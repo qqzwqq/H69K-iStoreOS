@@ -84,11 +84,12 @@ CONFIG_PACKAGE_docker=y
 CONFIG_PACKAGE_dockerd=y
 EOF
 
-echo "== 检查 AdGuard Home 软件包 =="
 
-grep -R -l 'Package/adguardhome' package feeds 2>/dev/null | head -20 || true
-grep -R -l 'Package/luci-app-adguardhome' package feeds 2>/dev/null | head -20 || true
+echo "== 启用 AdGuard Home =="
 
-echo "AdGuard Home 软件包检查完成"
+cat >> .config <<'EOF'
+CONFIG_PACKAGE_adguardhome=y
+CONFIG_PACKAGE_luci-app-adguardhome=y
+EOF
 
 echo "插件源码准备完成"
