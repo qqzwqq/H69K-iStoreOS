@@ -1,0 +1,89 @@
+name: Build H69K iStoreOS 24.10
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  REPO_URL: https://github.com/istoreos/istoreos
+  REPO_BRANCH: istoreos-24.10
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout customization repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential clang flex bison g++ gawk gcc-multilib \
+            g++-multilib gettext git libncurses-dev libssl-dev \
+            python3 python3-distutils rsync unzip zlib1g-dev \
+            file wget curl cpio perl time
+
+      - name: Clone official iStoreOS 24.10 source
+        run: |
+          git clone --depth=1 \
+            --branch "$REPO_BRANCH" \
+            "$REPO_URL" openwrt
+
+      - name: Configure H69K target
+        run: |
+          cp rk35xx/h69k-24.10.config openwrt/.config
+          cd openwrt
+          grep -q 'TARGET_DEVICES += hinlink_opc-h6xk' \
+            target/linux/rockchip/image/legacy.mk
+          grep -q 'hinlink,opc-h69k' \
+            target/linux/rockchip/image/legacy.mk
+
+      - name: Update feeds
+        run: |
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Add custom packages
+        run: |
+          chmod +x scripts/prepare-h69k-24.10.sh
+          cd openwrt
+          "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
+
+      - name: Verify configuration
+        run: |
+          cd openwrt
+          make defconfig
+          grep -E \
+            '^(CONFIG_TARGET_DEVICE_rockchip_rk35xx_DEVICE_hinlink_opc-h6xk|CONFIG_PACKAGE_luci-app-fan-h69k|CONFIG_PACKAGE_luci-app-mt5700)=' \
+            .config
+
+          grep -q '^CONFIG_TARGET_DEVICE_rockchip_rk35xx_DEVICE_hinlink_opc-h6xk=y$' .config
+          grep -q '^CONFIG_PACKAGE_luci-app-fan-h69k=y$' .config
+          grep -q '^CONFIG_PACKAGE_luci-app-mt5700=y$' .config
+
+      - name: Download sources
+        run: |
+          cd openwrt
+          make download -j8
+          find dl -size -1024c -delete
+
+      - name: Compile firmware
+        run: |
+          cd openwrt
+          make -j"$(nproc)" || make -j1 V=s
+
+      - name: Upload firmware
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: H69K-iStoreOS-24.10
+          path: openwrt/bin/targets/rockchip/armv8/*
+          if-no-files-found: error
+          retention-days: 14
