@@ -1,87 +1,116 @@
-# iStore OS 固件 | 定制的麻烦自行 fork 修改
+# H69K iStoreOS 24.10 定制固件
 
-[![iStore使用文档](https://img.shields.io/badge/使用文档-iStore%20OS-brightgreen?style=flat-square)](https://doc.linkease.com/zh/guide/istoreos) [![最新固件下载](https://img.shields.io/github/v/release/xiaomeng9597/Actions-iStoreOS-RK35XX?style=flat-square&label=最新固件下载)](../../releases/latest)
+基于官方 iStoreOS 24.10 源码，为 HINLINK OPC-H69K 定制构建。
 
-![支持设备](https://img.shields.io/badge/支持设备:-blueviolet.svg?style=flat-square) ![H88K](https://img.shields.io/badge/H88K-blue.svg?style=flat-square) ![H66K](https://img.shields.io/badge/H66K-blue.svg?style=flat-square) ![H68K](https://img.shields.io/badge/H68K-blue.svg?style=flat-square) ![H69K](https://img.shields.io/badge/H69K-blue.svg?style=flat-square) ![R5S](https://img.shields.io/badge/R5S-blue.svg?style=flat-square) ![R6S](https://img.shields.io/badge/R6S-blue.svg?style=flat-square) ![R66S](https://img.shields.io/badge/R66S-blue.svg?style=flat-square) ![R68S](https://img.shields.io/badge/R68S-blue.svg?style=flat-square) ![STATION P2](https://img.shields.io/badge/STATION%20P2-blue.svg?style=flat-square) ![T68M](https://img.shields.io/badge/T68M-blue.svg?style=flat-square) ![JIANPIAN TVBOX](https://img.shields.io/badge/JIANPIAN%20TVBOX-blue.svg?style=flat-square) ![PANTHER X2](https://img.shields.io/badge/PANTHER%20X2-blue.svg?style=flat-square) ![DG NAS LITE](https://img.shields.io/badge/DG%20NAS%20LITE-blue.svg?style=flat-square) ![IDO3568 CM4](https://img.shields.io/badge/IDO3568%20CM4-blue.svg?style=flat-square) ![EZPRO Mrkaio M68S](https://img.shields.io/badge/EZPRO%20Mrkaio%20M68S-blue.svg?style=flat-square) ![EZPRO Mrkaio M68S Plus](https://img.shields.io/badge/EZPRO%20Mrkaio%20M68S%20Plus-blue.svg?style=flat-square) ![DG TN3568](https://img.shields.io/badge/DG%20TN3568-blue.svg?style=flat-square) ![YIJIAHE JM10](https://img.shields.io/badge/YIJIAHE%20JM10-blue.svg?style=flat-square) ![Orange Pi 5 Plus](https://img.shields.io/badge/Orange%20Pi%205%20Plus-blue.svg?style=flat-square)
+本项目用于个人设备适配与固件定制。欢迎 Fork 后按自己的需求修改。
 
-## 默认配置
+[![iStoreOS](https://img.shields.io/badge/Base-iStoreOS%2024.10-brightgreen?style=flat-square)](https://github.com/istoreos/istoreos)
+[![Platform](https://img.shields.io/badge/Platform-Rockchip%20RK3568-blue?style=flat-square)](https://github.com/istoreos/istoreos)
+[![Device](https://img.shields.io/badge/Device-HINLINK%20OPC--H69K-blueviolet?style=flat-square)](https://github.com/istoreos/istoreos)
+[![Build](https://img.shields.io/badge/Build-GitHub%20Actions-black?style=flat-square&logo=githubactions)](../../actions)
 
-- IP: `http://192.168.100.1` or `http://iStoreOS.lan/`
-- 用户名: `root`
-- 密码: `password`
-- 如果设备只有一个网口，则此网口就是 `LAN` , 如果大于一个网口, 默认第一个网口是 `WAN` 口, 其它都是 `LAN`
-- 如果要修改 `LAN` 口 `IP` , 首页有个内网设置，或者用命令 `quickstart` 修改
-- 北京时间每天 `0:00` 定时编译, `Release` 中只保留不同架构的最新版本
-- 历史版本在 `Actions` 中选择一个已经运行完成且成功的 `workflow` 在页面底部可以看到 `Artifacts`, `Artifacts` 需要登录 Github 才能下载
-- 请把要加入的插件配置项填写在仓库 “configfiles/config_data.txt” 文件里面，假如你直接填写到 “rk35xx/.config” 文件里面绝对会丢你新加的配置项，因为每天会定时执行同步文件 “Sync Files” 工作流会自动更新.config为istoreos官方最新的配置文件。
-- 自行定制时需要注意这几点：假如你禁用了 “Sync Files” 工作流的话，那插件配置项就要填写到 “rk35xx/.config” 文件里面才行，反之你没禁用 “Sync Files” 工作流的话，那插件配置项就要填写到 “configfiles/config_data.txt” 文件里面才行。
-- 使用此仓库必须设置机密token，Actions云编译固件时需要用到，其他人无法看到的（通常在仓库设置里面，严禁在仓库可视代码中填写，否则后果自负），机密键名为 `ACCESS_TOKEN`
+## 设备与系统信息
 
-## 支持架构
+| 项目 | 信息 |
+| --- | --- |
+| 设备型号 | HINLINK OPC-H69K |
+| SoC 平台 | Rockchip RK3568 |
+| 操作系统 | iStoreOS 24.10 |
+| 官方源码 | `istoreos/istoreos` |
+| 源码分支 | `istoreos-24.10` |
+| 编译目标 | `rockchip/armv8` |
+| 设备定义 | `hinlink_opc-h6xk` |
+| CPU 架构 | ARM64 / AArch64 |
 
-### RK33xx 架构
+## 定制功能与软件包
 
-| 设备       | 包名称                                                                    |
-| ---------- | ------------------------------------------------------------------------- |
-| R2S        | istoreos-rockchip-armv8-friendlyarm_nanopi-r2s-squashfs-sysupgrade.img.gz |
-| R4S        | istoreos-rockchip-armv8-friendlyarm_nanopi-r4s-squashfs-sysupgrade.img.gz |
-| R4SE       | istoreos-rockchip-armv8-friendlyarm_nanopi-r4se-squashfs-sysupgrade.img.gz |
-| ROCK-PI-4A | istoreos-rockchip-armv8-radxa_rock-pi-squashfs-sysupgrade.img.gz  |
-| ROCKPRO64  | istoreos-rockchip-armv8-pine64_rockpro64-squashfs-sysupgrade.img.gz  |
+本项目在官方固件基础上，尝试集成以下软件包。
 
-### RK35xx 架构
+| 软件包 | 用途 | 集成方式 |
+| --- | --- | --- |
+| 调温大师 `luci-app-fan-h69k` | H69K 风扇控制与温度管理 | 从本仓库内的源码 ZIP 构建 |
+| `luci-app-mt5700` | MT5700 模组管理及相关功能 | 从插件仓库获取源码 |
+| Docker | 容器运行环境 | 通过 iStoreOS 软件包配置 |
+| AdGuard Home LuCI 前端 | AdGuard Home 管理界面及相关脚本 | 从前端插件仓库获取源码 |
+| `kmod-hwmon-pwmfan` | PWM 风扇驱动支持 | 通过固件配置选择 |
+| `kmod-thermal` | 温控相关内核功能 | 通过固件配置选择 |
 
-| 设备           | 包名称                                                                   |
-| -------------- | ------------------------------------------------------------------------ |
-| H66K/H68K/H69K | istoreos-rockchip-rk35xx-hinlink_opc-h6xk-squashfs-combined.img.gz       |
-| H88K           | istoreos-rockchip-rk35xx-hinlink_h88k-squashfs-combined.img.gz           |
-| NANOPI-R5S     | istoreos-rockchip-rk35xx-friendlyarm_nanopi-r5s-squashfs-combined.img.gz |
-| NANOPI-R6S     | istoreos-rockchip-rk35xx-friendlyarm_nanopi-r6s-squashfs-combined.img.gz |
-| R66S/R68S      | istoreos-rockchip-rk35xx-fastrhino_r6xs-squashfs-combined.img.gz         |
-| STATION-P2     | istoreos-rockchip-rk35xx-firefly_station-p2-squashfs-combined.img.gz     |
-| T68M     | istoreos-rockchip-rk35xx-lyt_t68m-squashfs-combined.img.gz     |
-| JIANPIAN-TVBOX     | istoreos-rockchip-rk35xx-jp_tvbox-squashfs-sysupgrade.img.gz     |
-| PANTHER-X2     | istoreos-rockchip-rk35xx-panther_x2-squashfs-sysupgrade.img.gz     |
-| DG-NAS-LITE/IDO3568-CM4 | istoreos-rockchip-rk35xx-dg_nas-lite-squashfs-sysupgrade.img.gz     |
-| EZPRO-Mrkaio-M68S     | istoreos-rockchip-rk35xx-ezpro_mrkaio-m68s-squashfs-sysupgrade.img.gz     |
-| EZPRO-Mrkaio-M68S-Plus     | istoreos-rockchip-rk35xx-ezpro_mrkaio-m68s-plus-squashfs-sysupgrade.img.gz     |
-| DG-TN3568     | istoreos-rockchip-rk35xx-dg_tn3568-squashfs-sysupgrade.img.gz     |
-| YIJIAHE-JM10     | istoreos-rockchip-rk35xx-yijiahe_jm10-squashfs-sysupgrade.img.gz     |
-| Orange-Pi-5-Plus     | istoreos-rockchip-rk35xx-xunlong_orangepi-5-plus-squashfs-sysupgrade.img.gz     |
+**注意：** 上述内容是计划集成的软件包清单，不代表所有功能均已通过编译、刷机和运行测试。AdGuard Home LuCI 前端与核心程序是不同组件，核心程序的下载、安装及启动需要另外验证。
 
-### x86 架构
+## GitHub Actions 云编译
 
-| 启动       | 包名称                                              |
-| ---------- | --------------------------------------------------- |
-| X86-64     | istoreos-x86-64-generic-squashfs-combined.img.gz    |
-| X86-64-EFI | storeos-x86-64-generic-squashfs-combined-efi.img.gz |
+本项目使用 GitHub Actions 在云端构建固件。
 
-## 鸣谢
+### 手动启动编译
 
-- [istoreos](https://github.com/istoreos/istoreos)
-- [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
-- [Microsoft Azure](https://azure.microsoft.com)
+1. 打开本仓库的 `Actions` 页面。
+2. 选择 `Build H69K iStoreOS 24.10` 工作流。
+3. 点击 `Run workflow`。
+4. 等待依赖安装、源码准备、配置检查和编译完成。
+5. 打开成功的运行记录，在页面底部的 `Artifacts` 区域下载构建产物。
+
+[进入 Actions 编译页面](../../actions)
+
+### 构建产物
+
+工作流会尝试归档以下文件：
+
+- H69K 固件及相关镜像文件。
+- 编译生成的软件包 IPK。
+- 构建日志 `build.log`。
+
+只有实际成功生成的文件才会出现在归档中。若编译失败，请优先检查运行记录中的失败步骤和日志。
+
+当前工作流使用 GitHub Actions Artifacts 保存构建产物，保留期限由工作流中的 `retention-days` 设置。它不等同于 GitHub Releases 自动发布。
+
+## 仓库目录说明
+
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── build-h69k-istoreos-24.10.yml
+├── rk35xx/
+│   └── h69k-24.10.config
+├── scripts/
+│   └── prepare-h69k-24.10.sh
+└── luci-app-fan-h69k-build-source-1.3-25.zip
+```
+
+目录结构以当前仓库实际内容为准。
+
+### 配置文件
+
+`rk35xx/h69k-24.10.config` 用于指定目标设备和需要集成的软件包。
+
+### 自定义插件准备脚本
+
+`scripts/prepare-h69k-24.10.sh` 负责准备调温大师、MT5700 和 AdGuard Home LuCI 前端源码，并向固件配置追加相应软件包选项。
+
+### 固件构建工作流
+
+`.github/workflows/build-h69k-istoreos-24.10.yml` 负责安装构建依赖、下载官方源码、准备插件、检查配置、编译固件和归档产物。
+
+## 刷机与使用提示
+
+- 刷机前请确认设备型号为 HINLINK OPC-H69K，并核对固件文件名、镜像格式和适用设备。
+- 建议在刷机前备份当前系统配置，并保存完整磁盘备份，以便发生启动故障时恢复。
+- 不要将其他 RK3568 设备的固件直接刷入 H69K。
+- 首次启动后，请检查网络接口、LAN IP、风扇控制、MT5700 模组、Docker 和 AdGuard Home 是否正常工作。
+- 固件默认 IP、登录密码和端口设置应以实际构建结果及首次启动配置为准，不应直接假设与其他定制固件一致。
+
+## 免责声明
+
+本项目为个人定制与学习用途。固件功能和兼容性以实际构建、刷机及测试结果为准。
+
+刷写固件存在设备无法启动、配置丢失或数据损坏的风险。请在操作前做好备份，并自行承担刷机和使用风险。
+
+## 致谢
+
+- [iStoreOS 官方项目](https://github.com/istoreos/istoreos)
+- [LianXia233/luci-app-mt5700](https://github.com/LianXia233/luci-app-mt5700)
+- [rufengsuixing/luci-app-adguardhome](https://github.com/rufengsuixing/luci-app-adguardhome)
 - [GitHub Actions](https://github.com/features/actions)
-- [OpenWrt](https://github.com/openwrt/openwrt)
-- [Lean&#39;s OpenWrt](https://github.com/coolsnowwolf/lede)
-- [tmate](https://github.com/tmate-io/tmate)
-- [mxschmitt/action-tmate](https://github.com/mxschmitt/action-tmate)
-- [csexton/debugger-action](https://github.com/csexton/debugger-action)
-- [Cowtransfer](https://cowtransfer.com)
-- [WeTransfer](https://wetransfer.com/)
-- [Mikubill/transfer](https://github.com/Mikubill/transfer)
-- [softprops/action-gh-release](https://github.com/softprops/action-gh-release)
-- [ActionsRML/delete-workflow-runs](https://github.com/ActionsRML/delete-workflow-runs)
-- [dev-drprasad/delete-older-releases](https://github.com/dev-drprasad/delete-older-releases)
-- [peter-evans/repository-dispatch](https://github.com/peter-evans/repository-dispatch)
-- [draco-china/istoreos-actions](https://github.com/draco-china/istoreos-actions)
-- [zhoufuli/immortalwrt-rk356x](https://github.com/zhoufuli/immortalwrt-rk356x)
-
-## 捐赠
-- 如果你觉得此系统好用的话，请我喝一杯82年的凉白开吧，感谢！
-
--支付宝-
-# <img src="https://raw.githubusercontent.com/xiaomeng9597/webfiles/refs/heads/main/zfb.jpg" alt="支付宝收款码" width="200" />
 
 -微信-
 # <img src="https://raw.githubusercontent.com/xiaomeng9597/webfiles/refs/heads/main/weixin.jpg" alt="微信收款码" width="200" />
