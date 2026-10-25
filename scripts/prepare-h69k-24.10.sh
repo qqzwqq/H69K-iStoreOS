@@ -71,6 +71,40 @@ if [ ! -s package/luci-app-mt5700/Makefile ]; then
   exit 1
 fi
 
+
+echo "== 下载 AdGuard Home LuCI 插件源码 =="
+
+if [ -d package/luci-app-adguardhome/.git ]; then
+  git -C package/luci-app-adguardhome pull --ff-only
+else
+  rm -rf package/luci-app-adguardhome
+  git clone --depth=1 \
+    https://github.com/rufengsuixing/luci-app-adguardhome.git \
+    package/luci-app-adguardhome
+fi
+
+adguard_dir="package/luci-app-adguardhome"
+
+for f in \
+  Makefile \
+  root/etc/init.d/AdGuardHome \
+  root/etc/config/AdGuardHome \
+  root/usr/share/AdGuardHome/update_core.sh \
+  root/usr/share/AdGuardHome/links.txt \
+  root/usr/share/AdGuardHome/AdGuardHome_template.yaml
+do
+  if [ ! -s "$adguard_dir/$f" ]; then
+    echo "错误：AdGuard Home 缺少必要文件：$f"
+    exit 1
+  fi
+done
+
+grep -q 'define Package/luci-app-adguardhome' \
+  "$adguard_dir/Makefile" || {
+    echo "错误：未找到 luci-app-adguardhome 软件包定义"
+    exit 1
+  }
+
 echo "== 启用自定义软件包 =="
 
 cat >> .config <<'EOF'
@@ -82,14 +116,9 @@ CONFIG_PACKAGE_kmod-hwmon-pwmfan=y
 CONFIG_PACKAGE_kmod-thermal=y
 CONFIG_PACKAGE_docker=y
 CONFIG_PACKAGE_dockerd=y
-EOF
-
-
-echo "== 启用 AdGuard Home =="
-
-cat >> .config <<'EOF'
-CONFIG_PACKAGE_adguardhome=y
 CONFIG_PACKAGE_luci-app-adguardhome=y
 EOF
+
+echo "AdGuard Home 前端源码和必要文件检查完成"
 
 echo "插件源码准备完成"
