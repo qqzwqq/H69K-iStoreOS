@@ -29,7 +29,12 @@ jobs:
             libncurses-dev libssl-dev python3 \
             python3-distutils rsync unzip zlib1g-dev \
             file wget curl cpio perl time \
-            device-tree-compiler libelf-dev
+            device-tree-compiler libelf-dev \
+            python3-pip python3-venv swig
+
+          python3 -m pip install --user pyelftools
+
+          python3 -c "import elftools; print('pyelftools OK:', elftools.__file__)"
 
       - name: Clone official iStoreOS 24.10 source
         run: |
