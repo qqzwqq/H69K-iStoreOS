@@ -1,4 +1,3 @@
-```yaml
 name: Build H69K iStoreOS 24.10
 
 on:
@@ -249,4 +248,3 @@ jobs:
           path: build-output/
           if-no-files-found: warn
           retention-days: 14
-```
