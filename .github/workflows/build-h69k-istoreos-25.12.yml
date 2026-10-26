@@ -8,19 +8,23 @@ on:
     paths:
       - ".github/workflows/build-h69k-istoreos-25.12.yml"
       - "rk35xx/h69k-25.12.config"
+      - "scripts/prepare-h69k-25.12.sh"
+      - "luci-app-fan-h69k-build-source-1.3-25.zip"
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build H69K base firmware
+    name: Build H69K iStoreOS 25.12
     runs-on: ubuntu-24.04
     timeout-minutes: 360
 
     steps:
       - name: Checkout H69K build configuration
         uses: actions/checkout@v4
+        with:
+          ref: build-25.12
 
       - name: Install build dependencies
         run: |
@@ -29,55 +33,87 @@ jobs:
             build-essential clang flex bison g++ gawk \
             gcc-multilib g++-multilib gettext git \
             libncurses-dev libssl-dev python3 python3-setuptools \
+            python3-pyelftools python3-yaml \
             rsync swig unzip zlib1g-dev file wget curl \
             ccache ecj fastjar java-propose-classpath \
-            libelf-dev libfuse-dev
+            libelf-dev libfuse-dev libxml-parser-perl \
+            libgmp3-dev libmpc-dev libexpat1-dev zstd
 
       - name: Download iStoreOS 25.12 source
         run: |
           git clone --depth 1 \
-            --branch openwrt-25.12 \
+            --branch istoreos-25.12 \
             https://github.com/istoreos/istoreos.git \
             openwrt
+
+          git -C openwrt log -1 --oneline
 
       - name: Check H69K device support
         working-directory: openwrt
         run: |
-          grep -R -n -E \
-            'Device/hinlink_opc-h6xk|TARGET_DEVICES.*hinlink_opc-h6xk' \
-            target/linux/rockchip
-          
-          grep -R -q 'Device/hinlink_opc-h6xk' \
-            target/linux/rockchip || {
-              echo "ERROR: H69K device definition not found"
-              exit 1
-            }
+          set -eu
+
+          echo "===== Check H69K device name ====="
+          if ! grep -R -n \
+            --include='*.mk' \
+            'hinlink_opc-h6xk' \
+            target/linux/rockchip; then
+            echo "ERROR: H69K device definition not found in iStoreOS 25.12"
+            exit 1
+          fi
+
+          echo "===== Check H69K compatible string ====="
+          if ! grep -R -n \
+            --include='*.mk' \
+            'hinlink,opc-h69k' \
+            target/linux/rockchip; then
+            echo "ERROR: hinlink,opc-h69k compatible string not found"
+            exit 1
+          fi
 
       - name: Apply H69K configuration
         run: |
-          test -f rk35xx/h69k-25.12.config
+          set -eu
+          test -s rk35xx/h69k-25.12.config
           cp rk35xx/h69k-25.12.config openwrt/.config
+          echo "H69K configuration copied."
 
-      - name: Update feeds
+      - name: Prepare H69K custom packages
         working-directory: openwrt
         run: |
+          set -eu
+          test -s "$GITHUB_WORKSPACE/scripts/prepare-h69k-25.12.sh"
+          bash "$GITHUB_WORKSPACE/scripts/prepare-h69k-25.12.sh"
+
+      - name: Update and install feeds
+        working-directory: openwrt
+        run: |
+          set -eu
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
       - name: Generate default configuration
         working-directory: openwrt
         run: |
+          set -eu
           make defconfig
+
+          echo "===== Verify H69K target ====="
           grep -E \
             '^CONFIG_TARGET_rockchip=y|^CONFIG_TARGET_rockchip_armv8=y|^CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y' \
-            .config
+            .config || true
 
           grep -q \
             '^CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y' \
             .config || {
-              echo "ERROR: H69K target was not selected"
+              echo "ERROR: H69K target was not selected after defconfig"
               exit 1
             }
+
+          echo "===== Custom package configuration ====="
+          grep -E \
+            '^CONFIG_PACKAGE_(luci-app-fan-h69k|luci-app-mt5700|kmod-hwmon-pwmfan|kmod-thermal|docker|dockerd|adguardhome|luci-app-adguardhome|luci-app-openclash)=y$' \
+            .config || true
 
       - name: Download source packages
         working-directory: openwrt
