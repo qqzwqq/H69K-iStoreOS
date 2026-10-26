@@ -47,10 +47,8 @@ jobs:
           echo "===== Rust version ====="
           rustc --version
           cargo --version
-
           echo "===== Installed Rust targets ====="
           rustup target list --installed
-
           rustup target list --installed \
             | grep -qx 'aarch64-unknown-linux-musl'
 
@@ -62,66 +60,94 @@ jobs:
 
       - name: Configure H69K target
         run: |
+          set -eu
+
+          echo "===== Check H69K config file ====="
+          test -s rk35xx/h69k-24.10.config
           cp rk35xx/h69k-24.10.config openwrt/.config
+
           cd openwrt
 
-          echo "===== Verify H69K device definition ====="
-          grep -q 'TARGET_DEVICES += hinlink_opc-h6xk' \
-            target/linux/rockchip/image/legacy.mk
-          grep -q 'hinlink,opc-h69k' \
-            target/linux/rockchip/image/legacy.mk
+          echo "===== Search H69K device definition ====="
+          grep -R -n -E \
+            'hinlink_opc-h6xk|hinlink,opc-h69k' \
+            target/linux/rockchip || true
 
-          grep -q '^CONFIG_TARGET_rockchip=y$' .config
-          grep -q '^CONFIG_TARGET_rockchip_armv8=y$'
-
-      - name: Register OpenClash feed
-        run: |
-          cd openwrt
-
-          if ! grep -qE '^src-git[[:space:]]+openclash[[:space:]]+' \
-            feeds.conf.default; then
-            echo 'src-git openclash https://github.com/vernesong/OpenClash.git' \
-              >> feeds.conf.default
+          if ! grep -R -q 'hinlink_opc-h6xk' target/linux/rockchip; then
+            echo "ERROR: hinlink_opc-h6xk was not found in this iStoreOS source."
+            exit 1
           fi
 
-          echo "===== OpenClash feed configuration ====="
-          grep -n 'openclash' feeds.conf.default
+          if ! grep -R -q 'hinlink,opc-h69k' target/linux/rockchip; then
+            echo "ERROR: hinlink,opc-h69k was not found in this iStoreOS source."
+            exit 1
+          fi
+
+          echo "===== Check initial target configuration ====="
+          grep -n -E \
+            '^CONFIG_TARGET_rockchip=|^CONFIG_TARGET_rockchip_armv8=|^CONFIG_TARGET_DEVICE_.*hinlink_opc-h6xk=' \
+            .config || true
+
+          grep -qxF 'CONFIG_TARGET_rockchip=y' .config
+          grep -qxF 'CONFIG_TARGET_rockchip_armv8=y' .config
+          grep -qxF \
+            'CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y' \
+            .config
+
+          echo "H69K target config checks passed."
 
       - name: Update and install feeds
         run: |
           cd openwrt
-
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-          echo "===== Install OpenClash explicitly ====="
-          ./scripts/feeds install -p openclash luci-app-openclash
-
-          echo "===== Check OpenClash package files ====="
-          test -s \
-            package/feeds/openclash/luci-app-openclash/Makefile
-
-          echo "===== OpenClash feed registration ====="
-          ./scripts/feeds list -i | grep -i openclash || true
-
       - name: Add custom packages
         run: |
+          set -eu
           chmod +x "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
-
           cd openwrt
           "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
 
-      - name: Prepare OpenClash translation compiler
+      - name: Add OpenClash source
         run: |
+          set -eu
           cd openwrt
 
-          PO2LMO_DIR="package/feeds/openclash/luci-app-openclash/tools/po2lmo"
+          echo "===== Download OpenClash source ====="
+          git clone --depth=1 \
+            --branch master \
+            https://github.com/vernesong/OpenClash.git \
+            /tmp/OpenClash
+
+          test -s /tmp/OpenClash/luci-app-openclash/Makefile
+
+          if [ -e package/luci-app-openclash ]; then
+            echo "ERROR: package/luci-app-openclash already exists."
+            echo "Check for duplicate OpenClash package sources."
+            exit 1
+          fi
+
+          cp -a \
+            /tmp/OpenClash/luci-app-openclash \
+            package/luci-app-openclash
+
+          test -s package/luci-app-openclash/Makefile
+
+          echo "===== OpenClash package files ====="
+          ls -la package/luci-app-openclash
+
+      - name: Prepare OpenClash translation compiler
+        run: |
+          set -eu
+          cd openwrt
+
+          PO2LMO_DIR="package/luci-app-openclash/tools/po2lmo"
 
           echo "===== Check po2lmo source ====="
           if [ ! -s "$PO2LMO_DIR/Makefile" ]; then
-            echo "ERROR: OpenClash po2lmo Makefile not found."
-            echo "===== Search available po2lmo Makefiles ====="
-            find package -path '*/po2lmo/Makefile' -print || true
+            echo "ERROR: po2lmo Makefile not found at $PO2LMO_DIR"
+            find package/luci-app-openclash -path '*/po2lmo/*' -print || true
             exit 1
           fi
 
@@ -133,21 +159,23 @@ jobs:
 
       - name: Verify custom package sources
         run: |
+          set -eu
           cd openwrt
 
           test -s package/luci-app-fan-h69k/Makefile
           test -s package/luci-app-mt5700/Makefile
           test -s package/luci-app-adguardhome/Makefile
-          test -s package/feeds/openclash/luci-app-openclash/Makefile
+          test -s package/luci-app-openclash/Makefile
 
-          echo "===== All required package Makefiles found ====="
+          echo "===== Required package Makefiles found ====="
 
       - name: Enable required packages
         run: |
+          set -eu
           cd openwrt
 
           enable_config() {
-            local key="$1"
+            key="$1"
             if ! grep -qxF "${key}=y" .config; then
               echo "${key}=y" >> .config
             fi
@@ -173,6 +201,7 @@ jobs:
 
       - name: Resolve and verify configuration
         run: |
+          set -eu
           cd openwrt
 
           make defconfig
@@ -182,16 +211,18 @@ jobs:
             '^(CONFIG_TARGET_rockchip|CONFIG_TARGET_rockchip_armv8|CONFIG_TARGET_MULTI_PROFILE|CONFIG_TARGET_DEVICE_.*hinlink_opc-h6xk|CONFIG_PACKAGE_luci-app-fan-h69k|CONFIG_PACKAGE_luci-app-mt5700|CONFIG_PACKAGE_kmod-hwmon-pwmfan|CONFIG_PACKAGE_kmod-thermal|CONFIG_PACKAGE_luci-app-adguardhome|CONFIG_PACKAGE_luci-app-openclash|CONFIG_PACKAGE_docker|CONFIG_PACKAGE_dockerd)=' \
             .config || true
 
-          echo "===== Check required configuration ====="
-
           check_config() {
-            local key="$1"
+            key="$1"
             if ! grep -qxF "${key}=y" .config; then
-              echo "ERROR: ${key}=y is missing after make defconfig"
+              echo "ERROR: ${key}=y is missing after make defconfig."
+              echo "===== OpenClash package source ====="
+              test ! -s package/luci-app-openclash/Makefile \
+                || sed -n '1,100p' package/luci-app-openclash/Makefile
               return 1
             fi
           }
 
+          echo "===== Check required configuration ====="
           check_config CONFIG_TARGET_rockchip
           check_config CONFIG_TARGET_rockchip_armv8
           check_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
@@ -204,23 +235,22 @@ jobs:
           check_config CONFIG_PACKAGE_luci-app-adguardhome
           check_config CONFIG_PACKAGE_luci-app-openclash
 
-          echo "===== Verify OpenClash source still exists ====="
-          test -s package/feeds/openclash/luci-app-openclash/Makefile
+          echo "===== Verify OpenClash source ====="
+          test -s package/luci-app-openclash/Makefile
 
-          echo "===== Configuration verification passed ====="
+          echo "Configuration verification passed."
 
       - name: Download sources
         run: |
+          set -eu
           cd openwrt
-
           make download -j8
           find dl -type f -size -1024c -delete
 
       - name: Compile firmware
         run: |
-          cd openwrt
-
           set -o pipefail
+          cd openwrt
           make -j"$(nproc)" V=s 2>&1 \
             | tee "$GITHUB_WORKSPACE/build.log"
 
