@@ -1,3 +1,4 @@
+
 name: Build H69K iStoreOS 24.10
 
 on:
@@ -38,7 +39,8 @@ jobs:
 
       - name: Install Rust toolchain and ARM64 target
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --profile minimal --default-toolchain stable
 
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.cargo/bin:$PATH"
@@ -51,7 +53,8 @@ jobs:
 
           echo "===== Installed Rust targets ====="
           rustup target list --installed
-          rustup target list --installed | grep -qx 'aarch64-unknown-linux-musl'
+          rustup target list --installed \
+            | grep -qx 'aarch64-unknown-linux-musl'
 
       - name: Clone official iStoreOS 24.10 source
         run: |
@@ -64,11 +67,15 @@ jobs:
           cp rk35xx/h69k-24.10.config openwrt/.config
           cd openwrt
 
+          echo "===== Verify H69K device definition ====="
+
           grep -q 'TARGET_DEVICES += hinlink_opc-h6xk' \
             target/linux/rockchip/image/legacy.mk
 
           grep -q 'hinlink,opc-h69k' \
             target/linux/rockchip/image/legacy.mk
+
+          echo "H69K device definition found."
 
       - name: Update feeds
         run: |
@@ -79,6 +86,7 @@ jobs:
       - name: Add custom packages
         run: |
           chmod +x "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
+
           cd openwrt
           "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
 
@@ -86,20 +94,33 @@ jobs:
         run: |
           cd openwrt
 
+          # Clone the OpenClash repository outside the package directory.
           git clone --depth=1 \
             --branch master \
             https://github.com/vernesong/OpenClash.git \
+            /tmp/OpenClash
+
+          # Place the actual LuCI package at package/luci-app-openclash.
+          # OpenWrt expects the package Makefile at this level.
+          test -s /tmp/OpenClash/luci-app-openclash/Makefile
+          test ! -e package/luci-app-openclash
+
+          cp -a \
+            /tmp/OpenClash/luci-app-openclash \
             package/luci-app-openclash
 
-          test -s package/luci-app-openclash/luci-app-openclash/Makefile
+          echo "===== Verify OpenClash package layout ====="
+          test -s package/luci-app-openclash/Makefile
+          ls -l package/luci-app-openclash/Makefile
 
       - name: Prepare OpenClash translation compiler
         run: |
-          cd openwrt/package/luci-app-openclash/luci-app-openclash/tools/po2lmo
+          cd openwrt/package/luci-app-openclash/tools/po2lmo
 
           make
           sudo make install
 
+          echo "===== Verify po2lmo ====="
           command -v po2lmo
 
       - name: Verify custom package sources
@@ -109,19 +130,20 @@ jobs:
           test -s package/luci-app-fan-h69k/Makefile
           test -s package/luci-app-mt5700/Makefile
           test -s package/luci-app-adguardhome/Makefile
-          test -s package/luci-app-openclash/luci-app-openclash/Makefile
+          test -s package/luci-app-openclash/Makefile
 
           grep -q 'define Package/luci-app-adguardhome' \
             package/luci-app-adguardhome/Makefile
 
           grep -q 'define Package/$(PKG_NAME)' \
-            package/luci-app-openclash/luci-app-openclash/Makefile
+            package/luci-app-openclash/Makefile
 
           echo "All custom package sources verified."
 
       - name: Resolve and verify configuration
         run: |
           cd openwrt
+
           make defconfig
 
           echo "===== Resolved target and package configuration ====="
@@ -160,7 +182,8 @@ jobs:
           cd openwrt
 
           set -o pipefail
-          make -j"$(nproc)" V=s 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+          make -j"$(nproc)" V=s 2>&1 \
+            | tee "$GITHUB_WORKSPACE/build.log"
 
       - name: Collect build outputs
         if: always()
