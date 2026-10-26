@@ -26,6 +26,15 @@ jobs:
         with:
           ref: build-25.12
 
+      - name: Check runner resources
+        run: |
+          echo "===== CPU ====="
+          nproc
+          echo "===== Memory ====="
+          free -h
+          echo "===== Disk ====="
+          df -h /
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
@@ -47,6 +56,14 @@ jobs:
             https://github.com/istoreos/istoreos.git \
             openwrt
           git -C openwrt log -1 --oneline
+
+      - name: Cache OpenWrt downloads
+        uses: actions/cache@v4
+        with:
+          path: openwrt/dl
+          key: istoreos-25.12-downloads-${{ runner.os }}-${{ hashFiles('openwrt/include/download.mk') }}
+          restore-keys: |
+            istoreos-25.12-downloads-${{ runner.os }}-
 
       - name: Check H69K device support
         working-directory: openwrt
@@ -109,22 +126,22 @@ jobs:
         working-directory: openwrt
         run: |
           set -eu
-          make download -j2
+          make download -j4
 
       - name: Build OpenWrt tools first
         working-directory: openwrt
         run: |
           set -eu
-          make tools/install -j2 V=s
+          make tools/install -j4 V=s
 
       - name: Build OpenWrt target toolchain
         working-directory: openwrt
         run: |
           set -eu
-          make toolchain/install -j2 V=s
+          make toolchain/install -j4 V=s
 
           echo "===== Locate cross compiler ====="
-          find staging_dir -type f \
+          find staging_dir \
             \( -name 'aarch64-openwrt-linux-musl-gcc' \
             -o -name 'aarch64-openwrt-linux-musl-g++' \) \
             -print
@@ -139,7 +156,7 @@ jobs:
         working-directory: openwrt
         run: |
           set -eu
-          make -j2 V=s
+          make -j4 V=s
 
       - name: Verify firmware artifacts
         if: success()
