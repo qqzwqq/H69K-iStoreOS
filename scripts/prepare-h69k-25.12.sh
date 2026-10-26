@@ -51,7 +51,7 @@ echo "===== 3. 下载 MT5700 插件 ====="
 
 rm -rf package/luci-app-mt5700
 git clone --depth=1 \
-  https://github.com/LianXia233/luci-app-mt5700.git \
+  https://github.com/qqzwqq/luci-app-mt5700.git \
   package/luci-app-mt5700
 test -s package/luci-app-mt5700/Makefile
 
