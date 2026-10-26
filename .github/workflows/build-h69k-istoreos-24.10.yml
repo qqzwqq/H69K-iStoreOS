@@ -36,6 +36,23 @@ jobs:
 
           python3 -c "import elftools; print('pyelftools OK:', elftools.__file__)"
 
+      - name: Install Rust toolchain and ARM64 target
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.cargo/bin:$PATH"
+
+          rustup target add aarch64-unknown-linux-musl
+
+          echo "===== Rust version ====="
+          rustc --version
+          cargo --version
+
+          echo "===== Installed Rust targets ====="
+          rustup target list --installed
+          rustup target list --installed | grep -qx 'aarch64-unknown-linux-musl'
+
       - name: Clone official iStoreOS 24.10 source
         run: |
           git clone --depth=1 \
@@ -49,6 +66,7 @@ jobs:
 
           grep -q 'TARGET_DEVICES += hinlink_opc-h6xk' \
             target/linux/rockchip/image/legacy.mk
+
           grep -q 'hinlink,opc-h69k' \
             target/linux/rockchip/image/legacy.mk
 
@@ -67,6 +85,7 @@ jobs:
       - name: Verify custom package sources
         run: |
           cd openwrt
+
           test -s package/luci-app-fan-h69k/Makefile
           test -s package/luci-app-mt5700/Makefile
           test -s package/luci-app-adguardhome/Makefile
@@ -80,12 +99,14 @@ jobs:
           make defconfig
 
           echo "===== Resolved target and package configuration ====="
+
           grep -E \
             '^(CONFIG_TARGET_rockchip|CONFIG_TARGET_rockchip_armv8|CONFIG_TARGET_DEVICE_.*hinlink_opc-h6xk|CONFIG_PACKAGE_luci-app-fan-h69k|CONFIG_PACKAGE_luci-app-mt5700|CONFIG_PACKAGE_luci-app-adguardhome|CONFIG_PACKAGE_docker|CONFIG_PACKAGE_dockerd)=' \
             .config || true
 
           grep -q '^CONFIG_TARGET_rockchip=y$' .config
           grep -q '^CONFIG_TARGET_rockchip_armv8=y$' .config
+
           grep -q '^CONFIG_PACKAGE_luci-app-fan-h69k=y$' .config
           grep -q '^CONFIG_PACKAGE_luci-app-mt5700=y$' .config
           grep -q '^CONFIG_PACKAGE_luci-app-adguardhome=y$' .config
