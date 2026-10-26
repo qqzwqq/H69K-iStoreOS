@@ -82,6 +82,23 @@ jobs:
           cd openwrt
           "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
 
+      - name: Add OpenClash source
+        run: |
+          cd openwrt
+          git clone --depth=1 \
+            --branch master \
+            https://github.com/vernesong/OpenClash.git \
+            package/luci-app-openclash
+
+          test -s package/luci-app-openclash/luci-app-openclash/Makefile
+
+      - name: Prepare OpenClash translation compiler
+        run: |
+          cd openwrt/package/luci-app-openclash/luci-app-openclash/tools/po2lmo
+          make
+          sudo make install
+          command -v po2lmo
+
       - name: Verify custom package sources
         run: |
           cd openwrt
