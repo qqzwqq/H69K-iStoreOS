@@ -120,9 +120,17 @@ jobs:
         run: |
           make download -j2
 
+
+      - name: Compile Rust host toolchain first
+        working-directory: openwrt
+        run: |
+          set -eu
+          make package/feeds/packages/rust/host/compile -j1 V=s
+
       - name: Compile firmware
         working-directory: openwrt
         run: |
+          set -eu
           make -j2 V=s
 
       - name: Upload firmware artifacts
