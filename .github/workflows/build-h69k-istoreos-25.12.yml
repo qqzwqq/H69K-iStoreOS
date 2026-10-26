@@ -41,11 +41,11 @@ jobs:
 
       - name: Download iStoreOS 25.12 source
         run: |
+          set -eu
           git clone --depth 1 \
             --branch istoreos-25.12 \
             https://github.com/istoreos/istoreos.git \
             openwrt
-
           git -C openwrt log -1 --oneline
 
       - name: Check H69K device support
@@ -54,22 +54,12 @@ jobs:
           set -eu
 
           echo "===== Check H69K device name ====="
-          if ! grep -R -n \
-            --include='*.mk' \
-            'hinlink_opc-h6xk' \
-            target/linux/rockchip; then
-            echo "ERROR: H69K device definition not found in iStoreOS 25.12"
-            exit 1
-          fi
+          grep -R -n --include='*.mk' \
+            'hinlink_opc-h6xk' target/linux/rockchip
 
           echo "===== Check H69K compatible string ====="
-          if ! grep -R -n \
-            --include='*.mk' \
-            'hinlink,opc-h69k' \
-            target/linux/rockchip; then
-            echo "ERROR: hinlink,opc-h69k compatible string not found"
-            exit 1
-          fi
+          grep -R -n --include='*.mk' \
+            'hinlink,opc-h69k' target/linux/rockchip
 
       - name: Apply H69K configuration
         run: |
@@ -118,10 +108,28 @@ jobs:
       - name: Download source packages
         working-directory: openwrt
         run: |
+          set -eu
           make download -j2
 
+      - name: Build OpenWrt tools first
+        working-directory: openwrt
+        run: |
+          set -eu
+          make tools/install -j2 V=s
 
-      - name: Compile Rust host toolchain first
+      - name: Build OpenWrt target toolchain
+        working-directory: openwrt
+        run: |
+          set -eu
+          make toolchain/install -j2 V=s
+
+          echo "===== Locate cross compiler ====="
+          find staging_dir -type f \
+            \( -name 'aarch64-openwrt-linux-musl-gcc' \
+            -o -name 'aarch64-openwrt-linux-musl-g++' \) \
+            -print
+
+      - name: Compile Rust host toolchain
         working-directory: openwrt
         run: |
           set -eu
@@ -132,6 +140,28 @@ jobs:
         run: |
           set -eu
           make -j2 V=s
+
+      - name: Verify firmware artifacts
+        if: success()
+        working-directory: openwrt
+        run: |
+          set -eu
+          echo "===== Firmware output ====="
+          find bin/targets/rockchip/armv8 \
+            -maxdepth 2 -type f \
+            \( -name '*.img.gz' \
+            -o -name '*sysupgrade.bin' \
+            -o -name '*.manifest' \
+            -o -name '*.buildinfo' \) \
+            -print
+
+          test -n "$(find bin/targets/rockchip/armv8 \
+            -maxdepth 2 -type f \
+            \( -name '*.img.gz' -o -name '*sysupgrade.bin' \) \
+            -print -quit)" || {
+              echo "ERROR: No flashable firmware image found"
+              exit 1
+            }
 
       - name: Upload firmware artifacts
         if: always()
