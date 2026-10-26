@@ -62,7 +62,7 @@ else
   rm -rf package/luci-app-mt5700
 
   git clone --depth=1 \
-    https://github.com/LianXia233/luci-app-mt5700.git \
+    https://github.com/qqzwqq/luci-app-mt5700.git \
     package/luci-app-mt5700
 fi
 
