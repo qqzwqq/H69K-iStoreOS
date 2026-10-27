@@ -245,10 +245,12 @@ jobs:
 
           echo "===== 验证根文件系统分区大小 ====="
           grep '^CONFIG_TARGET_ROOTFS_PARTSIZE=' .config || true
-          if ! grep -qx 'CONFIG_TARGET_ROOTFS_PARTSIZE=256' .config; then
+          if ! grep -qx 'CONFIG_TARGET_ROOTFS_PARTSIZE=1024' .config; then
             echo "::error::CONFIG_TARGET_ROOTFS_PARTSIZE 未生效为 1024，请检查 iStoreOS 配置项"
             exit 1
           fi
+
+          echo "根文件系统分区大小验证通过：1024 MiB（约 1 GiB）"
 
           check_config() {
             local key="$1"
