@@ -98,15 +98,16 @@ log "调温大师插件准备完成"
 # 3. 准备 AdGuard Home LuCI 插件
 log "3/4 准备 AdGuard Home LuCI 插件"
 
-# 默认使用 main；需要固定版本时可在工作流设置 AGH_REPO_REF
-agh_ref="${AGH_REPO_REF:-main}"
+# 修复：仓库默认分支为 master，不是 main
+# 如需指定其他分支，可在 GitHub Actions 中设置 AGH_REPO_REF
+agh_ref="${AGH_REPO_REF:-master}"
 
 # 清理旧目录，保证重复运行结果一致
 rm -rf "$AGH_PACKAGE"
 
 git clone --depth=1 --branch "$agh_ref" \
   "$AGH_REPO" "$AGH_PACKAGE" ||
-  die "AdGuard Home 插件克隆失败，ref：$agh_ref"
+  die "AdGuard Home 插件克隆失败，ref：$agh_ref；请检查仓库分支和网络连接"
 
 for f in \
   Makefile \
