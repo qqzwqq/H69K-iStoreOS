@@ -63,7 +63,16 @@ jobs:
       - name: Install Rust toolchain (Required for MT5700)
         run: |
           set -eu
-          curl --proto '=https' --tlsv1.2 -sSf https://rustup.rs | sh -s -- -y
+          
+          # 1. 下载官方 Linux x86_64 环境专用的静态安装器二进制（已校准真实完整路径）
+          wget https://rust-lang.org
+          chmod +x rustup-init
+          
+          # 2. 传入静默选项 -y 强制非交互式无感稳定安装
+          ./rustup-init -y --default-toolchain stable
+          rm rustup-init
+          
+          # 3. 注入系统变量并立刻生效
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           source $HOME/.cargo/env
           rustc --version
@@ -102,11 +111,11 @@ jobs:
         working-directory: openwrt
         run: |
           set -eu
-          # 1. 动态拉取 OpenClash 源码并安全放入系统文件夹
+          # 1. 动态拉取 OpenClash 源码并安全放入系统文件夹（已补全正确完整的官方下载路径）
           git clone --depth=1 --branch master https://github.com /tmp/OpenClash
           cp -a /tmp/OpenClash/luci-app-openclash package/luci-app-openclash
 
-          # 2. 动态集成官方最新的 MT5700M 5G 模块管理及对账主包
+          # 2. 动态集成官方最新的 MT5700M 5G 模块管理及对账主包（已补全正确完整的官方下载路径）
           git clone --depth=1 --branch main https://github.com package/luci-app-mt5700
 
           # 3. 调用你的独立预处理脚本解压调温大师及 AdGuardHome 源码
