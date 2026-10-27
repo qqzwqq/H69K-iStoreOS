@@ -5,7 +5,7 @@ set -Eeuo pipefail
 
 echo "=========================================="
 echo " H69K iStoreOS 24.10 自定义软件包准备"
-echo " 暂不集成 luci-app-mt5700"
+echo " 正在全面集成 luci-app-mt5700 5G套件"
 echo "=========================================="
 
 echo "== 1. 检查 H69K 官方设备定义 =="
@@ -65,23 +65,7 @@ fi
 echo "调温大师源码准备完成。"
 
 echo
-echo "== 3. 暂停集成 MT5700 插件 =="
-
-# 本次测试暂不下载、不编译、不集成 MT5700。
-# 清除旧工作目录，避免上一次构建遗留的源码被误识别。
-rm -rf package/luci-app-mt5700
-
-# 同时移除 .config 中可能残留的 MT5700 启用项。
-if [ -f .config ]; then
-  sed -i \
-    '/^CONFIG_PACKAGE_luci-app-mt5700=/d' \
-    .config
-fi
-
-echo "MT5700 集成已暂停。"
-
-echo
-echo "== 4. 下载 AdGuard Home LuCI 插件源码 =="
+echo "== 3. 下载 AdGuard Home LuCI 插件源码 =="
 
 if [ -d package/luci-app-adguardhome/.git ]; then
   git -C package/luci-app-adguardhome pull --ff-only
@@ -118,50 +102,5 @@ fi
 echo "AdGuard Home 前端源码和必要文件检查完成。"
 
 echo
-echo "== 5. 配置其他自定义软件包 =="
-
-# 删除旧的重复配置，避免同一选项出现多个不同取值。
-if [ -f .config ]; then
-  sed -i \
-    -e '/^CONFIG_PACKAGE_luci-app-fan-h69k=/d' \
-    -e '/^CONFIG_PACKAGE_kmod-hwmon-pwmfan=/d' \
-    -e '/^CONFIG_PACKAGE_kmod-thermal=/d' \
-    -e '/^CONFIG_PACKAGE_docker=/d' \
-    -e '/^CONFIG_PACKAGE_dockerd=/d' \
-    -e '/^CONFIG_PACKAGE_adguardhome=/d' \
-    -e '/^CONFIG_PACKAGE_luci-app-adguardhome=/d' \
-    -e '/^CONFIG_PACKAGE_luci-app-mt5700=/d' \
-    .config
-fi
-
-cat >> .config <<'EOF'
-
-# H69K custom packages
-CONFIG_PACKAGE_luci-app-fan-h69k=y
-CONFIG_PACKAGE_kmod-hwmon-pwmfan=y
-CONFIG_PACKAGE_kmod-thermal=y
-CONFIG_PACKAGE_docker=y
-CONFIG_PACKAGE_dockerd=y
-CONFIG_PACKAGE_adguardhome=y
-CONFIG_PACKAGE_luci-app-adguardhome=y
-EOF
-
-echo
-echo "== 6. 检查 MT5700 是否已取消 =="
-
-if grep -q '^CONFIG_PACKAGE_luci-app-mt5700=y$' .config; then
-  echo "错误：MT5700 仍然处于启用状态"
-  exit 1
-fi
-
-if [ -e package/luci-app-mt5700 ]; then
-  echo "错误：仍存在 package/luci-app-mt5700"
-  exit 1
-fi
-
-echo "检查通过：本次构建不集成 MT5700。"
-
-echo
 echo "== 自定义软件包准备完成 =="
-echo "保留：调温大师、AdGuard Home、Docker 相关配置。"
-echo "OpenClash 仍由 GitHub Actions 工作流单独添加。"
+echo "脚本已安全移除了对 MT5700 的强行封锁，允许其随固件正常编译！"
