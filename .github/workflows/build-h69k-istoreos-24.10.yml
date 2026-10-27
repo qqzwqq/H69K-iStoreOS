@@ -1,172 +1,243 @@
-name: Build iStoreOS 24.10 H69K
+name: Build H69K iStoreOS 24.10
 
 on:
-  repository_dispatch:
   workflow_dispatch:
-    inputs:
-      ssh:
-        description: 'SSH connection to actions'
-        required: false
-        default: 'false'
+
+permissions:
+  contents: read
 
 env:
-  REPO_URL: https://github.com  # 1. 彻底修正拉取主源地址
-  REPO_BRANCH: istoreos-24.10
-  FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: h69k.config
-  DIY_P1_SH: diy-part1.sh
-  DIY_P2_SH: diy-part2.sh
-  UPLOAD_BIN_DIR: false
-  UPLOAD_FIRMWARE: true
-  UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # 消除 Node 20 过期黄字警告
+  REPO_BRANCH: istoreos-24.10
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 360
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      # 1. 获取你的自定义仓库
+      - name: Checkout customization repository
+        uses: actions/checkout@v4
 
-    - name: Initialization environment
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/share/man /usr/share/doc
-        sudo -E apt-get -qq update
-        sudo -E apt-get -qq install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison bzip2 ccache cmake cpio curl file gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp nano p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply qemu-utils rsync scons squashfs-tools subversion swig texinfo u-boot-tools upx-ucl unzip vim wget xmlto xz-utils zlib1g-dev python3-setuptools python3-pyelftools
-        sudo -E apt-get -qq autoremove --purge
-        sudo -E apt-get -qq clean
-        sudo timedatectl set-timezone "$TZ"
-        sudo mkdir -p /workdir
-        sudo chown $USER:$GROUPS /workdir
+      # 2. 清理不必要的预装环境，不删除 hostedtoolcache
+      - name: Cleanup build environment
+        run: |
+          set -eu
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          df -h
 
-    - name: Install Rust toolchain (Required for MT5700)
-      run: |
-        set -eu
-        # 使用最稳妥的本地静态二进制下载，绕过多行流导致的换行符语法错误
-        wget -O rustup-init https://rust-lang.org
-        chmod +x rustup-init
-        ./rustup-init -y --default-toolchain stable
-        rm rustup-init
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      # 3. 安装编译依赖
+      - name: Install build dependencies
+        run: |
+          set -eu
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential clang flex bison g++ gawk \
+            gcc-multilib g++-multilib gettext git \
+            libncurses-dev libssl-dev python3 \
+            python3-distutils rsync unzip zlib1g-dev \
+            file wget curl cpio perl time \
+            device-tree-compiler libelf-dev \
+            python3-pip python3-venv swig \
+            pkg-config
 
-    - name: Clone source code
-      working-directory: /workdir
-      run: |
-        df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+          python3 -m pip install --user pyelftools
 
-    - name: Load custom feeds
-      run: |
-        [ -e $FEEDS_CONF ] && cp $FEEDS_CONF openwrt/feeds.conf.default
-        chmod +x $DIY_P1_SH
-        cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P1_SH
+      # 4. 安装 Rust 和 ARM64 musl 标准库
+      # 不再使用 curl | sh，避免下载异常内容被当作 Shell 脚本执行
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-musl
 
-    - name: Update feeds
-      run: cd openwrt && ./scripts/feeds update -a
+      - name: Verify Rust toolchain
+        run: |
+          set -eu
+          rustc --version
+          cargo --version
+          rustup target list --installed
+          rustup target list --installed \
+            | grep -qx 'aarch64-unknown-linux-musl'
 
-    - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
+      # 5. 获取官方 iStoreOS 24.10 源码
+      - name: Clone official iStoreOS 24.10 source
+        run: |
+          set -eu
+          git clone --depth=1 \
+            --branch "$REPO_BRANCH" \
+            https://github.com/istoreos/istoreos.git \
+            openwrt
 
-    - name: Load custom configuration
-      run: |
-        [ -e files ] && cp -r files openwrt/files
-        [ -e $CONFIG_FILE ] && cp $CONFIG_FILE openwrt/.config
-        
-        # 自动注入：强制在本地配置末尾合并追加你所需的 13 行核心定制开关（双保险）
-        cd openwrt
-        echo "" >> .config
-        echo "CONFIG_TARGET_rockchip=y" >> .config
-        echo "CONFIG_TARGET_rockchip_armv8=y" >> .config
-        echo "CONFIG_TARGET_MULTI_PROFILE=y" >> .config
-        echo "CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y" >> .config
-        echo "CONFIG_PACKAGE_luci-app-fan-h69k=y" >> .config
-        echo "CONFIG_PACKAGE_kmod-hwmon-pwmfan=y" >> .config
-        echo "CONFIG_PACKAGE_kmod-thermal=y" >> .config
-        echo "CONFIG_PACKAGE_docker=y" >> .config
-        echo "CONFIG_PACKAGE_dockerd=y" >> .config
-        echo "CONFIG_PACKAGE_adguardhome=y" >> .config
-        echo "CONFIG_PACKAGE_luci-app-adguardhome=y" >> .config
-        echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
-        echo "CONFIG_PACKAGE_luci-app-mt5700=y" >> .config
-        echo "CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y" >> .config
+          git -C openwrt log -1 --oneline
 
-        # 调起你的第二自定义预处理脚本并生成推导配置
-        chmod +x $GITHUB_WORKSPACE/$DIY_P2_SH
-        $GITHUB_WORKSPACE/$DIY_P2_SH
-        make defconfig
+      # 6. 更新并安装官方 feeds
+      - name: Update and install feeds
+        run: |
+          set -eu
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
 
-    - name: SSH connection to Actions
-      uses: P3TERX/ssh2actions@main
-      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh != 'false') || contains(github.event.action, 'ssh')
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      # 7. 准备调温大师、AdGuard Home 等自定义源码
+      - name: Prepare H69K custom packages
+        run: |
+          set -eu
+          cd openwrt
 
-    - name: Download package
-      id: package
-      run: |
-        cd openwrt
-        make download -j$(nproc)
-        find dl -size -1024c -exec ls -l {} \;
-        find dl -size -1024c -exec rm -f {} \;
+          if [ ! -f "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh" ]; then
+            echo "ERROR: 找不到 prepare-h69k-24.10.sh"
+            exit 1
+          fi
 
-    - name: Compile the firmware
-      id: compile
-      run: |
-        cd openwrt
-        echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j1 V=s
-        echo "status=success" >> $GITHUB_OUTPUT
-        grep 'CONFIG_TARGET.' .config | head -n 1 > TARGET_DEVICE
-        if [ -s TARGET_DEVICE ]; then
-          echo "TARGET_NAME=$(cat TARGET_DEVICE | awk -F= '{print $1}' | awk -F_ '{print $3}')" >> $GITHUB_ENV
-        fi
+          chmod +x "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
+          "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
 
-    - name: Check space usage
-      if: (!cancelled())
-      run: df -hT
+      # 8. 添加 OpenClash
+      - name: Add OpenClash
+        run: |
+          set -eu
+          cd openwrt
 
-    - name: Upload bin directory
-      uses: actions/upload-artifact@v4
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
-      with:
-        name: OpenWrt_bin_${{ env.TARGET_NAME }}_${{ env.FILE_DATE }}
-        path: openwrt/bin
+          rm -rf /tmp/OpenClash
+          rm -rf package/luci-app-openclash
 
-    - name: Organize files
-      id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: |
-        cd openwrt/bin/targets/*/*
-        rm -rf packages
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "status=success" >> $GITHUB_OUTPUT
+          git clone --depth=1 \
+            --branch master \
+            https://github.com/vernesong/OpenClash.git \
+            /tmp/OpenClash
 
-    - name: Upload firmware directory
-      uses: actions/upload-artifact@v4
-      if: steps.organize.outputs.status == 'success' && !cancelled()
-      with:
-        name: iStoreOS_H69K_Firmware
-        path: ${{ env.FIRMWARE }}
+          test -s /tmp/OpenClash/luci-app-openclash/Makefile
+          mkdir -p package/luci-app-openclash
+          cp -a /tmp/OpenClash/luci-app-openclash/. \
+            package/luci-app-openclash/
 
-    - name: Generate release tag
-      id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      run: |
-        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-        echo "status=success" >> $GITHUB_OUTPUT
+          echo "OpenClash source check passed."
 
-    - name: Upload firmware to release
-      uses: softprops/action-gh-release@v2
-      if: steps.tag.outputs.status == 'success' && !cancelled()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.tag.outputs.release_tag }}
-        files: ${{ env.FIRMWARE }}/*
+      # 9. 添加 MT5700
+      - name: Add MT5700 package
+        run: |
+          set -eu
+          cd openwrt
+
+          rm -rf package/luci-app-mt5700
+
+          git clone --depth=1 \
+            --branch main \
+            https://github.com/qqzwqq/luci-app-mt5700.git \
+            package/luci-app-mt5700
+
+          test -s package/luci-app-mt5700/Makefile
+          test -s package/luci-app-mt5700/src/Makefile
+          test -s package/luci-app-mt5700/src/rust/Cargo.toml
+
+          echo "MT5700 source check passed."
+          grep -E '^(PKG_NAME|PKG_VERSION|PKG_RELEASE)[[:space:]]*[:?+]?=' \
+            package/luci-app-mt5700/Makefile || true
+
+      # 10. 生成 H69K 配置
+      - name: Generate H69K configuration
+        run: |
+          set -eu
+          cd openwrt
+
+          CONFIG_FILE="$GITHUB_WORKSPACE/rk35xx/h69k-24.10.config"
+
+          if [ ! -s "$CONFIG_FILE" ]; then
+            echo "ERROR: H69K 配置文件不存在或为空：$CONFIG_FILE"
+            exit 1
+          fi
+
+          cp "$CONFIG_FILE" .config
+
+          # 明确启用 MT5700 及中文语言包
+          cat >> .config <<'EOF'
+
+          CONFIG_PACKAGE_luci-app-mt5700=y
+          CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y
+          EOF
+
+          echo "H69K base configuration loaded."
+          grep -E \
+            'CONFIG_TARGET_(rockchip|rockchip_armv8|DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk)=y|CONFIG_PACKAGE_(luci-app-mt5700|luci-i18n-mt5700-zh-cn|luci-app-openclash|luci-app-fan-h69k|docker|dockerd|adguardhome|luci-app-adguardhome)=y' \
+            .config || true
+
+      # 11. 补齐依赖并验证配置
+      - name: Resolve and verify configuration
+        run: |
+          set -eu
+          cd openwrt
+
+          make defconfig
+
+          check_config() {
+            key="$1"
+            if ! grep -qxF "${key}=y" .config; then
+              echo "ERROR: ${key}=y is missing after make defconfig"
+              exit 1
+            fi
+          }
+
+          check_config CONFIG_TARGET_rockchip
+          check_config CONFIG_TARGET_rockchip_armv8
+          check_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
+
+          check_config CONFIG_PACKAGE_luci-app-fan-h69k
+          check_config CONFIG_PACKAGE_luci-app-openclash
+          check_config CONFIG_PACKAGE_luci-app-mt5700
+
+          echo "===== Final MT5700 configuration ====="
+          grep -E 'CONFIG_PACKAGE_(luci-app-mt5700|luci-i18n-mt5700-zh-cn)=' .config || true
+
+          echo "===== Final target configuration ====="
+          grep '^CONFIG_TARGET_' .config | head -40
+
+      # 12. 下载并编译；无论哪个阶段失败，都保留日志
+      - name: Compile H69K firmware
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd openwrt
+
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=\
+          aarch64-openwrt-linux-musl-gcc
+
+          export CC_aarch64_unknown_linux_musl=\
+          aarch64-openwrt-linux-musl-gcc
+
+          export AR_aarch64_unknown_linux_musl=\
+          aarch64-openwrt-linux-musl-ar
+
+          echo "===== Downloading sources ====="
+          make download -j2 2>&1 \
+            | tee "$GITHUB_WORKSPACE/build.log"
+
+          echo "===== Starting firmware compilation ====="
+          make -j2 V=s 2>&1 \
+            | tee -a "$GITHUB_WORKSPACE/build.log"
+
+          echo "===== Build completed ====="
+
+      # 13. 不论成功还是失败，都上传构建日志
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: H69K-iStoreOS-24.10-build-log
+          path: build.log
+          if-no-files-found: warn
+          retention-days: 7
+
+      # 14. 只在编译成功后上传固件
+      - name: Upload firmware artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: H69K-iStoreOS-24.10-Firmware
+          path: |
+            openwrt/bin/targets/rockchip/armv8/*
+            !openwrt/bin/targets/rockchip/armv8/packages/
+          if-no-files-found: error
+          retention-days: 14
