@@ -205,6 +205,7 @@ jobs:
           CONFIG_PACKAGE_luci-app-mt5700=y
           CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y
           CONFIG_CCACHE=y
+          CONFIG_TARGET_ROOTFS_PARTSIZE=256
           EOF
 
           echo "H69K configuration loaded."
