@@ -46,7 +46,7 @@ jobs:
       - name: Install Rust toolchain (Required for MT5700)
         run: |
           set -eu
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          curl --proto '=https' --tlsv1.2 -sSf https://rustup.rs | sh -s -- -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           source $HOME/.cargo/env
           rustc --version
@@ -75,11 +75,11 @@ jobs:
           fi
           mkdir -p package
 
-          # 2. 集成 OpenClash 源码（已补全正确完整的官方下载路径）
+          # 2. 集成 OpenClash 源码
           git clone --depth=1 --branch master https://github.com /tmp/OpenClash
           cp -a /tmp/OpenClash/luci-app-openclash package/luci-app-openclash
 
-          # 3. 集成 luci-app-mt5700 5G模组管理套件（已补全正确完整的官方下载路径）
+          # 3. 集成 luci-app-mt5700 5G模组管理套件（包含中文语言包）
           git clone --depth=1 --branch main https://github.com package/luci-app-mt5700
 
       - name: Generate H69K Target Configuration
