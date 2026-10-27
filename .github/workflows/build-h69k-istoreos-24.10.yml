@@ -1,328 +1,173 @@
 name: Build H69K iStoreOS 24.10
 
 on:
+  repository_dispatch:
   workflow_dispatch:
-
-permissions:
-  contents: read
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
 
 env:
-  REPO_URL: https://github.com/istoreos/istoreos
-  REPO_BRANCH: istoreos-24.10
+  REPO_URL: https://github.com
+  REPO_BRANCH: master
+  FEEDS_CONF: feeds.conf.default
+  CONFIG_FILE: .config
+  DIY_P1_SH: diy-part1.sh
+  DIY_P2_SH: diy-part2.sh
+  UPLOAD_BIN_DIR: false
+  UPLOAD_FIRMWARE: true
+  UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 360
 
     steps:
-      - name: Checkout customization repository
-        uses: actions/checkout@v4
-
-      - name: Install build dependencies
-        run: |
-          set -eu
-
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential clang flex bison g++ gawk \
-            gcc-multilib g++-multilib gettext git \
-            libncurses-dev libssl-dev python3 \
-            python3-distutils rsync unzip zlib1g-dev \
-            file wget curl cpio perl time \
-            device-tree-compiler libelf-dev \
-            python3-pip python3-venv swig
-
-          python3 -m pip install --user pyelftools
-          python3 -c "import elftools; print('pyelftools OK:', elftools.__file__)"
-
-      - name: Clone official iStoreOS 24.10 source
-        run: |
-          set -eu
-
-          git clone --depth=1 \
-            --branch "$REPO_BRANCH" \
-            "$REPO_URL" openwrt
-
-      - name: Configure H69K target
-        run: |
-          set -eu
-
-          echo "===== Check H69K config file ====="
-          test -s rk35xx/h69k-24.10.config
-
-          cp rk35xx/h69k-24.10.config openwrt/.config
-
-          cd openwrt
-
-          echo "===== Search H69K device definition ====="
-          grep -R -n -E \
-            'hinlink_opc-h6xk|hinlink,opc-h69k' \
-            target/linux/rockchip || true
-
-          if ! grep -R -q 'hinlink_opc-h6xk' target/linux/rockchip; then
-            echo "ERROR: hinlink_opc-h6xk was not found in this iStoreOS source."
-            exit 1
-          fi
-
-          if ! grep -R -q 'hinlink,opc-h69k' target/linux/rockchip; then
-            echo "ERROR: hinlink,opc-h69k was not found in this iStoreOS source."
-            exit 1
-          fi
-
-          echo "===== Check initial target configuration ====="
-          grep -n -E \
-            '^CONFIG_TARGET_rockchip=|^CONFIG_TARGET_rockchip_armv8=|^CONFIG_TARGET_DEVICE_.*hinlink_opc-h6xk=' \
-            .config || true
-
-          grep -qxF 'CONFIG_TARGET_rockchip=y' .config
-          grep -qxF 'CONFIG_TARGET_rockchip_armv8=y' .config
-          grep -qxF \
-            'CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y' \
-            .config
-
-          echo "H69K target config checks passed."
-
-      - name: Update and install feeds
-        run: |
-          set -eu
-          cd openwrt
-
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
-      - name: Add custom packages
-        run: |
-          set -eu
-
-          chmod +x "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
-          cd openwrt
-
-          "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
-
-          echo "===== Check that MT5700 is not added by the preparation script ====="
-          if [ -d package/luci-app-mt5700 ]; then
-            echo "ERROR: package/luci-app-mt5700 still exists."
-            echo "Remove its integration from scripts/prepare-h69k-24.10.sh first."
-            exit 1
-          fi
-
-      - name: Add OpenClash source
-        run: |
-          set -eu
-          cd openwrt
-
-          echo "===== Download OpenClash source ====="
-          git clone --depth=1 \
-            --branch master \
-            https://github.com/vernesong/OpenClash.git \
-            /tmp/OpenClash
-
-          test -s /tmp/OpenClash/luci-app-openclash/Makefile
-
-          if [ -e package/luci-app-openclash ]; then
-            echo "ERROR: package/luci-app-openclash already exists."
-            echo "Check for duplicate OpenClash package sources."
-            exit 1
-          fi
-
-          cp -a \
-            /tmp/OpenClash/luci-app-openclash \
-            package/luci-app-openclash
-
-          test -s package/luci-app-openclash/Makefile
-
-          echo "===== OpenClash package files ====="
-          ls -la package/luci-app-openclash
-
-      - name: Prepare OpenClash translation compiler
-        run: |
-          set -eu
-          cd openwrt
-
-          PO2LMO_DIR="package/luci-app-openclash/tools/po2lmo"
-
-          echo "===== Check po2lmo source ====="
-          if [ ! -s "$PO2LMO_DIR/Makefile" ]; then
-            echo "ERROR: po2lmo Makefile not found at $PO2LMO_DIR"
-            find package/luci-app-openclash -path '*/po2lmo/*' -print || true
-            exit 1
-          fi
-
-          make -C "$PO2LMO_DIR"
-          sudo make -C "$PO2LMO_DIR" install
-
-          echo "===== Verify po2lmo ====="
-          command -v po2lmo
-
-      - name: Verify custom package sources
-        run: |
-          set -eu
-          cd openwrt
-
-          test -s package/luci-app-fan-h69k/Makefile
-          test -s package/luci-app-adguardhome/Makefile
-          test -s package/luci-app-openclash/Makefile
-
-          if [ -e package/luci-app-mt5700 ]; then
-            echo "ERROR: MT5700 package source is still present."
-            exit 1
-          fi
-
-          echo "===== Required package Makefiles found ====="
-          echo "MT5700 integration is disabled."
-
-      - name: Enable required packages
-        run: |
-          set -eu
-          cd openwrt
-
-          enable_config() {
-            key="$1"
-            if ! grep -qxF "${key}=y" .config; then
-              echo "${key}=y" >> .config
-            fi
-          }
-
-          enable_config CONFIG_TARGET_rockchip
-          enable_config CONFIG_TARGET_rockchip_armv8
-          enable_config CONFIG_TARGET_MULTI_PROFILE
-          enable_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
-
-          enable_config CONFIG_PACKAGE_luci-app-fan-h69k
-          enable_config CONFIG_PACKAGE_kmod-hwmon-pwmfan
-          enable_config CONFIG_PACKAGE_kmod-thermal
-          enable_config CONFIG_PACKAGE_docker
-          enable_config CONFIG_PACKAGE_dockerd
-          enable_config CONFIG_PACKAGE_adguardhome
-          enable_config CONFIG_PACKAGE_luci-app-adguardhome
-          enable_config CONFIG_PACKAGE_luci-app-openclash
-
-          echo "===== Selected package configuration ====="
-          grep -n -E \
-            '^CONFIG_PACKAGE_(luci-app-fan-h69k|kmod-hwmon-pwmfan|kmod-thermal|docker|dockerd|adguardhome|luci-app-adguardhome|luci-app-openclash)=' \
-            .config || true
-
-          if grep -q '^CONFIG_PACKAGE_luci-app-mt5700=y$' .config; then
-            echo "ERROR: MT5700 is still enabled in .config."
-            exit 1
-          fi
-
-      - name: Resolve and verify configuration
-        run: |
-          set -eu
-          cd openwrt
-
-          make defconfig
-
-          echo "===== Resolved target and package configuration ====="
-          grep -E \
-            '^(CONFIG_TARGET_rockchip|CONFIG_TARGET_rockchip_armv8|CONFIG_TARGET_MULTI_PROFILE|CONFIG_TARGET_DEVICE_.*hinlink_opc-h6xk|CONFIG_PACKAGE_luci-app-fan-h69k|CONFIG_PACKAGE_kmod-hwmon-pwmfan|CONFIG_PACKAGE_kmod-thermal|CONFIG_PACKAGE_luci-app-adguardhome|CONFIG_PACKAGE_luci-app-openclash|CONFIG_PACKAGE_docker|CONFIG_PACKAGE_dockerd|CONFIG_PACKAGE_adguardhome)=' \
-            .config || true
-
-          check_config() {
-            key="$1"
-            if ! grep -qxF "${key}=y" .config; then
-              echo "ERROR: ${key}=y is missing after make defconfig."
-              return 1
-            fi
-          }
-
-          echo "===== Check required configuration ====="
-          check_config CONFIG_TARGET_rockchip
-          check_config CONFIG_TARGET_rockchip_armv8
-          check_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
-          check_config CONFIG_PACKAGE_luci-app-fan-h69k
-          check_config CONFIG_PACKAGE_kmod-hwmon-pwmfan
-          check_config CONFIG_PACKAGE_kmod-thermal
-          check_config CONFIG_PACKAGE_docker
-          check_config CONFIG_PACKAGE_dockerd
-          check_config CONFIG_PACKAGE_adguardhome
-          check_config CONFIG_PACKAGE_luci-app-adguardhome
-          check_config CONFIG_PACKAGE_luci-app-openclash
-
-          if grep -qxF 'CONFIG_PACKAGE_luci-app-mt5700=y' .config; then
-            echo "ERROR: MT5700 remains enabled after make defconfig."
-            exit 1
-          fi
-
-          echo "===== Verify OpenClash source ====="
-          test -s package/luci-app-openclash/Makefile
-
-          echo "Configuration verification passed."
-
-      - name: Download sources
-        run: |
-          set -eu
-          cd openwrt
-
-          make download -j8
-          find dl -type f -size -1024c -delete
-
-      - name: Compile firmware
-        run: |
-          set -eu
-          set -o pipefail
-
-          cd openwrt
-
-          make -j2 V=s 2>&1 \
-            | tee "$GITHUB_WORKSPACE/build.log"
-
-      - name: Verify firmware output
-        if: success()
-        run: |
-          set -eu
-
-          TARGET_DIR="openwrt/bin/targets/rockchip/armv8"
-
-          if [ ! -d "$TARGET_DIR" ]; then
-            echo "ERROR: Firmware target directory was not generated."
-            exit 1
-          fi
-
-          echo "===== H69K firmware images ====="
-          find "$TARGET_DIR" -maxdepth 1 -type f \
-            \( -name '*hinlink*' -o -name '*h69k*' -o -name '*.img.gz' -o -name '*.bin' \) \
-            -print
-
-          if ! find "$TARGET_DIR" -maxdepth 1 -type f \
-            \( -name '*hinlink*' -o -name '*h69k*' -o -name '*.img.gz' \) \
-            -print -quit | grep -q .; then
-            echo "WARNING: No obvious H69K image filename was found."
-            echo "Review the target directory listing before flashing."
-            find "$TARGET_DIR" -maxdepth 1 -type f -print
-          fi
-
-      - name: Collect build outputs
-        if: always()
-        run: |
-          set -eu
-
-          mkdir -p "$GITHUB_WORKSPACE/build-output"
-
-          if [ -d openwrt/bin/targets/rockchip/armv8 ]; then
-            cp -a openwrt/bin/targets/rockchip/armv8 \
-              "$GITHUB_WORKSPACE/build-output/firmware"
-          fi
-
-          if [ -d openwrt/bin/packages ]; then
-            cp -a openwrt/bin/packages \
-              "$GITHUB_WORKSPACE/build-output/packages"
-          fi
-
-          if [ -f "$GITHUB_WORKSPACE/build.log" ]; then
-            cp "$GITHUB_WORKSPACE/build.log" \
-              "$GITHUB_WORKSPACE/build-output/build.log"
-          fi
-
-      - name: Upload build outputs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: H69K-iStoreOS-24.10
-          path: build-output/
-          if-no-files-found: warn
-          retention-days: 14
-          
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/powershell /usr/share/swift /wx*
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake ctxt cpio curl file gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp nano p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils qemu-utils rsync scons squashfs-tools subversion swig texinfo u-boot-tools upx-ucl unzip xmlto xz-utils zlib1g-dev lib32gcc-s1 libc6-dev-i386
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$USER /workdir
+
+    - name: Clone source code
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: Load custom feeds & Inject luci-app-mt5700
+      run: |
+        [ -e $FEEDS_CONF ] && cp $FEEDS_CONF openwrt/feeds.conf.default
+        chmod +x $DIY_P1_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P1_SH
+        
+        # 核心步骤：直接将 mt5700 模组管理及传输依赖注入到自定义包目录中
+        mkdir -p package/custom
+        git clone https://github.com package/custom/luci-app-mt5700
+        # 同步注入其配套的原生传输层程序（若上游进行了项目分离）
+        if [ ! -d "package/custom/luci-app-mt5700/mt5700m-transport" ]; then
+          git clone https://github.com temp_mt5700
+          cp -a temp_mt5700/mt5700m-transport package/custom/
+          rm -rf temp_mt5700
+        fi
+
+    - name: Update feeds
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: Install feeds
+      run: cd openwrt && ./scripts/feeds install -a
+
+    - name: Load custom configuration
+      run: |
+        [ -e files ] && cp -r files openwrt/files
+        [ -e $CONFIG_FILE ] && cp $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
+        
+        # 强行在 .config 中追加对 H69K 平台及 luci-app-mt5700 依赖的构建标记
+        # 适配特定的 MediaTek Filogic 目标平台架构（示例以 mt7981 为基础）
+        echo "CONFIG_TARGET_mediatek=y" >> .config
+        echo "CONFIG_TARGET_mediatek_filogic=y" >> .config
+        echo "CONFIG_TARGET_mediatek_filogic_DEVICE_generic-h69k=y" >> .config
+        
+        # 启用全功能 5G 模组管理套件及所需的内核 USB/网卡驱动协议栈
+        echo "CONFIG_PACKAGE_luci-app-mt5700=y" >> .config
+        echo "CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y" >> .config
+        echo "CONFIG_PACKAGE_mt5700m-transport=y" >> .config
+        echo "CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y" >> .config
+        echo "CONFIG_PACKAGE_kmod-usb-serial-option=y" >> .config
+        echo "CONFIG_PACKAGE_kmod-usb3=y" >> .config
+        
+        make defconfig
+
+    - name: SSH connection to Actions
+      uses: P3TERX/ssh2actions@main
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+
+    - name: Download package
+      id: package
+      run: |
+        cd openwrt
+        make download -j8
+        find package -name "dl" -path "*/download/*"
+        fgrep -z -q 'error' download.log && echo "::error::Download failed" || echo "Download success"
+
+    - name: Compile the firmware
+      id: compile
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
+        echo "status=success" >> $GITHUB_OUTPUT
+        grep 'TARGET_FIRMWARE' .config || true
+
+    - name: Check space usage
+      if: (!cancelled())
+      run: |
+        df -hT
+        path="$GITHUB_WORKSPACE/openwrt"
+        du -h --max-depth=1 $path | sort -h
+
+    - name: Upload bin directory
+      uses: actions/upload-artifact@v4
+      if: steps.compile.outputs.status == 'success' && env:UPLOAD_BIN_DIR == 'true'
+      with:
+        name: OpenWrt_bin_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
+        path: openwrt/bin
+
+    - name: Organize files
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: Upload firmware directory
+      uses: actions/upload-artifact@v4
+      if: steps.organize.outputs.status == 'success' && !cancelled()
+      with:
+        name: OpenWrt_firmware_H69K
+        path: ${{ env.FIRMWARE }}
+
+    - name: Generate release tag
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+        echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: Upload firmware to release
+      uses: softprops/action-gh-release@v2
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        files: ${{ env.FIRMWARE }}/*
+
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        retain_days: 1
+        keep_minimum_runs: 3
