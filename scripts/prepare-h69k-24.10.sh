@@ -1,44 +1,63 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+IFS=$'\n\t'
 
-: "${GITHUB_WORKSPACE:?GITHUB_WORKSPACE is not set}"
+: "${GITHUB_WORKSPACE:?错误：GITHUB_WORKSPACE 未设置}"
 
-echo "=========================================="
-echo " H69K iStoreOS 24.10 自定义软件包准备"
-echo " 正在全面集成 luci-app-mt5700 5G套件"
-echo "=========================================="
+readonly FAN_ARCHIVE="${GITHUB_WORKSPACE}/luci-app-fan-h69k-build-source-1.3-25.zip"
+readonly FAN_PACKAGE="package/luci-app-fan-h69k"
+readonly AGH_PACKAGE="package/luci-app-adguardhome"
+readonly AGH_REPO="https://github.com/rufengsuixing/luci-app-adguardhome.git"
 
-echo "== 1. 检查 H69K 官方设备定义 =="
+log() {
+  printf '\n[%s] %s\n' "$(date -u '+%H:%M:%S UTC')" "$*"
+}
 
-if ! grep -q 'TARGET_DEVICES += hinlink_opc-h6xk' \
-  target/linux/rockchip/image/legacy.mk; then
-  echo "错误：源码中未找到 hinlink_opc-h6xk"
+die() {
+  printf '\n::error::%s\n' "$*" >&2
   exit 1
+}
+
+need_file() {
+  [[ -s "$1" ]] || die "缺少必要文件或文件为空：$1"
+}
+
+log "H69K iStoreOS 24.10 自定义软件包准备开始"
+
+# 1. 确认在正确的源码根目录执行
+[[ -f Makefile && -d target/linux/rockchip && -d package ]] ||
+  die "当前目录不是有效的 iStoreOS/OpenWrt 源码根目录：$(pwd)"
+
+log "1/4 检查 H69K 设备定义"
+
+image_mk="target/linux/rockchip/image/legacy.mk"
+need_file "$image_mk"
+
+grep -qE 'TARGET_DEVICES[[:space:]]*\+=[[:space:]]*hinlink_opc-h6xk' "$image_mk" ||
+  die "未找到 HINLINK OPC-H6xK 设备条目：hinlink_opc-h6xk"
+
+if ! grep -R -l \
+  --include='*.dts' \
+  --include='*.dtsi' \
+  --include='*.mk' \
+  'hinlink,opc-h69k' \
+  target/linux/rockchip >/dev/null 2>&1; then
+  die "未找到设备兼容字符串：hinlink,opc-h69k"
 fi
 
-if ! grep -q 'hinlink,opc-h69k' \
-  target/linux/rockchip/image/legacy.mk; then
-  echo "错误：设备定义未包含 hinlink,opc-h69k"
-  exit 1
-fi
+log "H69K 设备定义检查通过"
 
-echo "H69K 设备定义检查通过。"
-
+# 使用临时目录解压，脚本退出时自动清理
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
-echo
-echo "== 2. 准备调温大师插件 =="
+# 2. 准备调温大师插件
+log "2/4 准备调温大师插件"
 
-archive="$GITHUB_WORKSPACE/luci-app-fan-h69k-build-source-1.3-25.zip"
+need_file "$FAN_ARCHIVE"
 
-if [ ! -s "$archive" ]; then
-  echo "错误：仓库根目录缺少调温大师源码 ZIP："
-  echo "$archive"
-  exit 1
-fi
-
-unzip -q "$archive" -d "$tmpdir"
+unzip -q "$FAN_ARCHIVE" -d "$tmpdir" ||
+  die "调温大师源码 ZIP 解压失败"
 
 fan_makefile="$(
   find "$tmpdir" -type f \
@@ -46,38 +65,48 @@ fan_makefile="$(
     -print -quit
 )"
 
-if [ -z "$fan_makefile" ]; then
-  echo "错误：ZIP 内未找到调温大师插件 Makefile"
-  find "$tmpdir" -maxdepth 4 -type f | head -80 || true
-  exit 1
+# 兼容压缩包顶层目录名称变化
+if [[ -z "$fan_makefile" ]]; then
+  fan_makefile="$(
+    find "$tmpdir" -type f \
+      -path '*/luci-app-fan-h69k/Makefile' \
+      -print -quit
+  )"
+fi
+
+if [[ -z "$fan_makefile" ]]; then
+  find "$tmpdir" -maxdepth 5 -type f -print | head -80 >&2 || true
+  die "ZIP 内未找到调温大师插件 Makefile"
 fi
 
 fan_src="$(dirname "$fan_makefile")"
 
-mkdir -p package/luci-app-fan-h69k
-cp -a "$fan_src/." package/luci-app-fan-h69k/
+grep -qE \
+  'define Package/luci-app-fan-h69k|^PKG_NAME[[:space:]]*:?=[[:space:]]*luci-app-fan-h69k' \
+  "$fan_makefile" ||
+  die "找到的 Makefile 不是 luci-app-fan-h69k 软件包"
 
-if [ ! -s package/luci-app-fan-h69k/Makefile ]; then
-  echo "错误：调温大师 Makefile 不存在"
-  exit 1
-fi
+# 清理旧版本，避免残留文件进入本次编译
+rm -rf "$FAN_PACKAGE"
+mkdir -p "$FAN_PACKAGE"
+cp -a "$fan_src/." "$FAN_PACKAGE/"
 
-echo "调温大师源码准备完成。"
+need_file "$FAN_PACKAGE/Makefile"
 
-echo
-echo "== 3. 下载 AdGuard Home LuCI 插件源码 =="
+log "调温大师插件准备完成"
 
-if [ -d package/luci-app-adguardhome/.git ]; then
-  git -C package/luci-app-adguardhome pull --ff-only
-else
-  rm -rf package/luci-app-adguardhome
+# 3. 准备 AdGuard Home LuCI 插件
+log "3/4 准备 AdGuard Home LuCI 插件"
 
-  git clone --depth=1 \
-    https://github.com/rufengsuixing/luci-app-adguardhome.git \
-    package/luci-app-adguardhome
-fi
+# 默认使用 main；需要固定版本时可在工作流设置 AGH_REPO_REF
+agh_ref="${AGH_REPO_REF:-main}"
 
-adguard_dir="package/luci-app-adguardhome"
+# 清理旧目录，保证重复运行结果一致
+rm -rf "$AGH_PACKAGE"
+
+git clone --depth=1 --branch "$agh_ref" \
+  "$AGH_REPO" "$AGH_PACKAGE" ||
+  die "AdGuard Home 插件克隆失败，ref：$agh_ref"
 
 for f in \
   Makefile \
@@ -87,20 +116,22 @@ for f in \
   root/usr/share/AdGuardHome/links.txt \
   root/usr/share/AdGuardHome/AdGuardHome_template.yaml
 do
-  if [ ! -s "$adguard_dir/$f" ]; then
-    echo "错误：AdGuard Home 缺少必要文件：$f"
-    exit 1
-  fi
+  need_file "$AGH_PACKAGE/$f"
 done
 
-if ! grep -q 'define Package/luci-app-adguardhome' \
-  "$adguard_dir/Makefile"; then
-  echo "错误：未找到 luci-app-adguardhome 软件包定义"
-  exit 1
+grep -q 'define Package/luci-app-adguardhome' \
+  "$AGH_PACKAGE/Makefile" ||
+  die "AdGuard Home Makefile 中未找到软件包定义"
+
+log "AdGuard Home 插件检查通过"
+
+# 4. MT5700 统一由 GitHub Actions 工作流负责
+log "4/4 检查 MT5700 集成步骤"
+
+if [[ -d package/luci-app-mt5700 ]]; then
+  log "检测到 MT5700 源码目录；保留现有目录，不重复覆盖"
+else
+  log "MT5700 将由工作流后续步骤克隆"
 fi
 
-echo "AdGuard Home 前端源码和必要文件检查完成。"
-
-echo
-echo "== 自定义软件包准备完成 =="
-echo "脚本已安全移除了对 MT5700 的强行封锁，允许其随固件正常编译！"
+log "所有自定义软件包准备步骤完成"
