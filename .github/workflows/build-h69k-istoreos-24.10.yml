@@ -16,14 +16,15 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      # 1. 获取你的自定义仓库
+      # 1. 获取自定义仓库
       - name: Checkout customization repository
         uses: actions/checkout@v4
 
-      # 2. 清理不必要的预装环境，不删除 hostedtoolcache
+      # 2. 清理编译环境
       - name: Cleanup build environment
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
@@ -31,8 +32,9 @@ jobs:
 
       # 3. 安装编译依赖
       - name: Install build dependencies
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           sudo apt-get update
           sudo apt-get install -y \
             build-essential clang flex bison g++ gawk \
@@ -46,16 +48,16 @@ jobs:
 
           python3 -m pip install --user pyelftools
 
-      # 4. 安装 Rust 和 ARM64 musl 标准库
-      # 不再使用 curl | sh，避免下载异常内容被当作 Shell 脚本执行
+      # 4. 安装 Rust 与 ARM64 musl 标准库
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-unknown-linux-musl
 
       - name: Verify Rust toolchain
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           rustc --version
           cargo --version
           rustup target list --installed
@@ -64,8 +66,9 @@ jobs:
 
       # 5. 获取官方 iStoreOS 24.10 源码
       - name: Clone official iStoreOS 24.10 source
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           git clone --depth=1 \
             --branch "$REPO_BRANCH" \
             https://github.com/istoreos/istoreos.git \
@@ -73,32 +76,37 @@ jobs:
 
           git -C openwrt log -1 --oneline
 
-      # 6. 更新并安装官方 feeds
+      # 6. 更新并安装 feeds
       - name: Update and install feeds
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      # 7. 准备调温大师、AdGuard Home 等自定义源码
+      # 7. 准备自定义软件包
       - name: Prepare H69K custom packages
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           cd openwrt
 
-          if [ ! -f "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh" ]; then
-            echo "ERROR: 找不到 prepare-h69k-24.10.sh"
+          SCRIPT="$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
+
+          if [ ! -s "$SCRIPT" ]; then
+            echo "::error::找不到自定义软件包准备脚本：$SCRIPT"
             exit 1
           fi
 
-          chmod +x "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
-          "$GITHUB_WORKSPACE/scripts/prepare-h69k-24.10.sh"
+          chmod +x "$SCRIPT"
+          "$SCRIPT"
 
       # 8. 添加 OpenClash
       - name: Add OpenClash
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           cd openwrt
 
           rm -rf /tmp/OpenClash
@@ -110,6 +118,7 @@ jobs:
             /tmp/OpenClash
 
           test -s /tmp/OpenClash/luci-app-openclash/Makefile
+
           mkdir -p package/luci-app-openclash
           cp -a /tmp/OpenClash/luci-app-openclash/. \
             package/luci-app-openclash/
@@ -118,8 +127,9 @@ jobs:
 
       # 9. 添加 MT5700
       - name: Add MT5700 package
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           cd openwrt
 
           rm -rf package/luci-app-mt5700
@@ -137,22 +147,22 @@ jobs:
           grep -E '^(PKG_NAME|PKG_VERSION|PKG_RELEASE)[[:space:]]*[:?+]?=' \
             package/luci-app-mt5700/Makefile || true
 
-      # 10. 生成 H69K 配置
+      # 10. 加载 H69K 配置
       - name: Generate H69K configuration
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           cd openwrt
 
           CONFIG_FILE="$GITHUB_WORKSPACE/rk35xx/h69k-24.10.config"
 
           if [ ! -s "$CONFIG_FILE" ]; then
-            echo "ERROR: H69K 配置文件不存在或为空：$CONFIG_FILE"
+            echo "::error::H69K 配置文件不存在或为空：$CONFIG_FILE"
             exit 1
           fi
 
           cp "$CONFIG_FILE" .config
 
-          # 明确启用 MT5700 及中文语言包
           cat >> .config <<'EOF'
 
           CONFIG_PACKAGE_luci-app-mt5700=y
@@ -160,46 +170,95 @@ jobs:
           EOF
 
           echo "H69K base configuration loaded."
+
           grep -E \
             'CONFIG_TARGET_(rockchip|rockchip_armv8|DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk)=y|CONFIG_PACKAGE_(luci-app-mt5700|luci-i18n-mt5700-zh-cn|luci-app-openclash|luci-app-fan-h69k|docker|dockerd|adguardhome|luci-app-adguardhome)=y' \
             .config || true
 
-      # 11. 补齐依赖并验证配置
+      # 11. 整理并验证最终配置
       - name: Resolve and verify configuration
+        shell: bash
         run: |
-          set -eu
+          set -Eeuo pipefail
           cd openwrt
 
+          echo "===== 1. 首次整理配置 ====="
           make defconfig
 
+          echo "===== 2. 检查 dnsmasq 配置 ====="
+          grep -E \
+            '^(CONFIG_PACKAGE_dnsmasq(-full)?=y|# CONFIG_PACKAGE_dnsmasq(-full)? is not set)$' \
+            .config || true
+
+          # 只有 dnsmasq-full 已启用时才移除普通 dnsmasq。
+          if grep -qx 'CONFIG_PACKAGE_dnsmasq-full=y' .config; then
+            echo "检测到 dnsmasq-full"
+
+            if grep -qx 'CONFIG_PACKAGE_dnsmasq=y' .config; then
+              sed -i '/^CONFIG_PACKAGE_dnsmasq=y$/d' .config
+              echo '# CONFIG_PACKAGE_dnsmasq is not set' >> .config
+            fi
+
+            echo "===== 3. 重新整理 DNS 配置 ====="
+            make defconfig
+          fi
+
+          echo "===== 4. 验证 DNS 配置 ====="
+          grep -E \
+            '^(CONFIG_PACKAGE_dnsmasq(-full)?=y|# CONFIG_PACKAGE_dnsmasq(-full)? is not set)$' \
+            .config || true
+
+          if grep -qx 'CONFIG_PACKAGE_dnsmasq=y' .config &&
+             grep -qx 'CONFIG_PACKAGE_dnsmasq-full=y' .config; then
+            echo "::error::dnsmasq 与 dnsmasq-full 同时启用"
+            exit 1
+          fi
+
           check_config() {
-            key="$1"
+            local key="$1"
+
             if ! grep -qxF "${key}=y" .config; then
-              echo "ERROR: ${key}=y is missing after make defconfig"
+              echo "::error::make defconfig 后缺少必要配置：${key}=y"
               exit 1
             fi
           }
 
+          echo "===== 5. 验证 H69K 目标设备 ====="
           check_config CONFIG_TARGET_rockchip
           check_config CONFIG_TARGET_rockchip_armv8
           check_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
 
+          echo "===== 6. 验证必要软件包 ====="
           check_config CONFIG_PACKAGE_luci-app-fan-h69k
           check_config CONFIG_PACKAGE_luci-app-openclash
           check_config CONFIG_PACKAGE_luci-app-mt5700
 
-          echo "===== Final MT5700 configuration ====="
-          grep -E 'CONFIG_PACKAGE_(luci-app-mt5700|luci-i18n-mt5700-zh-cn)=' .config || true
+          echo "===== 7. 检查 MT5700 中文语言包 ====="
+          if grep -qx 'CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y' .config; then
+            echo "MT5700 中文语言包已启用"
+          else
+            echo "::warning::MT5700 中文语言包未进入最终配置"
+          fi
 
-          echo "===== Final target configuration ====="
+          echo "===== 8. 最终 DNS 配置 ====="
+          grep -E \
+            '^(CONFIG_PACKAGE_dnsmasq(-full)?=y|# CONFIG_PACKAGE_dnsmasq(-full)? is not set)$' \
+            .config || true
+
+          echo "===== 9. 最终设备配置 ====="
           grep '^CONFIG_TARGET_' .config | head -40
 
-      # 12. 下载并编译；无论哪个阶段失败，都保留日志
+          echo "===== H69K 配置检查完成 ====="
+
+      # 12. 下载并编译
       - name: Compile H69K firmware
         shell: bash
         run: |
           set -Eeuo pipefail
           cd openwrt
+
+          LOG="$GITHUB_WORKSPACE/build.log"
+          touch "$LOG"
 
           export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=\
           aarch64-openwrt-linux-musl-gcc
@@ -211,16 +270,14 @@ jobs:
           aarch64-openwrt-linux-musl-ar
 
           echo "===== Downloading sources ====="
-          make download -j2 2>&1 \
-            | tee "$GITHUB_WORKSPACE/build.log"
+          make download -j2 2>&1 | tee -a "$LOG"
 
           echo "===== Starting firmware compilation ====="
-          make -j2 V=s 2>&1 \
-            | tee -a "$GITHUB_WORKSPACE/build.log"
+          make -j2 V=s 2>&1 | tee -a "$LOG"
 
           echo "===== Build completed ====="
 
-      # 13. 不论成功还是失败，都上传构建日志
+      # 13. 无论成功失败，都上传日志
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
@@ -230,7 +287,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-      # 14. 只在编译成功后上传固件
+      # 14. 只在成功后上传固件
       - name: Upload firmware artifacts
         if: success()
         uses: actions/upload-artifact@v4
