@@ -9,6 +9,8 @@ permissions:
 env:
   TZ: Asia/Shanghai
   REPO_BRANCH: istoreos-24.10
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CARGO_HOME: ${{ github.workspace }}/.cargo-home
 
 jobs:
   build:
@@ -20,7 +22,7 @@ jobs:
       - name: Checkout customization repository
         uses: actions/checkout@v4
 
-      # 2. 清理编译环境
+      # 2. 清理环境并释放磁盘空间
       - name: Cleanup build environment
         shell: bash
         run: |
@@ -30,7 +32,7 @@ jobs:
           sudo rm -rf /opt/ghc
           df -h
 
-      # 3. 安装编译依赖
+      # 3. 安装编译依赖及 ccache
       - name: Install build dependencies
         shell: bash
         run: |
@@ -44,9 +46,13 @@ jobs:
             file wget curl cpio perl time \
             device-tree-compiler libelf-dev \
             python3-pip python3-venv swig \
-            pkg-config
+            pkg-config ccache
 
           python3 -m pip install --user pyelftools
+
+          ccache --version
+          ccache -M 5G
+          mkdir -p "$CCACHE_DIR" "$CARGO_HOME"
 
       # 4. 安装 Rust 与 ARM64 musl 标准库
       - name: Install Rust toolchain
@@ -60,7 +66,6 @@ jobs:
           set -Eeuo pipefail
           rustc --version
           cargo --version
-          rustup target list --installed
           rustup target list --installed \
             | grep -qx 'aarch64-unknown-linux-musl'
 
@@ -76,7 +81,27 @@ jobs:
 
           git -C openwrt log -1 --oneline
 
-      # 6. 更新并安装 feeds
+      # 6. 恢复 OpenWrt 下载缓存
+      - name: Restore OpenWrt download cache
+        uses: actions/cache@v4
+        with:
+          path: openwrt/dl
+          key: openwrt-dl-${{ runner.os }}-${{ env.REPO_BRANCH }}-${{ github.run_id }}
+          restore-keys: |
+            openwrt-dl-${{ runner.os }}-${{ env.REPO_BRANCH }}-
+            openwrt-dl-${{ runner.os }}-
+
+      # 7. 恢复 ccache 编译缓存
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-${{ runner.os }}-${{ env.REPO_BRANCH }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ env.REPO_BRANCH }}-
+            ccache-${{ runner.os }}-
+
+      # 8. 更新并安装官方 feeds
       - name: Update and install feeds
         shell: bash
         run: |
@@ -85,7 +110,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      # 7. 准备自定义软件包
+      # 9. 准备自定义软件包
       - name: Prepare H69K custom packages
         shell: bash
         run: |
@@ -102,15 +127,14 @@ jobs:
           chmod +x "$SCRIPT"
           "$SCRIPT"
 
-      # 8. 添加 OpenClash
+      # 10. 添加 OpenClash
       - name: Add OpenClash
         shell: bash
         run: |
           set -Eeuo pipefail
           cd openwrt
 
-          rm -rf /tmp/OpenClash
-          rm -rf package/luci-app-openclash
+          rm -rf /tmp/OpenClash package/luci-app-openclash
 
           git clone --depth=1 \
             --branch master \
@@ -125,7 +149,7 @@ jobs:
 
           echo "OpenClash source check passed."
 
-      # 9. 添加 MT5700
+      # 11. 添加 MT5700
       - name: Add MT5700 package
         shell: bash
         run: |
@@ -147,7 +171,20 @@ jobs:
           grep -E '^(PKG_NAME|PKG_VERSION|PKG_RELEASE)[[:space:]]*[:?+]?=' \
             package/luci-app-mt5700/Makefile || true
 
-      # 10. 加载 H69K 配置
+      # 12. 恢复 Rust Cargo 缓存
+      - name: Restore Rust Cargo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cargo-home/registry
+            .cargo-home/git
+            openwrt/package/luci-app-mt5700/src/rust/target
+          key: cargo-${{ runner.os }}-${{ env.REPO_BRANCH }}-${{ hashFiles('openwrt/package/luci-app-mt5700/src/rust/Cargo.toml', 'openwrt/package/luci-app-mt5700/src/rust/Cargo.lock') }}-${{ github.run_id }}
+          restore-keys: |
+            cargo-${{ runner.os }}-${{ env.REPO_BRANCH }}-${{ hashFiles('openwrt/package/luci-app-mt5700/src/rust/Cargo.toml', 'openwrt/package/luci-app-mt5700/src/rust/Cargo.lock') }}-
+            cargo-${{ runner.os }}-${{ env.REPO_BRANCH }}-
+
+      # 13. 加载 H69K 配置
       - name: Generate H69K configuration
         shell: bash
         run: |
@@ -167,22 +204,23 @@ jobs:
 
           CONFIG_PACKAGE_luci-app-mt5700=y
           CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y
+          CONFIG_CCACHE=y
           EOF
 
-          echo "H69K base configuration loaded."
+          echo "H69K configuration loaded."
 
           grep -E \
-            'CONFIG_TARGET_(rockchip|rockchip_armv8|DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk)=y|CONFIG_PACKAGE_(luci-app-mt5700|luci-i18n-mt5700-zh-cn|luci-app-openclash|luci-app-fan-h69k|docker|dockerd|adguardhome|luci-app-adguardhome)=y' \
+            'CONFIG_TARGET_(rockchip|rockchip_armv8|DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk)=y|CONFIG_PACKAGE_(luci-app-mt5700|luci-i18n-mt5700-zh-cn|luci-app-openclash|luci-app-fan-h69k|docker|dockerd|adguardhome|luci-app-adguardhome)=y|CONFIG_CCACHE=y' \
             .config || true
 
-      # 11. 整理并验证最终配置
+      # 14. 整理并验证最终配置
       - name: Resolve and verify configuration
         shell: bash
         run: |
           set -Eeuo pipefail
           cd openwrt
 
-          echo "===== 1. 首次整理配置 ====="
+          echo "===== 1. 整理配置 ====="
           make defconfig
 
           echo "===== 2. 检查 dnsmasq 配置 ====="
@@ -190,23 +228,13 @@ jobs:
             '^(CONFIG_PACKAGE_dnsmasq(-full)?=y|# CONFIG_PACKAGE_dnsmasq(-full)? is not set)$' \
             .config || true
 
-          # 只有 dnsmasq-full 已启用时才移除普通 dnsmasq。
           if grep -qx 'CONFIG_PACKAGE_dnsmasq-full=y' .config; then
-            echo "检测到 dnsmasq-full"
-
             if grep -qx 'CONFIG_PACKAGE_dnsmasq=y' .config; then
               sed -i '/^CONFIG_PACKAGE_dnsmasq=y$/d' .config
               echo '# CONFIG_PACKAGE_dnsmasq is not set' >> .config
+              make defconfig
             fi
-
-            echo "===== 3. 重新整理 DNS 配置 ====="
-            make defconfig
           fi
-
-          echo "===== 4. 验证 DNS 配置 ====="
-          grep -E \
-            '^(CONFIG_PACKAGE_dnsmasq(-full)?=y|# CONFIG_PACKAGE_dnsmasq(-full)? is not set)$' \
-            .config || true
 
           if grep -qx 'CONFIG_PACKAGE_dnsmasq=y' .config &&
              grep -qx 'CONFIG_PACKAGE_dnsmasq-full=y' .config; then
@@ -216,41 +244,37 @@ jobs:
 
           check_config() {
             local key="$1"
-
             if ! grep -qxF "${key}=y" .config; then
-              echo "::error::make defconfig 后缺少必要配置：${key}=y"
+              echo "::error::缺少必要配置：${key}=y"
               exit 1
             fi
           }
 
-          echo "===== 5. 验证 H69K 目标设备 ====="
+          echo "===== 3. 验证 H69K 目标 ====="
           check_config CONFIG_TARGET_rockchip
           check_config CONFIG_TARGET_rockchip_armv8
           check_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
 
-          echo "===== 6. 验证必要软件包 ====="
+          echo "===== 4. 验证自定义软件包 ====="
           check_config CONFIG_PACKAGE_luci-app-fan-h69k
           check_config CONFIG_PACKAGE_luci-app-openclash
           check_config CONFIG_PACKAGE_luci-app-mt5700
 
-          echo "===== 7. 检查 MT5700 中文语言包 ====="
-          if grep -qx 'CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y' .config; then
-            echo "MT5700 中文语言包已启用"
+          echo "===== 5. 验证 ccache 配置 ====="
+          if grep -qx 'CONFIG_CCACHE=y' .config; then
+            echo "CONFIG_CCACHE=y"
           else
-            echo "::warning::MT5700 中文语言包未进入最终配置"
+            echo "::warning::CONFIG_CCACHE 未保留在最终配置中"
           fi
 
-          echo "===== 8. 最终 DNS 配置 ====="
+          echo "===== 6. 最终 DNS 配置 ====="
           grep -E \
             '^(CONFIG_PACKAGE_dnsmasq(-full)?=y|# CONFIG_PACKAGE_dnsmasq(-full)? is not set)$' \
             .config || true
 
-          echo "===== 9. 最终设备配置 ====="
-          grep '^CONFIG_TARGET_' .config | head -40
-
           echo "===== H69K 配置检查完成 ====="
 
-      # 12. 下载并编译
+      # 15. 下载并编译，保存完整日志
       - name: Compile H69K firmware
         shell: bash
         run: |
@@ -260,14 +284,16 @@ jobs:
           LOG="$GITHUB_WORKSPACE/build.log"
           touch "$LOG"
 
-          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=\
-          aarch64-openwrt-linux-musl-gcc
+          export CARGO_HOME="$GITHUB_WORKSPACE/.cargo-home"
+          export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
 
-          export CC_aarch64_unknown_linux_musl=\
-          aarch64-openwrt-linux-musl-gcc
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-openwrt-linux-musl-gcc
+          export CC_aarch64_unknown_linux_musl=aarch64-openwrt-linux-musl-gcc
+          export AR_aarch64_unknown_linux_musl=aarch64-openwrt-linux-musl-ar
 
-          export AR_aarch64_unknown_linux_musl=\
-          aarch64-openwrt-linux-musl-ar
+          echo "===== ccache status before build ====="
+          ccache -s | tee -a "$LOG"
+          ccache -z
 
           echo "===== Downloading sources ====="
           make download -j2 2>&1 | tee -a "$LOG"
@@ -275,9 +301,12 @@ jobs:
           echo "===== Starting firmware compilation ====="
           make -j2 V=s 2>&1 | tee -a "$LOG"
 
+          echo "===== ccache status after build ====="
+          ccache -s | tee -a "$LOG"
+
           echo "===== Build completed ====="
 
-      # 13. 无论成功失败，都上传日志
+      # 16. 无论成功失败，都上传构建日志
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
@@ -287,7 +316,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-      # 14. 只在成功后上传固件
+      # 17. 上传固件
       - name: Upload firmware artifacts
         if: success()
         uses: actions/upload-artifact@v4
