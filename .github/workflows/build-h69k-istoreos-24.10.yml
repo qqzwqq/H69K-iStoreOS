@@ -234,6 +234,8 @@ jobs:
               sed -i '/^CONFIG_PACKAGE_dnsmasq=y$/d' .config
               echo '# CONFIG_PACKAGE_dnsmasq is not set' >> .config
               make defconfig
+              grep '^CONFIG_TARGET_ROOTFS_PARTSIZE=' .config
+              grep '^CONFIG_TARGET_ROOTFS_PARTSIZE=' .config | grep -qx 'CONFIG_TARGET_ROOTFS_PARTSIZE=256'
             fi
           fi
 
