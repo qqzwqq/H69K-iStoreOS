@@ -1,0 +1,241 @@
+name: Build H69K iStoreOS 25.12
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build-25.12
+    paths:
+      - ".github/workflows/build-h69k-istoreos-25.12.yml"
+      - "scripts/prepare-h69k-25.12.sh"
+      - "luci-app-fan-h69k-build-source-1.3-25.zip"
+
+permissions:
+  contents: read
+
+env:
+  REPO_URL: https://github.com/istoreos/istoreos
+  REPO_BRANCH: istoreos-25.12
+  TZ: Asia/Shanghai
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # 彻底解决 Node 20 废弃警告并强制升级至 Actions Node 24 运行环境
+
+jobs:
+  build:
+    name: Build H69K iStoreOS 25.12
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout H69K build configuration
+        uses: actions/checkout@v4
+        with:
+          ref: build-25.12
+
+      - name: Cleanup build environment
+        run: |
+          set -eu
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo docker image prune --all --force
+          df -h /
+
+      - name: Check runner resources
+        run: |
+          echo "===== CPU ====="
+          nproc
+          echo "===== Memory ====="
+          free -h
+          echo "===== Disk ====="
+          df -h /
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential clang flex bison g++ gawk \
+            gcc-multilib g++-multilib gettext git \
+            libncurses-dev libssl-dev python3 python3-setuptools \
+            python3-pyelftools python3-yaml \
+            rsync swig unzip zlib1g-dev file wget curl \
+            ccache ecj fastjar java-propose-classpath \
+            libelf-dev libfuse-dev libxml-parser-perl \
+            libgmp3-dev libmpc-dev libexpat1-dev zstd
+
+      - name: Install Rust toolchain (Required for MT5700)
+        run: |
+          set -eu
+          curl --proto '=https' --tlsv1.2 -sSf https://rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          source $HOME/.cargo/env
+          rustc --version
+
+      - name: Download iStoreOS 25.12 source
+        run: |
+          set -eu
+          git clone --depth 1 \
+            --branch "$REPO_BRANCH" \
+            "$REPO_URL" \
+            openwrt
+          git -C openwrt log -1 --oneline
+
+      - name: Cache OpenWrt downloads
+        uses: actions/cache@v4
+        with:
+          path: openwrt/dl
+          key: istoreos-25.12-downloads-${{ runner.os }}-${{ hashFiles('openwrt/include/download.mk') }}
+          restore-keys: |
+            istoreos-25.12-downloads-${{ runner.os }}-
+
+      - name: Check H69K device support
+        working-directory: openwrt
+        run: |
+          set -eu
+
+          echo "===== Check H69K device name ====="
+          grep -R -n --include='*.mk' \
+            'hinlink_opc-h6xk' target/linux/rockchip
+
+          echo "===== Check H69K compatible string ====="
+          grep -R -n --include='*.mk' \
+            'hinlink,opc-h69k' target/linux/rockchip
+
+      - name: Prepare H69K custom packages
+        working-directory: openwrt
+        run: |
+          set -eu
+          # 1. 动态拉取 OpenClash 源码并安全放入系统文件夹
+          git clone --depth=1 --branch master https://github.com /tmp/OpenClash
+          cp -a /tmp/OpenClash/luci-app-openclash package/luci-app-openclash
+
+          # 2. 动态集成官方最新的 MT5700M 5G 模块管理及对账主包
+          git clone --depth=1 --branch main https://github.com package/luci-app-mt5700
+
+          # 3. 调用你的独立预处理脚本解压调温大师及 AdGuardHome 源码
+          test -s "$GITHUB_WORKSPACE/scripts/prepare-h69k-25.12.sh"
+          bash "$GITHUB_WORKSPACE/scripts/prepare-h69k-25.12.sh"
+
+      - name: Update and install feeds
+        working-directory: openwrt
+        run: |
+          set -eu
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Generate Target Configuration
+        working-directory: openwrt
+        run: |
+          set -eu
+
+          # 直接在内存中合并并动态创建完美的初始化 .config 配置项
+          cat <<EOF > .config
+          CONFIG_TARGET_rockchip=y
+          CONFIG_TARGET_rockchip_armv8=y
+          CONFIG_TARGET_MULTI_PROFILE=y
+          CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y
+
+          CONFIG_PACKAGE_luci-app-fan-h69k=y
+          CONFIG_PACKAGE_kmod-hwmon-pwmfan=y
+          CONFIG_PACKAGE_kmod-thermal=y
+          CONFIG_PACKAGE_docker=y
+          CONFIG_PACKAGE_dockerd=y
+          CONFIG_PACKAGE_adguardhome=y
+          CONFIG_PACKAGE_luci-app-adguardhome=y
+          CONFIG_PACKAGE_luci-app-openclash=y
+
+          # 注入 MT5700 全功能拨号管理插件与专属现代化 LuCI 中文语言包
+          CONFIG_PACKAGE_luci-app-mt5700=y
+          CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y
+          EOF
+
+          echo "===== Initial .config items injected ====="
+
+      - name: Generate default configuration
+        working-directory: openwrt
+        run: |
+          set -eu
+          make defconfig
+
+          echo "===== Verify H69K target ====="
+          grep -E \
+            '^CONFIG_TARGET_rockchip=y|^CONFIG_TARGET_rockchip_armv8=y|^CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y' \
+            .config || true
+
+          grep -q \
+            '^CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y' \
+            .config || {
+              echo "ERROR: H69K target was not selected after defconfig"
+              exit 1
+            }
+
+          echo "===== Custom package configuration ====="
+          grep -E \
+            '^CONFIG_PACKAGE_(luci-app-fan-h69k|luci-app-mt5700|kmod-hwmon-pwmfan|kmod-thermal|docker|dockerd|adguardhome|luci-app-adguardhome|luci-app-openclash)=' \
+            .config || true
+
+      - name: Download source packages
+        working-directory: openwrt
+        run: |
+          set -eu
+          make download -j$(nproc)
+
+      - name: Build OpenWrt tools first
+        working-directory: openwrt
+        run: |
+          set -eu
+          make tools/install -j$(nproc) V=s
+
+      - name: Build OpenWrt target toolchain
+        working-directory: openwrt
+        run: |
+          set -eu
+          make toolchain/install -j$(nproc) V=s
+
+          echo "===== Locate cross compiler ====="
+          find staging_dir \
+            \( -name 'aarch64-openwrt-linux-musl-gcc' \
+            -o -name 'aarch64-openwrt-linux-musl-g++' \) \
+            -print
+
+      - name: Compile Rust host toolchain
+        working-directory: openwrt
+        run: |
+          set -eu
+          make package/feeds/packages/rust/host/compile -j1 V=s
+
+      - name: Compile firmware
+        working-directory: openwrt
+        run: |
+          set -eu
+          # 优先以最大可调度线程速度多线程全力冲刺，失败则自动切换为单线程展示完整错误日志
+          make -j$(nproc) || make -j1 V=s
+
+      - name: Verify firmware artifacts
+        if: success()
+        working-directory: openwrt
+        run: |
+          set -eu
+          echo "===== Firmware output ====="
+          find bin/targets/rockchip/armv8 \
+            -maxdepth 2 -type f \
+            \( -name '*.img.gz' \
+            -o -name '*sysupgrade.bin' \
+            -o -name '*.manifest' \
+            -o -name '*.buildinfo' \) \
+            -print
+
+          test -n "$(find bin/targets/rockchip/armv8 \
+            -maxdepth 2 -type f \
+            \( -name '*.img.gz' -o -name '*sysupgrade.bin' \) \
+            -print -quit)" || {
+              echo "ERROR: No flashable firmware image found"
+              exit 1
+            }
+
+      - name: Upload firmware artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: H69K-iStoreOS-25.12-build-output
+          path: |
+            openwrt/bin/targets/rockchip/armv8/
+          if-no-files-found: warn
+          retention-days: 7
