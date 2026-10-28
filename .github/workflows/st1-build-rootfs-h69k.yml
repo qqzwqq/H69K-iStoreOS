@@ -25,7 +25,7 @@ on:
       ipaddr:
         description: "静态管理 IP（仅选择 static 时使用）"
         required: true
-        default: "192.168.5.88"
+        default: "192.168.66.1"
       gateway:
         description: "静态网关（仅选择 static 时使用）"
         required: true
@@ -82,6 +82,8 @@ jobs:
           else
             sed -i '26,32d' "$CONFIG_PATH"
           fi
+          # 无论选择哪种网络模式，多网口设备的默认 LAN 管理地址统一改为输入的 IP。
+          sed -i "/ipaddr/s/192.168.100.1/${INPUT_IP}/g" "$CONFIG_PATH"
           cat "$CONFIG_PATH"
 
       - name: Install build dependencies
