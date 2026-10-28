@@ -81,6 +81,53 @@ jobs:
 
           git -C openwrt log -1 --oneline
 
+      # 5.1 为 H69K 增加同源码的 TF 卡 combined 启动镜像
+      - name: Enable H69K TF card combined image
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd openwrt
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("target/linux/rockchip/image/legacy.mk")
+          text = path.read_text()
+          marker = "define Device/hinlink_opc-h6xk\n"
+          if text.count(marker) != 1:
+              raise SystemExit("未能唯一定位 H69K 设备定义，停止修改")
+
+          start = text.index(marker)
+          end = text.find("\nendef", start)
+          if end < 0:
+              raise SystemExit("H69K 设备定义缺少 endef，停止修改")
+
+          block = text[start:end]
+          if "IMAGE/squashfs-combined.img.gz" in block:
+              print("H69K combined 镜像规则已存在，跳过重复添加")
+          else:
+              needle = "  BOOT_SCRIPT := rk3568-hinlink"
+              if block.count(needle) != 1:
+                  raise SystemExit("未能唯一定位 H69K BOOT_SCRIPT，停止修改")
+
+              replacement = needle + "\n" + \\
+                  "  IMAGES += squashfs-combined.img.gz\n" + \\
+                  "  IMAGE/squashfs-combined.img.gz = boot-common-legacy | boot-script-legacy $(BOOT_SCRIPT) | pine64-img | gzip"
+              block = block.replace(needle, replacement, 1)
+              text = text[:start] + block + text[end:]
+              path.write_text(text)
+              print("已为 H69K 添加 squashfs-combined.img.gz 输出规则")
+
+          check = path.read_text()
+          start = check.index(marker)
+          end = check.find("\nendef", start)
+          block = check[start:end]
+          if "IMAGES += squashfs-combined.img.gz" not in block or \\
+             "IMAGE/squashfs-combined.img.gz" not in block:
+              raise SystemExit("combined 镜像规则验证失败")
+          print("H69K TF combined 镜像规则验证通过")
+          PY
+
       # 6. 恢复 OpenWrt 下载缓存
       - name: Restore OpenWrt download cache
         uses: actions/cache@v4
@@ -375,6 +422,7 @@ jobs:
             ### 固件说明
             - 基于 iStoreOS 24.10 分支构建
             - 提供 SquashFS 和 EXT4 两种 sysupgrade 固件
+            - 额外提供同源码构建的 H69K TF 卡启动 combined 镜像
             - 本 Release 由 GitHub Actions 在编译成功后自动创建
             - 刷机前请确认设备型号并备份现有配置
 
@@ -382,5 +430,6 @@ jobs:
           files: |
             openwrt/bin/targets/rockchip/armv8/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-sysupgrade.img.gz
             openwrt/bin/targets/rockchip/armv8/istoreos-rockchip-armv8-hinlink_opc-h6xk-ext4-sysupgrade.img.gz
+            openwrt/bin/targets/rockchip/armv8/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-combined.img.gz
             openwrt/bin/targets/rockchip/armv8/sha256sums
           fail_on_unmatched_files: true
