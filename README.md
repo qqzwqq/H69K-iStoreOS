@@ -4,10 +4,10 @@
 
 本项目维护两个固件版本：
 
-- **iStoreOS 24.10**：原有稳定构建分支，保留现有配置与编译流程。
-- **iStoreOS 25.12**：独立开发与适配分支，用于新版本源码、软件包和功能兼容性测试。
+- **iStoreOS 24.10**：当前主要维护的构建版本，沿用现有设备配置和编译流程。
+- **iStoreOS 25.12**：独立开发与适配版本，用于新版本源码、软件包和功能兼容性测试。
 
-项目主要用于个人设备适配、固件定制与功能测试。欢迎 Fork 本仓库，根据自己的设备和使用需求进行修改。
+本项目主要用于个人设备适配、固件定制与功能测试。欢迎 Fork 本仓库，并根据自己的设备和使用需求进行修改。
 
 [![iStoreOS](https://img.shields.io/badge/Base-iStoreOS%2024.10%20%7C%2025.12-brightgreen?style=flat-square)](https://github.com/istoreos/istoreos)
 [![Platform](https://img.shields.io/badge/Platform-Rockchip%20RK3568-blue?style=flat-square)](https://github.com/istoreos/istoreos)
@@ -15,9 +15,12 @@
 [![Build](https://img.shields.io/badge/Build-GitHub%20Actions-black?style=flat-square&logo=githubactions)](../../actions)
 
 ---
-<img width="2540" height="1094" alt="image" src="https://github.com/user-attachments/assets/471abc6d-34f1-4d49-9095-5f3803129b0a" />
-<img width="2550" height="1104" alt="9634f9fb90cbcdebff368dee3d69ec83" src="https://github.com/user-attachments/assets/5b9fc797-9996-4e95-8a63-46f4da60058b" />
-<img width="2512" height="1088" alt="image" src="https://github.com/user-attachments/assets/be45b168-3081-417b-8e61-4863273baf70" />
+
+<img width="2540" height="1094" alt="H69K iStoreOS 系统界面" src="https://github.com/user-attachments/assets/471abc6d-34f1-4d49-9095-5f3803129b0a" />
+
+<img width="2550" height="1104" alt="H69K iStoreOS 系统界面" src="https://github.com/user-attachments/assets/5b9fc797-9996-4e95-8a63-46f4da60058b" />
+
+<img width="2512" height="1088" alt="H69K iStoreOS 系统界面" src="https://github.com/user-attachments/assets/be45b168-3081-417b-8e61-4863273baf70" />
 
 ## 目录
 
@@ -43,27 +46,27 @@
 | 定制版本 | iStoreOS 24.10、25.12 |
 | 编译平台 | GitHub Actions |
 
-实际源码分支、设备支持情况和最终固件版本，以对应工作流的运行记录为准。
+实际源码分支、设备支持情况、配置内容和最终固件版本，以对应分支的源码及工作流运行记录为准。
 
 ## 双版本编译方案
 
-本仓库使用独立分支、配置文件和 GitHub Actions 工作流管理两个版本，尽量避免新版本适配影响原有构建流程。
+本仓库采用独立配置文件、插件准备脚本和 GitHub Actions 工作流管理两个版本，尽量避免新版本适配影响现有构建流程。
 
 | 项目 | iStoreOS 24.10 | iStoreOS 25.12 |
 |---|---|---|
-| 用途 | 原有固件构建与维护 | 新版本适配与测试 |
-| Git 分支 | 原有 24.10 编译分支 | `build-25.12` |
+| 用途 | 主要构建与维护 | 新版本适配与测试 |
+| Git 分支 | 原有 24.10 构建分支 | `build-25.12` |
 | 配置文件 | `rk35xx/h69k-24.10.config` | `rk35xx/h69k-25.12.config` |
 | 插件准备脚本 | `scripts/prepare-h69k-24.10.sh` | `scripts/prepare-h69k-25.12.sh` |
-| 工作流 | `build-h69k-istoreos-24.10.yml` | `build-h69k-istoreos-25.12.yml` |
-| 构建产物名称 | 由 24.10 工作流定义 | `H69K-iStoreOS-25.12-build-output` |
+| 工作流文件 | `build-h69k-istoreos-24.10.yml` | `build-h69k-istoreos-25.12.yml` |
+| 构建产物名称 | 以 24.10 工作流配置为准 | `H69K-iStoreOS-25.12-build-output` |
 
 **双版本维护原则：**
 
-- 24.10 和 25.12 使用各自的配置文件与工作流。
-- 25.12 的设备定义、内核驱动和插件依赖需要单独检查。
-- 两个工作流可以分别启动；实际是否能同时运行，取决于 GitHub Actions 的并发额度和排队情况。
-- 25.12 仍需通过实际编译、刷机和功能测试验证，不能仅凭版本号认定所有插件均兼容。
+- 24.10 和 25.12 分别维护配置文件、插件准备脚本及工作流。
+- 25.12 的设备定义、内核驱动、软件包依赖和插件兼容性需要单独检查。
+- 两个工作流可以分别启动，但是否能够同时运行取决于 GitHub Actions 的并发额度和排队情况。
+- 只有实际编译、刷机和功能测试通过后，才能确认对应版本可用。编译成功不代表所有插件和硬件功能均已验证。
 
 ## 定制功能与软件包
 
@@ -77,20 +80,26 @@
 | `adguardhome` | AdGuard Home 核心程序 |
 | `luci-app-adguardhome` | AdGuard Home 管理界面 |
 | `luci-app-openclash` | OpenClash 管理界面及相关功能 |
-| `kmod-hwmon-pwmfan` | PWM 风扇驱动支持 |
+| `kmod-hwmon-pwmfan` | PWM 风扇监控及相关驱动支持 |
 | `kmod-thermal` | 内核温控相关功能 |
 
 ### 插件集成方式
 
 - **H69K 风扇插件：** 使用仓库中的 `luci-app-fan-h69k-build-source-1.3-25.zip` 准备源码。
-- **MT5700 插件：** 从 [LianXia233/luci-app-mt5700](https://github.com/LianXia233/luci-app-mt5700) 获取源码。
+- **MT5700 插件：** 从 [LianXia233/luci-app-mt5700](https://github.com/LianXia233/luci-app-mt5700) 获取源码；如需使用其他维护分支，应以对应准备脚本为准。
 - **AdGuard Home LuCI 前端：** 从 [rufengsuixing/luci-app-adguardhome](https://github.com/rufengsuixing/luci-app-adguardhome) 获取源码。
 - **OpenClash：** 从 [vernesong/OpenClash](https://github.com/vernesong/OpenClash) 获取插件源码。
-- **Docker、内核模块及其他软件包：** 根据对应版本的源码、软件源和配置进行选择。
+- **Docker、内核模块及其他软件包：** 根据对应版本的源码、软件源和配置选择。
 
-以上为项目的集成目标，不代表所有组件都已经成功编译或运行。不同版本的内核、软件源和依赖可能导致功能差异。
+以上为项目计划集成的功能，不代表所有组件均已成功编译或运行。不同版本的内核、软件源和依赖可能导致功能差异。
 
-特别注意：AdGuard Home 的 LuCI 管理界面与核心程序是不同组件；Docker 运行环境、OpenClash 依赖以及 MT5700 驱动也需要在实际设备上分别验证。
+特别注意：
+
+- AdGuard Home 核心程序与 LuCI 管理界面是不同组件。
+- Docker 需要正确的内核功能、软件包依赖及网络配置。
+- OpenClash 的运行依赖和网络转发功能需要在实际设备上验证。
+- MT5700 的管理插件、串口通信和短信功能需要分别测试。
+- 风扇控制还需要验证实际硬件接口、温度读取和调速行为。
 
 ## GitHub Actions 云端编译
 
@@ -102,43 +111,52 @@
 
 1. 打开 [Actions 页面](../../actions)。
 2. 选择 `Build H69K iStoreOS 24.10` 工作流。
-3. 如果存在 `Run workflow` 按钮，点击并选择对应的 24.10 分支。
-4. 启动编译并等待任务完成。
-5. 打开运行记录，在 **Artifacts** 区域下载构建产物。
+3. 如果显示 `Run workflow` 按钮，点击并选择正确的 24.10 分支。
+4. 启动编译，等待工作流执行完成。
+5. 打开对应的运行记录，在 `Artifacts` 区域下载构建产物。
 
-24.10 应继续使用原有配置、脚本和工作流，避免无意中影响已有的构建流程。
+**注意：** 24.10 应继续使用原有配置、脚本和工作流。修改前建议保留可用的提交版本，以便出现问题时恢复。
 
 ### 编译 iStoreOS 25.12
 
 1. 打开 [Actions 页面](../../actions)。
 2. 选择 `Build H69K iStoreOS 25.12` 工作流。
 3. 点击 `Run workflow`。
-4. 分支选择 `build-25.12`。
-5. 启动编译并检查每一步的运行日志。
-6. 成功后，在 **Artifacts** 区域查找 `H69K-iStoreOS-25.12-build-output`。
+4. 在分支选择中选择 `build-25.12`。
+5. 启动编译并检查每个步骤的运行日志。
+6. 如果构建成功，在 `Artifacts` 区域查找 `H69K-iStoreOS-25.12-build-output`。
 
-25.12 的首次构建应重点检查源码分支是否可用、H69K 设备定义是否存在、插件源码是否准备成功，以及软件包是否通过配置检查。
+25.12 的构建应重点检查：
 
-> 如果某个工作流没有显示，或没有 `Run workflow` 按钮，请检查当前分支是否包含相应的 YAML 文件，以及工作流是否配置了 `workflow_dispatch`。
+- 对应源码分支是否存在且可正常下载。
+- H69K 设备定义是否存在并能正确选择。
+- 自定义插件源码是否准备成功。
+- 软件包配置及依赖检查是否通过。
+- Rust 等交叉编译工具链是否与目标架构兼容。
+- 固件是否实际生成，并且归档步骤能找到目标文件。
+
+如果某个工作流没有显示，或者没有 `Run workflow` 按钮，请检查当前分支是否包含相应的 YAML 文件，以及工作流是否配置了 `workflow_dispatch`。
 
 ### 编译流程
 
-两个版本通常会执行以下类型的操作，具体步骤以各自的工作流文件为准：
+两个版本通常会执行以下操作，具体步骤以各自的工作流文件为准：
 
 1. 检出仓库配置和构建脚本。
 2. 安装云端编译依赖。
 3. 下载对应版本的 iStoreOS 源码。
-4. 检查目标设备定义。
-5. 准备自定义插件。
+4. 检查 H69K 目标设备定义。
+5. 准备自定义插件源码。
 6. 更新软件源并处理软件包依赖。
-7. 应用配置并检查目标设备。
-8. 下载编译所需源码包。
-9. 编译固件。
-10. 归档实际生成的文件。
+7. 应用配置并执行配置检查。
+8. 下载编译所需的源码包。
+9. 编译固件及相关软件包。
+10. 检查生成文件并归档构建产物。
+
+构建时间受软件包数量、源码下载速度、缓存命中率、编译器构建情况及 GitHub Actions 运行资源影响。首次构建通常需要较长时间；如果长时间没有输出或构建失败，应检查具体步骤的日志，而不是仅凭运行时间判断结果。
 
 ## 仓库目录结构
 
-以下是双版本构建预期使用的主要文件结构：
+以下为双版本构建预期使用的主要文件结构，实际内容以各分支为准。
 
 ```text
 .
@@ -156,32 +174,30 @@
 └── README.md
 ```
 
-目录结构以各分支中的实际文件为准。
-
 ### 配置文件
 
 - `rk35xx/h69k-24.10.config`：用于 24.10 固件的设备选择和软件包配置。
 - `rk35xx/h69k-25.12.config`：用于 25.12 固件的设备选择和软件包配置。
 
-两个配置文件应分别维护。修改某个版本的软件包时，先确认该版本的源码是否提供对应的软件包和依赖。
+两个配置文件应分别维护。修改某个版本的软件包前，应先确认对应源码是否提供该软件包及其所需依赖。
 
 ### 插件准备脚本
 
 - `scripts/prepare-h69k-24.10.sh`：准备 24.10 构建所需的自定义插件。
 - `scripts/prepare-h69k-25.12.sh`：准备 25.12 构建所需的自定义插件。
 
-插件仓库、源码目录和依赖发生变化时，需要检查对应脚本是否仍然有效。
+插件仓库、源码目录或依赖发生变化时，需要检查相应脚本是否仍然有效。
 
 ### 工作流文件
 
-- `.github/workflows/build-h69k-istoreos-24.10.yml`：负责 24.10 的云端编译和产物归档。
-- `.github/workflows/build-h69k-istoreos-25.12.yml`：负责 25.12 的云端编译和产物归档。
+- `.github/workflows/build-h69k-istoreos-24.10.yml`：负责 24.10 的云端编译及产物归档。
+- `.github/workflows/build-h69k-istoreos-25.12.yml`：负责 25.12 的云端编译及产物归档。
 
-请保持两个工作流的配置路径、构建目录和产物名称相互独立。
+请保持两个工作流的配置路径、构建目录和产物名称相互独立。若实际仓库中的文件名或目录结构不同，应以仓库当前内容为准，并同步更新本文档。
 
 ## 固件下载与构建产物
 
-编译完成后，在对应的 GitHub Actions 运行记录中查找 **Artifacts**。
+编译完成后，在对应的 GitHub Actions 运行记录中查找 `Artifacts`。
 
 根据工作流的实际配置，归档内容可能包括：
 
@@ -189,22 +205,22 @@
 - 编译生成的软件包 IPK。
 - 构建日志，例如 `build.log`。
 
-只有成功生成并匹配归档路径的文件才会出现在 Artifacts 中。若编译失败，请优先查看第一个失败步骤及其日志。
+只有成功生成且匹配归档路径的文件才会出现在 `Artifacts` 中。如果构建失败，请优先查看第一个失败步骤及其日志，并确认是否存在后续的固件生成与归档步骤。
 
-GitHub Actions Artifacts 是临时构建产物归档，不等同于 GitHub Releases。保留期限由对应工作流中的 `retention-days` 决定。
+GitHub Actions Artifacts 是工作流生成的构建产物归档，不等同于 GitHub Releases。产物的保留期限以工作流配置及 GitHub 仓库的相关设置为准。
 
 ## 刷机与使用说明
 
 刷写固件前，请确认以下事项：
 
-- **核对设备型号：** 本项目面向 HINLINK OPC-H69K，不要仅凭 RK3568 芯片型号判断固件兼容性。
-- **核对版本和镜像：** 确认下载的是正确版本，并检查文件名、镜像格式和设备定义。
+- **核对设备型号：** 本项目面向 HINLINK OPC-H69K。不要仅凭 RK3568 芯片型号判断固件兼容性。
+- **核对版本和镜像：** 确认下载的是正确版本，并检查文件名、镜像格式和目标设备定义。
 - **做好完整备份：** 建议备份系统配置和完整磁盘镜像，并验证备份文件可以正常读取。
-- **准备救援方案：** 提前确认设备的救援启动方式和磁盘恢复方法。
+- **准备救援方案：** 提前确认设备的救援启动方式、外部启动方式及磁盘恢复方法。
 - **首次启动后检查：** 验证 LAN/WAN 网络、管理地址、风扇控制、MT5700、Docker、AdGuard Home 和 OpenClash 等功能。
-- **核对登录信息：** 默认 IP、登录密码、端口和首次启动行为以实际构建配置为准，不要直接假设与其他固件相同。
+- **核对登录信息：** 默认 IP、登录密码、端口及首次启动行为以实际构建配置为准，不要直接假设与其他固件相同。
 
-建议先在确认可恢复的条件下测试新版本。不要仅因为 25.12 编译成功，就认定所有硬件和插件功能都已验证。
+建议优先在能够恢复原系统的条件下测试新版本。不要仅因为固件编译成功，就认定所有硬件和插件功能都已验证。
 
 ## 免责声明
 
@@ -226,6 +242,4 @@ GitHub Actions Artifacts 是临时构建产物归档，不等同于 GitHub Relea
 
 感谢所有为开源固件、驱动与插件生态作出贡献的开发者。
 
-
--微信-
 
