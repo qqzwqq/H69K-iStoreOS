@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   TZ: Asia/Shanghai
@@ -348,3 +348,39 @@ jobs:
             !openwrt/bin/targets/rockchip/armv8/packages/
           if-no-files-found: error
           retention-days: 14
+
+      
+      # 18. 发布固件到 GitHub Releases（仅在编译及固件上传成功后执行）
+      - name: Publish firmware to GitHub Releases
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v24.10.8-h69k-${{ github.run_number }}-${{ github.run_attempt }}
+          name: H69K iStoreOS 24.10.8 定制版（构建 #${{ github.run_number }}）
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          body: |
+            ## H69K iStoreOS 24.10 定制固件
+
+            适用于 HINLINK OPC-H69K（RK3568，设备配置 hinlink_opc-h6xk）。
+
+            ### 预装组件
+            - luci-app-mt5700
+            - luci-app-fan-h69k
+            - OpenClash
+            - AdGuard Home
+            - Docker / Dockerd
+
+            ### 固件说明
+            - 基于 iStoreOS 24.10 分支构建
+            - 提供 SquashFS 和 EXT4 两种 sysupgrade 固件
+            - 本 Release 由 GitHub Actions 在编译成功后自动创建
+            - 刷机前请确认设备型号并备份现有配置
+
+            **注意：** 编译成功不代表已经完成实机启动和所有功能验证。
+          files: |
+            openwrt/bin/targets/rockchip/armv8/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-sysupgrade.img.gz
+            openwrt/bin/targets/rockchip/armv8/istoreos-rockchip-armv8-hinlink_opc-h6xk-ext4-sysupgrade.img.gz
+            openwrt/bin/targets/rockchip/armv8/sha256sums
+          fail_on_unmatched_files: true
