@@ -374,6 +374,27 @@ jobs:
 
           echo "===== Build completed ====="
 
+      # 16. 验证 TF 卡启动镜像确实生成且 gzip 完整
+      - name: Validate H69K TF combined image
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          OUT="openwrt/bin/targets/rockchip/armv8"
+          IMAGE="$OUT/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-combined.img.gz"
+          SYSUPGRADE="$OUT/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-sysupgrade.img.gz"
+
+          test -s "$SYSUPGRADE"
+          if [ ! -s "$IMAGE" ]; then
+            echo "::error::没有生成 H69K TF 卡启动镜像 squashfs-combined.img.gz；停止发布，避免误把 sysupgrade 镜像当作 TF 启动镜像。"
+            echo "===== rockchip/armv8 image listing ====="
+            ls -lah "$OUT" || true
+            exit 1
+          fi
+
+          gzip -t "$IMAGE"
+          echo "TF combined image exists and gzip integrity check passed:"
+          ls -lh "$IMAGE" "$SYSUPGRADE"
+
       # 16. 无论成功失败，都上传构建日志
       - name: Upload build log
         if: always()
