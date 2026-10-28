@@ -100,6 +100,9 @@ jobs:
             fi
           done
           ls -lh "${PACKAGED_OUTPUTPATH}"/*.img.gz
+          mkdir -p packaged-output
+          cp -f "${PACKAGED_OUTPUTPATH}"/*.img.gz packaged-output/
+          test -n "$(find packaged-output -maxdepth 1 -type f -name '*.img.gz' -print -quit)"
 
       - name: Upload H69K firmware to Release
         uses: softprops/action-gh-release@v2
@@ -110,7 +113,7 @@ jobs:
             Stage 2: HINLINK OPC-H69K image packaged from the Stage 1 generic Rootfs.
             Device board: h69k
             Kernel: ${{ inputs.openwrt_kernel }} (${{ inputs.kernel_usage }})
-          files: ${{ env.PACKAGED_OUTPUTPATH }}/*.img.gz
+          files: packaged-output/*.img.gz
           overwrite_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
