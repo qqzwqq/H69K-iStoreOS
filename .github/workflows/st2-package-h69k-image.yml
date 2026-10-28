@@ -100,7 +100,6 @@ jobs:
           gzip -t "$IMAGE"
           echo "H69K TF/SD 整盘镜像 gzip 完整性检查通过："
           ls -lh "$IMAGE"
-          sha256sum "$IMAGE" | tee "${PACKAGED_OUTPUTPATH}/SHA256SUMS-H69K-TF.txt"
 
       - name: Rename image files
         run: |
@@ -116,8 +115,8 @@ jobs:
           ls -lh "${PACKAGED_OUTPUTPATH}"/*.img.gz
           mkdir -p packaged-output
           cp -f "${PACKAGED_OUTPUTPATH}"/*.img.gz packaged-output/
-          cp -f "${PACKAGED_OUTPUTPATH}/SHA256SUMS-H69K-TF.txt" packaged-output/
           test -n "$(find packaged-output -maxdepth 1 -type f -name '*h69k*.img.gz' -print -quit)"
+          (cd packaged-output && sha256sum *.img.gz > SHA256SUMS-H69K-TF.txt)
           test -s packaged-output/SHA256SUMS-H69K-TF.txt
 
       - name: Upload H69K firmware to Release
