@@ -112,7 +112,7 @@ jobs:
 
               replacement = needle + "\n" + \\
                   "  IMAGES += squashfs-combined.img.gz\n" + \\
-                  "  IMAGE/squashfs-combined.img.gz = boot-common-legacy | boot-script-legacy rk3568-hinlink | pine64-img | gzip"
+                  "  IMAGE/squashfs-combined.img.gz = boot-common-legacy | boot-script-legacy $(BOOT_SCRIPT) | pine64-img | gzip"
               block = block.replace(needle, replacement, 1)
               text = text[:start] + block + text[end:]
               path.write_text(text)
