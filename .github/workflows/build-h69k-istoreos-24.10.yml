@@ -205,6 +205,7 @@ jobs:
           CONFIG_PACKAGE_luci-app-mt5700=y
           CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y
           CONFIG_CCACHE=y
+          CONFIG_TARGET_KERNEL_PARTSIZE=64
           CONFIG_TARGET_ROOTFS_PARTSIZE=1024
           EOF
 
@@ -223,6 +224,16 @@ jobs:
 
           echo "===== 1. 整理配置 ====="
           make defconfig
+
+          echo "===== 验证内核分区大小 ====="
+          grep '^CONFIG_TARGET_KERNEL_PARTSIZE=' .config
+
+          if ! grep -qx 'CONFIG_TARGET_KERNEL_PARTSIZE=64' .config; then
+          echo "::error::CONFIG_TARGET_KERNEL_PARTSIZE 未生效为 64"
+          exit 1
+          fi
+
+          echo "内核分区大小验证通过：64 MiB"
 
           echo "===== 2. 检查 dnsmasq 配置 ====="
           grep -E \
