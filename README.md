@@ -52,14 +52,15 @@
 
 本仓库采用独立配置文件、插件准备脚本和 GitHub Actions 工作流管理两个版本，尽量避免新版本适配影响现有构建流程。
 
-| 项目 | iStoreOS 24.10 | iStoreOS 25.12 |
+| **项目** | **iStoreOS 24.10** | **iStoreOS 25.12** |
 |---|---|---|
-| 用途 | 主要构建与维护 | 新版本适配与测试 |
+| 用途 | 主要构建与维护 | 已完成打包，暂缓后续适配 |
 | Git 分支 | 原有 24.10 构建分支 | `build-25.12` |
 | 配置文件 | `rk35xx/h69k-24.10.config` | `rk35xx/h69k-25.12.config` |
 | 插件准备脚本 | `scripts/prepare-h69k-24.10.sh` | `scripts/prepare-h69k-25.12.sh` |
-| 工作流文件 | `build-h69k-istoreos-24.10.yml` | `build-h69k-istoreos-25.12.yml` |
-| 构建产物名称 | 以 24.10 工作流配置为准 | `H69K-iStoreOS-25.12-build-output` |
+| 工作流文件 | `.github/workflows/build-h69k-istoreos-24.10.yml` | `.github/workflows/build-h69k-istoreos-25.12.yml` |
+| 构建流程 | 按 24.10 工作流执行 | 分阶段构建 Rootfs 并打包完整固件 |
+| 构建产物名称 | 以 24.10 工作流实际配置为准 | `H69K-iStoreOS-25.12-build-output` |
 
 **双版本维护原则：**
 
