@@ -110,9 +110,11 @@ jobs:
               if block.count(needle) != 1:
                   raise SystemExit("未能唯一定位 H69K BOOT_SCRIPT，停止修改")
 
-              replacement = needle + "\n" + \\
-                  "  IMAGES += squashfs-combined.img.gz\n" + \\
-                  "  IMAGE/squashfs-combined.img.gz = boot-common-legacy | boot-script-legacy rk3568-hinlink | pine64-img | gzip"
+              replacement = (
+                  needle + "\n"
+                  + "  IMAGES += squashfs-combined.img.gz\n"
+                  + "  IMAGE/squashfs-combined.img.gz = boot-common-legacy | boot-script-legacy rk3568-hinlink | pine64-img | gzip"
+              )
               block = block.replace(needle, replacement, 1)
               text = text[:start] + block + text[end:]
               path.write_text(text)
@@ -122,8 +124,10 @@ jobs:
           start = check.index(marker)
           end = check.find("\nendef", start)
           block = check[start:end]
-          if "IMAGES += squashfs-combined.img.gz" not in block or \\
-             "IMAGE/squashfs-combined.img.gz" not in block:
+          if (
+              "IMAGES += squashfs-combined.img.gz" not in block
+              or "IMAGE/squashfs-combined.img.gz" not in block
+          ):
               raise SystemExit("combined 镜像规则验证失败")
           print("H69K TF combined 镜像规则验证通过")
           PY
