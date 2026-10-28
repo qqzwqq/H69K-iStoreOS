@@ -73,8 +73,11 @@ jobs:
           kernel_repo: ophub/kernel
           kernel_usage: ${{ inputs.kernel_usage }}
           builder_name: H69K-iStoreOS
+          # 明确设置完整镜像的分区布局：BOOTFS 256 MiB / ROOTFS 1024 MiB。
+          # 该输出是供 TF/SD 卡写入启动的整盘 .img.gz，不是 sysupgrade 包。
+          openwrt_size: 256/1024
 
-      - name: Verify packaged image
+      - name: Verify H69K TF card boot image
         run: |
           set -Eeuo pipefail
           echo "PACKAGED_OUTPUTPATH=${PACKAGED_OUTPUTPATH:-<unset>}"
@@ -82,11 +85,22 @@ jobs:
             echo "::error::打包动作没有提供有效的 PACKAGED_OUTPUTPATH"
             exit 1
           fi
-          find "${PACKAGED_OUTPUTPATH}" -maxdepth 1 -type f -name '*.img.gz' -ls
-          test -n "$(find "${PACKAGED_OUTPUTPATH}" -maxdepth 1 -type f -name '*.img.gz' -print -quit)"
-          for f in "${PACKAGED_OUTPUTPATH}"/*.img.gz; do
-            gzip -t "$f"
-          done
+
+          echo "===== 打包输出清单 ====="
+          find "${PACKAGED_OUTPUTPATH}" -maxdepth 1 -type f -printf '%f %s bytes\n' | sort
+
+          # 必须找到 h69k 对应的整盘镜像；不能仅凭任意 .img.gz 文件就判定成功。
+          IMAGE="$(find "${PACKAGED_OUTPUTPATH}" -maxdepth 1 -type f \
+            -name '*h69k*.img.gz' -print -quit)"
+          if [ -z "$IMAGE" ] || [ ! -s "$IMAGE" ]; then
+            echo "::error::没有找到 H69K 整盘 .img.gz 镜像，不能发布为 TF 卡启动固件。"
+            exit 1
+          fi
+
+          gzip -t "$IMAGE"
+          echo "H69K TF/SD 整盘镜像 gzip 完整性检查通过："
+          ls -lh "$IMAGE"
+          sha256sum "$IMAGE" | tee "${PACKAGED_OUTPUTPATH}/SHA256SUMS-H69K-TF.txt"
 
       - name: Rename image files
         run: |
@@ -102,7 +116,9 @@ jobs:
           ls -lh "${PACKAGED_OUTPUTPATH}"/*.img.gz
           mkdir -p packaged-output
           cp -f "${PACKAGED_OUTPUTPATH}"/*.img.gz packaged-output/
-          test -n "$(find packaged-output -maxdepth 1 -type f -name '*.img.gz' -print -quit)"
+          cp -f "${PACKAGED_OUTPUTPATH}/SHA256SUMS-H69K-TF.txt" packaged-output/
+          test -n "$(find packaged-output -maxdepth 1 -type f -name '*h69k*.img.gz' -print -quit)"
+          test -s packaged-output/SHA256SUMS-H69K-TF.txt
 
       - name: Upload H69K firmware to Release
         uses: softprops/action-gh-release@v2
@@ -123,7 +139,9 @@ jobs:
             - **LAN 管理地址：** `192.168.66.1`
 
             本工作流会自动下载第一阶段生成的 Rootfs，使用所选内核进行固件打包，检查最终生成的 `.img.gz` 镜像文件，并将固件发布到 GitHub Releases，供后续下载和测试。
-          files: packaged-output/*.img.gz
+          files: |
+            packaged-output/*.img.gz
+            packaged-output/SHA256SUMS-H69K-TF.txt
           overwrite_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
