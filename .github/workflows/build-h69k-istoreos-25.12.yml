@@ -94,6 +94,49 @@ jobs:
           restore-keys: |
             istoreos-25.12-downloads-${{ runner.os }}-
 
+      - name: Enable H69K TF card combined image
+        working-directory: openwrt
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("target/linux/rockchip/image/legacy.mk")
+          text = path.read_text()
+          marker = "define Device/hinlink_opc-h6xk\n"
+          if text.count(marker) != 1:
+              raise SystemExit("未能唯一定位 H69K 设备定义，停止修改")
+
+          start = text.index(marker)
+          end = text.find("\nendef", start)
+          if end < 0:
+              raise SystemExit("H69K 设备定义缺少 endef，停止修改")
+
+          block = text[start:end]
+          recipe = "  IMAGE/squashfs-combined.img.gz = boot-common-legacy | boot-script-legacy rk3568-hinlink | pine64-img | gzip"
+          if recipe not in block:
+              needle = "  BOOT_SCRIPT := rk3568-hinlink"
+              if block.count(needle) != 1:
+                  raise SystemExit("未能唯一定位 H69K BOOT_SCRIPT，停止修改")
+              replacement = needle + "\n" + \
+                  "  IMAGES += squashfs-combined.img.gz\n" + \
+                  recipe
+              block = block.replace(needle, replacement, 1)
+              text = text[:start] + block + text[end:]
+              path.write_text(text)
+              print("已添加 H69K TF combined 镜像规则")
+          else:
+              print("H69K TF combined 镜像规则已存在")
+
+          updated = path.read_text()
+          start = updated.index(marker)
+          end = updated.find("\nendef", start)
+          if recipe not in updated[start:end]:
+              raise SystemExit("H69K TF combined 镜像规则验证失败")
+          print("H69K TF combined 镜像规则验证通过")
+          PY
+
       - name: Check H69K device support
         working-directory: openwrt
         run: |
@@ -217,13 +260,36 @@ jobs:
           # 优先以最大可调度线程速度多线程全力冲刺，失败则自动切换为单线程展示完整错误日志
           make -j$(nproc) || make -j1 V=s
 
+      - name: Validate H69K TF combined image
+        if: success()
+        working-directory: openwrt
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          OUT="bin/targets/rockchip"
+          echo "===== Rockchip firmware output ====="
+          find "$OUT" -maxdepth 3 -type f \
+            \( -name '*hinlink_opc-h6xk*img.gz' -o -name '*hinlink_opc-h6xk*manifest' \) \
+            -print
+
+          IMAGE="$(find "$OUT" -maxdepth 3 -type f \
+            -name 'istoreos-rockchip-rk35xx-hinlink_opc-h6xk-squashfs-combined.img.gz' \
+            -print -quit)"
+          if [ -z "$IMAGE" ] || [ ! -s "$IMAGE" ]; then
+            echo "::error::未生成 H69K squashfs-combined.img.gz；停止发布，不能将 sysupgrade 镜像误当作 TF 卡启动镜像。"
+            exit 1
+          fi
+          gzip -t "$IMAGE"
+          echo "TF combined image gzip integrity check passed:"
+          ls -lh "$IMAGE"
+
       - name: Verify firmware artifacts
         if: success()
         working-directory: openwrt
         run: |
           set -eu
           echo "===== Firmware output ====="
-          find bin/targets/rockchip/armv8 \
+          find bin/targets/rockchip \
             -maxdepth 2 -type f \
             \( -name '*.img.gz' \
             -o -name '*sysupgrade.bin' \
@@ -231,7 +297,7 @@ jobs:
             -o -name '*.buildinfo' \) \
             -print
 
-          test -n "$(find bin/targets/rockchip/armv8 \
+          test -n "$(find bin/targets/rockchip \
             -maxdepth 2 -type f \
             \( -name '*.img.gz' -o -name '*sysupgrade.bin' \) \
             -print -quit)" || {
@@ -245,6 +311,6 @@ jobs:
         with:
           name: H69K-iStoreOS-25.12-build-output
           path: |
-            openwrt/bin/targets/rockchip/armv8/
+            openwrt/bin/targets/rockchip/
           if-no-files-found: warn
           retention-days: 7
