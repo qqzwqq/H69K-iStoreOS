@@ -1,0 +1,155 @@
+name: H69K St1 - Build Rootfs
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_version:
+        description: "ImageBuilder 版本"
+        required: true
+        default: "20261023"
+        type: choice
+        options:
+          - "20261023"
+          - "20260924"
+          - "20260911"
+          - "20260731"
+          - "20260703"
+      network_settings:
+        description: "初始网络配置"
+        required: true
+        default: "dhcp"
+        type: choice
+        options:
+          - "dhcp"
+          - "static"
+      ipaddr:
+        description: "静态管理 IP（仅选择 static 时使用）"
+        required: true
+        default: "192.168.5.88"
+      gateway:
+        description: "静态网关（仅选择 static 时使用）"
+        required: true
+        default: "192.168.5.1"
+
+env:
+  VERSION: "25.12.6"
+
+jobs:
+  build-rootfs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout H69K-iStoreOS
+        uses: actions/checkout@v4
+
+      - name: Checkout known-good ImageBuilder scripts
+        uses: actions/checkout@v4
+        with:
+          repository: qqzwqq/iStoreOS-Actions
+          ref: main
+          path: reference
+
+      - name: Check reference scripts
+        working-directory: reference
+        run: |
+          set -Eeuo pipefail
+          test -f arm64/build24.sh
+          test -f shell/download-third-party-apks.sh
+          test -f files/etc/uci-defaults/99-custom.sh
+          bash -n arm64/build24.sh
+          bash -n shell/custom-packages.sh
+          bash -n shell/prepare-packages.sh
+          bash -n shell/download-third-party-apks.sh
+          echo "参考项目脚本检查通过。"
+
+      - name: Configure IP and gateway
+        working-directory: reference
+        env:
+          NETWORK_SETTINGS: ${{ inputs.network_settings }}
+          INPUT_IP: ${{ inputs.ipaddr }}
+          INPUT_GATEWAY: ${{ inputs.gateway }}
+        run: |
+          set -Eeuo pipefail
+          CONFIG_PATH="./files/etc/uci-defaults/99-custom.sh"
+          sed -i "s/版本号/${VERSION}/g" "$CONFIG_PATH"
+          sed -i "s/版本号/${VERSION}/g" "./files/etc/banner"
+          if [ "$NETWORK_SETTINGS" = "static" ]; then
+            sed -i '34,111d' "$CONFIG_PATH"
+            sed -i "/ipaddr/s/192.168.5.88/${INPUT_IP}/g" "$CONFIG_PATH"
+            sed -i "/gateway/s/192.168.5.1/${INPUT_GATEWAY}/g" "$CONFIG_PATH"
+          else
+            sed -i '26,32d' "$CONFIG_PATH"
+          fi
+          cat "$CONFIG_PATH"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev zstd curl unzip tree jq
+
+      - name: Download ImageBuilder
+        working-directory: reference
+        env:
+          BUILD_VERSION: ${{ inputs.build_version }}
+        run: |
+          set -Eeuo pipefail
+          curl -fL --retry 3 --retry-delay 2 -o imagebuilder.tar.zst \
+            "https://github.com/Kwonelee/iStoreOS-Actions/releases/download/iStoreOS-ImageBuilder/${BUILD_VERSION}-istoreos-imagebuilder-armsr-armv8.Linux-x86_64.tar.zst"
+          tar --use-compress-program=unzstd -xf imagebuilder.tar.zst
+          IB_DIR="$(find . -maxdepth 1 -type d -name 'istoreos-imagebuilder-*' -print -quit)"
+          test -n "$IB_DIR"
+          mv "$IB_DIR" imagebuilder
+
+      - name: Prepare ImageBuilder files
+        working-directory: reference
+        run: |
+          set -Eeuo pipefail
+          chmod +x arm64/build24.sh shell/*.sh
+          cp arm64/build24.sh imagebuilder/
+          cp arm64/repositories imagebuilder/
+          cp shell/*-packages.sh imagebuilder/
+          find files/packages/ -type f -name "*.apk" -exec cp {} imagebuilder/packages/ \;
+          mkdir -p imagebuilder/files/etc/{uci-defaults,banner1}
+          cp files/etc/uci-defaults/99-custom.sh imagebuilder/files/etc/uci-defaults/
+          cp files/etc/banner imagebuilder/files/etc/banner1/
+          cp files/etc/rc.local imagebuilder/files/etc/
+          cd imagebuilder
+          sed -i 's/# CONFIG_TARGET_ROOTFS_TARGZ is not set/CONFIG_TARGET_ROOTFS_TARGZ=y/' .config
+          sed -i 's|CONFIG_TARGET_ROOTFS_SQUASHFS=.*|# CONFIG_TARGET_ROOTFS_SQUASHFS is not set|g' .config
+          sed -i 's|CONFIG_TARGET_IMAGES_GZIP=.*|# CONFIG_TARGET_IMAGES_GZIP is not set|g' .config
+          test -f build24.sh
+          test -d packages
+
+      - name: Download plugins and integrate H69K fan files
+        working-directory: reference
+        run: |
+          set -Eeuo pipefail
+          bash shell/download-third-party-apks.sh imagebuilder
+          test -x imagebuilder/files/etc/init.d/hinlinkfaninit
+          test -f imagebuilder/files/usr/sbin/hinlinkfan-daemon
+          find imagebuilder/packages -maxdepth 1 -type f \( -name '*openclash*.apk' -o -name '*mt5700*.apk' -o -name '*adguardhome*.apk' \) -printf '%f %s bytes\n' | sort
+
+      - name: Build generic Rootfs
+        working-directory: reference/imagebuilder
+        run: |
+          set -Eeuo pipefail
+          bash ./build24.sh
+          echo "===== Rootfs output ====="
+          find bin/targets/armsr/armv8 -maxdepth 1 -type f -name '*generic-rootfs.tar.gz' -ls
+          test -n "$(find bin/targets/armsr/armv8 -maxdepth 1 -type f -name '*generic-rootfs.tar.gz' -print -quit)"
+
+      - name: Upload Rootfs to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: iStoreOS-${{ env.VERSION }}-RELEASE-${{ inputs.network_settings }}
+          name: iStoreOS ${{ env.VERSION }} Rootfs (${{ inputs.network_settings }})
+          body: |
+            Stage 1: generic armsr/armv8 Rootfs for H69K image packaging.
+            Includes the selected ImageBuilder package set, MT5700, OpenClash, AdGuardHome and H69K fan overlay.
+            Default username: root. Password behavior follows the upstream ImageBuilder configuration.
+          files: reference/imagebuilder/bin/targets/armsr/armv8/*generic-rootfs.tar.gz
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
