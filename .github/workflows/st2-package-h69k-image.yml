@@ -1,0 +1,119 @@
+name: H69K St2 - Package Full Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      openwrt_kernel:
+        description: "选择内核版本"
+        required: true
+        default: "6.18.y"
+        type: choice
+        options:
+          - "6.6.y"
+          - "6.12.y"
+          - "6.18.y"
+      auto_kernel:
+        description: "自动选择匹配的最新内核"
+        required: true
+        default: true
+        type: boolean
+      kernel_usage:
+        description: "内核标签"
+        required: true
+        default: "stable"
+        type: choice
+        options:
+          - "stable"
+          - "flippy"
+          - "beta"
+      network_settings:
+        description: "选择第一步生成的 Rootfs 网络配置"
+        required: true
+        default: "dhcp"
+        type: choice
+        options:
+          - "dhcp"
+          - "static"
+
+env:
+  VERSION: "25.12.6"
+
+jobs:
+  package-h69k:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Stage 1 Rootfs
+        env:
+          NETWORK_SETTINGS: ${{ inputs.network_settings }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p bin/targets/armsr/armv8
+          ROOTFS_URL="https://github.com/${REPO}/releases/download/iStoreOS-${VERSION}-RELEASE-${NETWORK_SETTINGS}/istoreos-armsr-armv8-generic-rootfs.tar.gz"
+          echo "Downloading: ${ROOTFS_URL}"
+          curl -fL --retry 3 --retry-delay 3 "${ROOTFS_URL}" \
+            -o bin/targets/armsr/armv8/istoreos-armsr-armv8-generic-rootfs.tar.gz
+          test -s bin/targets/armsr/armv8/istoreos-armsr-armv8-generic-rootfs.tar.gz
+          tar -tzf bin/targets/armsr/armv8/istoreos-armsr-armv8-generic-rootfs.tar.gz >/dev/null
+          ls -lh bin/targets/armsr/armv8/
+
+      - name: Package H69K image
+        uses: ophub/amlogic-s9xxx-openwrt@main
+        with:
+          openwrt_path: bin/targets/armsr/armv8/istoreos-armsr-armv8-generic-rootfs.tar.gz
+          openwrt_board: h69k
+          openwrt_kernel: ${{ inputs.openwrt_kernel }}
+          auto_kernel: ${{ inputs.auto_kernel }}
+          kernel_repo: ophub/kernel
+          kernel_usage: ${{ inputs.kernel_usage }}
+          builder_name: H69K-iStoreOS
+
+      - name: Verify packaged image
+        run: |
+          set -Eeuo pipefail
+          echo "PACKAGED_OUTPUTPATH=${PACKAGED_OUTPUTPATH:-<unset>}"
+          if [ -z "${PACKAGED_OUTPUTPATH:-}" ] || [ ! -d "${PACKAGED_OUTPUTPATH}" ]; then
+            echo "::error::打包动作没有提供有效的 PACKAGED_OUTPUTPATH"
+            exit 1
+          fi
+          find "${PACKAGED_OUTPUTPATH}" -maxdepth 1 -type f -name '*.img.gz' -ls
+          test -n "$(find "${PACKAGED_OUTPUTPATH}" -maxdepth 1 -type f -name '*.img.gz' -print -quit)"
+          for f in "${PACKAGED_OUTPUTPATH}"/*.img.gz; do
+            gzip -t "$f"
+          done
+
+      - name: Rename image files
+        run: |
+          set -Eeuo pipefail
+          for FILE in "${PACKAGED_OUTPUTPATH}"/*.img.gz; do
+            [ -f "$FILE" ] || continue
+            FILENAME="$(basename "$FILE")"
+            NEW_FILENAME="${FILENAME/openwrt/istoreos_${VERSION}}"
+            if [ "$FILENAME" != "$NEW_FILENAME" ]; then
+              mv "$FILE" "${PACKAGED_OUTPUTPATH}/$NEW_FILENAME"
+            fi
+          done
+          ls -lh "${PACKAGED_OUTPUTPATH}"/*.img.gz
+          mkdir -p packaged-output
+          cp -f "${PACKAGED_OUTPUTPATH}"/*.img.gz packaged-output/
+          test -n "$(find packaged-output -maxdepth 1 -type f -name '*.img.gz' -print -quit)"
+
+      - name: Upload H69K firmware to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: iStoreOS-${{ env.VERSION }}-RELEASE-${{ inputs.network_settings }}
+          name: iStoreOS ${{ env.VERSION }} H69K (${{ inputs.network_settings }})
+          body: |
+            Stage 2: HINLINK OPC-H69K image packaged from the Stage 1 generic Rootfs.
+            Device board: h69k
+            Kernel: ${{ inputs.openwrt_kernel }} (${{ inputs.kernel_usage }})
+          files: packaged-output/*.img.gz
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
