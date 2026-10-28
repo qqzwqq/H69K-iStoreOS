@@ -273,7 +273,7 @@ jobs:
             -print
 
           IMAGE="$(find "$OUT" -maxdepth 3 -type f \
-            -name 'istoreos-rockchip-rk35xx-hinlink_opc-h6xk-squashfs-combined.img.gz' \
+            -name '*hinlink_opc-h6xk-squashfs-combined.img.gz' \
             -print -quit)"
           if [ -z "$IMAGE" ] || [ ! -s "$IMAGE" ]; then
             echo "::error::未生成 H69K squashfs-combined.img.gz；停止发布，不能将 sysupgrade 镜像误当作 TF 卡启动镜像。"
