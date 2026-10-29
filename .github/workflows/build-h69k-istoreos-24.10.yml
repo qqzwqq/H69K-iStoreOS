@@ -327,19 +327,24 @@ jobs:
           check_config CONFIG_TARGET_rockchip_armv8
           check_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
 
-          echo "===== 4. 验证自定义软件包 ====="
+          echo "===== 4. 验证 Web 管理服务 ====="
+          check_config CONFIG_PACKAGE_uhttpd
+          check_config CONFIG_PACKAGE_uhttpd-mod-ubus
+          check_config CONFIG_PACKAGE_luci
+
+          echo "===== 5. 验证自定义软件包 ====="
           check_config CONFIG_PACKAGE_luci-app-fan-h69k
           check_config CONFIG_PACKAGE_luci-app-openclash
           check_config CONFIG_PACKAGE_luci-app-mt5700
 
-          echo "===== 5. 验证 ccache 配置 ====="
+          echo "===== 6. 验证 ccache 配置 ====="
           if grep -qx 'CONFIG_CCACHE=y' .config; then
             echo "CONFIG_CCACHE=y"
           else
             echo "::warning::CONFIG_CCACHE 未保留在最终配置中"
           fi
 
-          echo "===== 6. 最终 DNS 配置 ====="
+          echo "===== 7. 最终 DNS 配置 ====="
           grep -E \
             '^(CONFIG_PACKAGE_dnsmasq(-full)?=y|# CONFIG_PACKAGE_dnsmasq(-full)? is not set)$' \
             .config || true
@@ -405,6 +410,23 @@ jobs:
           SYSUPGRADE="$OUT/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-sysupgrade.img.gz"
 
           test -s "$SYSUPGRADE"
+
+          echo "===== 检查根文件系统中的 Web 管理组件 ====="
+          ROOTFS="openwrt/build_dir/target-aarch64_generic_musl/root-rockchip"
+          test -x "$ROOTFS/usr/sbin/uhttpd" || {
+            echo "::error::根文件系统缺少可执行的 /usr/sbin/uhttpd"
+            exit 1
+          }
+          test -x "$ROOTFS/etc/init.d/uhttpd" || {
+            echo "::error::根文件系统缺少 /etc/init.d/uhttpd"
+            exit 1
+          }
+          test -e "$ROOTFS/www/cgi-bin/luci" || {
+            echo "::error::根文件系统缺少 LuCI 入口 /www/cgi-bin/luci"
+            exit 1
+          }
+          echo "uhttpd、启动脚本和 LuCI 入口均存在。"
+
           if [ ! -s "$IMAGE" ]; then
             echo "::error::没有生成 H69K TF 卡启动镜像 squashfs-combined.img.gz；停止发布，避免误把 sysupgrade 镜像当作 TF 启动镜像。"
             echo "===== rockchip/armv8 image listing ====="
