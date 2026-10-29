@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       openwrt_kernel:
-        description: "选择内核版本"
+        description: "选择内核版本（H69K 优先测试 6.6.y）"
         required: true
-        default: "6.18.y"
+        default: "6.6.y"
         type: choice
         options:
           - "6.6.y"
@@ -177,7 +177,7 @@ jobs:
             - **LAN 管理地址：** `192.168.66.1`
             - **分区布局：** Ophub 默认布局（BOOTFS 256 MiB / ROOTFS 1024 MiB）
 
-            打包后会执行 gzip 完整性检查，并额外解压镜像检查分区表、第一分区文件列表和设备树/启动配置候选。静态检查不能替代真实 H69K 硬件启动测试。
+            默认优先使用 6.6.y 内核作为 H69K 兼容性基线。打包后会检查镜像分区表、第一分区文件列表和设备树/启动配置候选；静态检查不能替代真实 H69K 硬件启动测试。
           files: packaged-output/*.img.gz
           overwrite_files: true
         env:
