@@ -358,7 +358,18 @@ jobs:
 
           export CARGO_HOME="$GITHUB_WORKSPACE/.cargo-home"
           export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
+          export CCACHE_BASEDIR="$GITHUB_WORKSPACE/openwrt"
+          export CCACHE_COMPRESS=1
+          export CCACHE_MAXSIZE=5G
+          export PATH="/usr/lib/ccache:$PATH"
 
+          echo "===== ccache executable and configuration ====="
+          command -v ccache
+          ccache --show-config | grep -E '^(cache_dir|compression|base_dir|compiler_check)' || true
+          echo "===== ccache wrappers ====="
+          ls -l /usr/lib/ccache 2>/dev/null | head -n 30 || true
+
+          export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
           export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-openwrt-linux-musl-gcc
           export CC_aarch64_unknown_linux_musl=aarch64-openwrt-linux-musl-gcc
           export AR_aarch64_unknown_linux_musl=aarch64-openwrt-linux-musl-ar
@@ -384,7 +395,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           OUT="openwrt/bin/targets/rockchip/armv8"
-          IMAGE="$OUT/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-combined.img.gz"
+          IMAGE="$OUT/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-squashfs-combined.img.gz"
           SYSUPGRADE="$OUT/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-sysupgrade.img.gz"
 
           test -s "$SYSUPGRADE"
@@ -455,6 +466,6 @@ jobs:
           files: |
             openwrt/bin/targets/rockchip/armv8/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-sysupgrade.img.gz
             openwrt/bin/targets/rockchip/armv8/istoreos-rockchip-armv8-hinlink_opc-h6xk-ext4-sysupgrade.img.gz
-            openwrt/bin/targets/rockchip/armv8/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-combined.img.gz
+            openwrt/bin/targets/rockchip/armv8/istoreos-rockchip-armv8-hinlink_opc-h6xk-squashfs-squashfs-combined.img.gz
             openwrt/bin/targets/rockchip/armv8/sha256sums
           fail_on_unmatched_files: true
