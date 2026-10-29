@@ -71,49 +71,6 @@ jobs:
           echo "===== Confirm H69K device definition ====="
           grep -R -n -E 'hinlink_opc-h6xk|hinlink,opc-h69k' openwrt/target/linux/rockchip
 
-      - name: "06.1 - Add H69K TF combined boot image"
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          cd openwrt
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("target/linux/rockchip/image/legacy.mk")
-          text = path.read_text()
-          marker = "define Device/hinlink_opc-h6xk\n"
-          if text.count(marker) != 1:
-              raise SystemExit("未能唯一定位 H69K 设备定义，停止修改")
-
-          start = text.index(marker)
-          end = text.find("\nendef", start)
-          if end < 0:
-              raise SystemExit("H69K 设备定义缺少 endef，停止修改")
-
-          block = text[start:end]
-          recipe = "  IMAGE/squashfs-combined.img.gz = boot-common-legacy | boot-script-legacy rk3568-hinlink | pine64-img | gzip"
-          if recipe not in block:
-              needle = "  BOOT_SCRIPT := rk3568-hinlink"
-              if block.count(needle) != 1:
-                  raise SystemExit("未能唯一定位 H69K BOOT_SCRIPT，停止修改")
-              replacement = needle + "\n" + \
-                  "  IMAGES += squashfs-combined.img.gz\n" + \
-                  recipe
-              block = block.replace(needle, replacement, 1)
-              text = text[:start] + block + text[end:]
-              path.write_text(text)
-              print("已添加 H69K TF combined 镜像规则")
-          else:
-              print("H69K TF combined 镜像规则已存在")
-
-          updated = path.read_text()
-          start = updated.index(marker)
-          end = updated.find("\nendef", start)
-          if recipe not in updated[start:end]:
-              raise SystemExit("H69K TF combined 镜像规则验证失败")
-          print("H69K TF combined 镜像规则验证通过")
-          PY
-
       - name: "07 - Restore source download cache"
         uses: actions/cache@v4
         with:
@@ -196,32 +153,44 @@ jobs:
             cargo-${{ runner.os }}-${{ env.REPO_BRANCH }}-${{ hashFiles('openwrt/package/luci-app-mt5700/src/rust/Cargo.toml', 'openwrt/package/luci-app-mt5700/src/rust/Cargo.lock') }}-
             cargo-${{ runner.os }}-${{ env.REPO_BRANCH }}-
 
-      - name: "14 - Load H69K configuration"
+      - name: "14 - Use official default image configuration"
         shell: bash
         run: |
           set -Eeuo pipefail
           cd openwrt
-          config="$GITHUB_WORKSPACE/rk35xx/h69k-25.12.config"
-          test -s "$config" || { echo "::error::H69K 25.12 config file is missing"; exit 1; }
-          cp "$config" .config
+
+          # Start from the upstream iStoreOS defaults; select only the H69K device
+          # and the requested extra packages. Do not import the previous custom
+          # .config, override partition sizes, or add a custom image recipe.
+          make defconfig
           cat >> .config <<'EOF'
 
+          CONFIG_TARGET_rockchip=y
+          CONFIG_TARGET_rockchip_armv8=y
+          CONFIG_TARGET_MULTI_PROFILE=y
+          CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y
+
+          CONFIG_PACKAGE_luci-app-fan-h69k=y
           CONFIG_PACKAGE_luci-app-mt5700=y
           CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y
           CONFIG_PACKAGE_luci-app-openclash=y
+          CONFIG_PACKAGE_luci-app-adguardhome=y
+          CONFIG_PACKAGE_adguardhome=y
+          CONFIG_PACKAGE_docker=y
+          CONFIG_PACKAGE_dockerd=y
+          CONFIG_PACKAGE_kmod-hwmon-pwmfan=y
+          CONFIG_PACKAGE_kmod-thermal=y
           CONFIG_CCACHE=y
-          CONFIG_TARGET_KERNEL_PARTSIZE=64
-          CONFIG_TARGET_ROOTFS_PARTSIZE=1024
           EOF
-          echo "===== Initial target and package selections ====="
+          echo "===== Target, requested packages, and upstream partition defaults ====="
           grep -E '^(CONFIG_TARGET_(rockchip|rockchip_armv8|MULTI_PROFILE|DEVICE_.*hinlink_opc-h6xk)|CONFIG_PACKAGE_(luci-app-fan-h69k|luci-app-mt5700|luci-i18n-mt5700-zh-cn|luci-app-openclash|luci-app-adguardhome|docker|dockerd|adguardhome)|CONFIG_TARGET_(KERNEL|ROOTFS)_PARTSIZE|CONFIG_CCACHE)=' .config || true
 
-      - name: "15 - Resolve and verify final configuration"
+      - name: "15 - Resolve and verify configuration"
         shell: bash
         run: |
           set -Eeuo pipefail
           cd openwrt
-          echo "===== Run make defconfig ====="
+          echo "===== Resolve configuration with upstream defaults ====="
           make defconfig
 
           check_config() {
@@ -237,7 +206,7 @@ jobs:
           check_config CONFIG_TARGET_rockchip_armv8
           check_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
 
-          echo "===== Verify custom packages ====="
+          echo "===== Verify requested extra packages ====="
           check_config CONFIG_PACKAGE_luci-app-fan-h69k
           check_config CONFIG_PACKAGE_luci-app-mt5700
           check_config CONFIG_PACKAGE_luci-app-openclash
@@ -245,21 +214,15 @@ jobs:
           check_config CONFIG_PACKAGE_docker
           check_config CONFIG_PACKAGE_dockerd
 
-          echo "===== Verify partition sizing ====="
+          echo "===== Report partition settings; do not force custom sizes ====="
           grep -E '^CONFIG_TARGET_(KERNEL|ROOTFS)_PARTSIZE=' .config || true
-          grep -qx 'CONFIG_TARGET_KERNEL_PARTSIZE=64' .config || {
-            echo "::error::Kernel partition size did not resolve to 64 MiB"; exit 1;
-          }
-          grep -qx 'CONFIG_TARGET_ROOTFS_PARTSIZE=1024' .config || {
-            echo "::error::Root filesystem partition size did not resolve to 1024 MiB"; exit 1;
-          }
 
           echo "===== Check dnsmasq mutual exclusion ====="
           if grep -qx 'CONFIG_PACKAGE_dnsmasq=y' .config && grep -qx 'CONFIG_PACKAGE_dnsmasq-full=y' .config; then
             echo "::error::dnsmasq and dnsmasq-full are both enabled"; exit 1
           fi
 
-          echo "===== Final selected packages ====="
+          echo "===== Final selected packages and partition settings ====="
           grep -E '^(CONFIG_PACKAGE_(luci-app-fan-h69k|luci-app-mt5700|luci-i18n-mt5700-zh-cn|luci-app-openclash|luci-app-adguardhome|docker|dockerd|adguardhome)|CONFIG_TARGET_(KERNEL|ROOTFS)_PARTSIZE)=' .config || true
           echo "Configuration checks passed."
 
