@@ -130,9 +130,9 @@ jobs:
             if sudo mount -o ro "$BOOT_PART" "$MOUNT_DIR"; then
               sudo find "$MOUNT_DIR" -maxdepth 5 -type f -printf '%P (%s bytes)\n' | sort | head -n 300
               echo "===== H69K / RK3568 设备树候选 ====="
-              find "$MOUNT_DIR" -type f \( -iname '*h69k*.dtb' -o -iname '*hlink*69k*.dtb' -o -iname 'rk3568*.dtb' \) -print
+              sudo find "$MOUNT_DIR" -type f \( -iname '*h69k*.dtb' -o -iname '*hlink*69k*.dtb' -o -iname 'rk3568*.dtb' \) -print
               echo "===== 启动配置候选 ====="
-              find "$MOUNT_DIR" -type f \( -iname 'boot.scr' -o -iname 'extlinux.conf' -o -iname 'armbianEnv.txt' -o -iname 'uEnv.txt' \) -print
+              sudo find "$MOUNT_DIR" -type f \( -iname 'boot.scr' -o -iname 'extlinux.conf' -o -iname 'armbianEnv.txt' -o -iname 'uEnv.txt' \) -print
               sudo umount "$MOUNT_DIR"
             else
               echo "::warning::第一分区未能以只读方式挂载；请结合上方分区表检查文件系统类型。"
