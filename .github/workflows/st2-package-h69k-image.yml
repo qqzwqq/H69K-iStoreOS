@@ -72,6 +72,10 @@ jobs:
           auto_kernel: ${{ inputs.auto_kernel }}
           kernel_repo: ophub/kernel
           kernel_usage: ${{ inputs.kernel_usage }}
+          # 使用 Ophub 打包器的默认分区布局：BOOTFS 256 MiB / ROOTFS 1024 MiB。
+          openwrt_size: 256/1024
+          # 保留 ST1 中设置的管理网段；不要让打包器回退到默认 192.168.1.1。
+          openwrt_ip: 192.168.66.1
           builder_name: H69K-iStoreOS
 
       - name: Verify packaged image
@@ -121,6 +125,7 @@ jobs:
             - **底包来源：** 第一阶段生成的通用 Rootfs
             - **网络模式：** ${{ inputs.network_settings == 'dhcp' && 'DHCP 自动获取地址' || '静态 IP' }}
             - **LAN 管理地址：** `192.168.66.1`
+            - **分区布局：** Ophub 默认布局（BOOTFS 256 MiB / ROOTFS 1024 MiB）
 
             本工作流会自动下载第一阶段生成的 Rootfs，使用所选内核进行固件打包，检查最终生成的 `.img.gz` 镜像文件，并将固件发布到 GitHub Releases，供后续下载和测试。
           files: packaged-output/*.img.gz
