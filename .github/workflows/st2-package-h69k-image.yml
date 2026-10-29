@@ -128,7 +128,7 @@ jobs:
           BOOT_PART="${LOOP}p1"
           if [ -b "$BOOT_PART" ]; then
             if sudo mount -o ro "$BOOT_PART" "$MOUNT_DIR"; then
-              find "$MOUNT_DIR" -maxdepth 5 -type f -printf '%P (%s bytes)\n' | sort | head -n 300
+              sudo find "$MOUNT_DIR" -maxdepth 5 -type f -printf '%P (%s bytes)\n' | sort | head -n 300
               echo "===== H69K / RK3568 设备树候选 ====="
               find "$MOUNT_DIR" -type f \( -iname '*h69k*.dtb' -o -iname '*hlink*69k*.dtb' -o -iname 'rk3568*.dtb' \) -print
               echo "===== 启动配置候选 ====="
