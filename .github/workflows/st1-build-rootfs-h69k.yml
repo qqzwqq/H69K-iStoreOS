@@ -131,7 +131,15 @@ jobs:
           bash shell/download-third-party-apks.sh imagebuilder
           test -x imagebuilder/files/etc/init.d/hinlinkfaninit
           test -f imagebuilder/files/usr/sbin/hinlinkfan-daemon
-          find imagebuilder/packages -maxdepth 1 -type f \( -name '*openclash*.apk' -o -name '*mt5700*.apk' -o -name '*adguardhome*.apk' \) -printf '%f %s bytes\n' | sort
+          echo "===== 第三方插件包检查 ====="
+          find imagebuilder/packages -maxdepth 1 -type f \( -iname '*openclash*.apk' -o -iname '*mt5700*.apk' -o -iname '*adguardhome*.apk' \) -printf '%f %s bytes\n' | sort
+          for pattern in '*openclash*.apk' '*mt5700*.apk' '*adguardhome*.apk'; do
+            if ! find imagebuilder/packages -maxdepth 1 -type f -iname "$pattern" -print -quit | grep -q .; then
+              echo "::error::缺少插件安装包：$pattern"
+              exit 1
+            fi
+          done
+          echo "OpenClash、MT5700、AdGuardHome 安装包均已准备。"
 
       - name: Build generic Rootfs
         working-directory: reference/imagebuilder
