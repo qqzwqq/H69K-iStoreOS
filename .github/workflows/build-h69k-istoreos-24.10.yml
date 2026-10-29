@@ -361,6 +361,7 @@ jobs:
           export CCACHE_BASEDIR="$GITHUB_WORKSPACE/openwrt"
           export CCACHE_COMPRESS=1
           export CCACHE_MAXSIZE=5G
+          export CCACHE_COMPILERCHECK=content
           export PATH="/usr/lib/ccache:$PATH"
 
           echo "===== ccache executable and configuration ====="
@@ -378,11 +379,16 @@ jobs:
           ccache -s | tee -a "$LOG"
           ccache -z
 
+          JOBS="$(nproc)"
+          echo "===== Build parallelism ====="
+          echo "Detected CPU cores: $JOBS"
+          echo "Using make -j$JOBS"
+
           echo "===== Downloading sources ====="
-          make download -j2 2>&1 | tee -a "$LOG"
+          make download -j"$JOBS" 2>&1 | tee -a "$LOG"
 
           echo "===== Starting firmware compilation ====="
-          make -j2 V=s 2>&1 | tee -a "$LOG"
+          make -j"$JOBS" V=s 2>&1 | tee -a "$LOG"
 
           echo "===== ccache status after build ====="
           ccache -s | tee -a "$LOG"
