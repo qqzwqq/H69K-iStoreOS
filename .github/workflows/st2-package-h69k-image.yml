@@ -72,9 +72,9 @@ jobs:
           auto_kernel: ${{ inputs.auto_kernel }}
           kernel_repo: ophub/kernel
           kernel_usage: ${{ inputs.kernel_usage }}
-          # 使用 Ophub 打包器的默认分区布局：BOOTFS 256 MiB / ROOTFS 1024 MiB。
+          # Ophub 镜像分区大小：BOOTFS 256 MiB / ROOTFS 1024 MiB。
           openwrt_size: 256/1024
-          # 保留 ST1 中设置的管理网段；不要让打包器回退到默认 192.168.1.1。
+          # 保留 ST1 中设置的管理网段。
           openwrt_ip: 192.168.66.1
           builder_name: H69K-iStoreOS
 
@@ -91,6 +91,56 @@ jobs:
           for f in "${PACKAGED_OUTPUTPATH}"/*.img.gz; do
             gzip -t "$f"
           done
+
+      # 额外检查镜像的实际分区和启动文件。仅做只读检查，不改写镜像内容。
+      - name: Inspect H69K image layout and boot files
+        run: |
+          set -Eeuo pipefail
+          sudo apt-get update
+          sudo apt-get install -y fdisk util-linux e2fsprogs
+          IMAGE_GZ="$(find "${PACKAGED_OUTPUTPATH}" -maxdepth 1 -type f -name '*.img.gz' -print -quit)"
+          test -n "$IMAGE_GZ"
+          RAW_IMAGE="$RUNNER_TEMP/h69k-inspect.img"
+          LOOP=""
+          MOUNT_DIR="$RUNNER_TEMP/h69k-boot-inspect"
+          cleanup() {
+            if mountpoint -q "$MOUNT_DIR"; then sudo umount "$MOUNT_DIR" || true; fi
+            if [ -n "$LOOP" ]; then sudo losetup -d "$LOOP" || true; fi
+            rm -f "$RAW_IMAGE"
+          }
+          trap cleanup EXIT
+
+          echo "===== 压缩镜像大小 / SHA256 ====="
+          ls -lh "$IMAGE_GZ"
+          sha256sum "$IMAGE_GZ"
+
+          echo "===== 解压镜像并读取分区表 ====="
+          gzip -dc "$IMAGE_GZ" > "$RAW_IMAGE"
+          sudo fdisk -l "$RAW_IMAGE"
+
+          echo "===== 分区设备识别 ====="
+          LOOP="$(sudo losetup --find --show --partscan "$RAW_IMAGE")"
+          sudo udevadm settle
+          sudo lsblk -o NAME,SIZE,FSTYPE,LABEL,PARTLABEL,PARTUUID "$LOOP"
+
+          echo "===== 检查第一分区中的启动文件 ====="
+          mkdir -p "$MOUNT_DIR"
+          BOOT_PART="${LOOP}p1"
+          if [ -b "$BOOT_PART" ]; then
+            if sudo mount -o ro "$BOOT_PART" "$MOUNT_DIR"; then
+              find "$MOUNT_DIR" -maxdepth 5 -type f -printf '%P (%s bytes)\n' | sort | head -n 300
+              echo "===== H69K / RK3568 设备树候选 ====="
+              find "$MOUNT_DIR" -type f \( -iname '*h69k*.dtb' -o -iname '*hlink*69k*.dtb' -o -iname 'rk3568*.dtb' \) -print
+              echo "===== 启动配置候选 ====="
+              find "$MOUNT_DIR" -type f \( -iname 'boot.scr' -o -iname 'extlinux.conf' -o -iname 'armbianEnv.txt' -o -iname 'uEnv.txt' \) -print
+              sudo umount "$MOUNT_DIR"
+            else
+              echo "::warning::第一分区未能以只读方式挂载；请结合上方分区表检查文件系统类型。"
+            fi
+          else
+            echo "::warning::未找到常见的第一分区设备名 ${BOOT_PART}，请检查上方 lsblk 输出。"
+          fi
+          echo "===== 镜像结构检查结束（本步骤不代表已通过真实硬件启动测试）====="
 
       - name: Rename image files
         run: |
@@ -127,7 +177,7 @@ jobs:
             - **LAN 管理地址：** `192.168.66.1`
             - **分区布局：** Ophub 默认布局（BOOTFS 256 MiB / ROOTFS 1024 MiB）
 
-            本工作流会自动下载第一阶段生成的 Rootfs，使用所选内核进行固件打包，检查最终生成的 `.img.gz` 镜像文件，并将固件发布到 GitHub Releases，供后续下载和测试。
+            打包后会执行 gzip 完整性检查，并额外解压镜像检查分区表、第一分区文件列表和设备树/启动配置候选。静态检查不能替代真实 H69K 硬件启动测试。
           files: packaged-output/*.img.gz
           overwrite_files: true
         env:
