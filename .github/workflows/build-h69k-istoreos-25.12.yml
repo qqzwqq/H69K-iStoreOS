@@ -332,7 +332,7 @@ jobs:
             grep '^go ' "$AGH_DIR/go.mod"
             exit 1
           }
-          grep -Eq '^[[:space:]]+github.com/google/go-cmp v0.7.0
+          grep -Eq '^[[:space:]]+github.com/google/go-cmp v0.7.0$' "$AGH_DIR/go.mod" || {
             echo "::error::Unexpected google/go-cmp version in upstream go.mod"
             grep 'github.com/google/go-cmp' "$AGH_DIR/go.mod" || true
             exit 1
