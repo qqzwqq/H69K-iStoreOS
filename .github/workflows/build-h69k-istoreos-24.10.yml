@@ -51,7 +51,7 @@ jobs:
           python3 -m pip install --user pyelftools
 
           ccache --version
-          ccache -M 5G
+          ccache -M 10G
           mkdir -p "$CCACHE_DIR" "$CARGO_HOME"
 
       # 4. 安装 Rust 与 ARM64 musl 标准库
@@ -442,7 +442,7 @@ jobs:
           export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
           export CCACHE_BASEDIR="$GITHUB_WORKSPACE/openwrt"
           export CCACHE_COMPRESS=1
-          export CCACHE_MAXSIZE=5G
+          export CCACHE_MAXSIZE=10G
           export CCACHE_COMPILERCHECK=content
           export PATH="/usr/lib/ccache:$PATH"
 
@@ -460,6 +460,15 @@ jobs:
           echo "===== ccache status before build ====="
           ccache -s | tee -a "$LOG"
           ccache -z
+
+          # 无论编译成功或失败，退出时都输出本次编译的 ccache 命中统计
+          report_ccache() {
+            rc=$?
+            echo "===== ccache final statistics (exit code: $rc) =====" | tee -a "$LOG"
+            ccache -s 2>&1 | tee -a "$LOG" || true
+            return "$rc"
+          }
+          trap report_ccache EXIT
 
           JOBS="$(nproc)"
           echo "===== Build parallelism ====="
