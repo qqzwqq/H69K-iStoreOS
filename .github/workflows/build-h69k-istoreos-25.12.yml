@@ -49,9 +49,26 @@ jobs:
           df -h
 
       - name: "04 - Install Rust toolchain for MT5700"
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-unknown-linux-musl
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          echo "===== Download official rustup installer ====="
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup-init.sh
+          test -s rustup-init.sh
+
+          echo "===== Install Rust stable non-interactively ====="
+          sh rustup-init.sh -y --profile minimal --default-toolchain stable
+          rm -f rustup-init.sh
+
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          source "$HOME/.cargo/env"
+
+          echo "===== Verify Rust installation ====="
+          rustc --version
+          cargo --version
+          rustup target add aarch64-unknown-linux-musl
+          rustup target list --installed | grep -qx 'aarch64-unknown-linux-musl'
 
       - name: "05 - Verify Rust toolchain"
         shell: bash
