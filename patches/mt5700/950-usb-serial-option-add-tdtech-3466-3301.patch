@@ -1,0 +1,8 @@
+--- a/drivers/usb/serial/option.c
++++ b/drivers/usb/serial/option.c
+@@
+ 	{ USB_DEVICE_AND_INTERFACE_INFO(0x33f8, 0x9300, 0xff, 0xff, 0x40) },
+ 	{ USB_DEVICE_AND_INTERFACE_INFO(0x33f8, 0x9300, 0xff, 0xff, 0x10),
+ 	  .driver_info = ZLP },
++	{ USB_DEVICE_INTERFACE_CLASS(0x3466, 0x3301, 0xff) },		/* TDTECH MT5710-CN / MT5700M-CN */
+ 	{ USB_DEVICE_AND_INTERFACE_INFO(0x3731, 0x0100, 0xff, 0xff, 0x30) },	/* NetPrisma LCUK54-WWD for Global */
