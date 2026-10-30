@@ -358,9 +358,32 @@ jobs:
             exit 1
           }
 
-          GO_BIN="$PWD/staging_dir/hostpkg/lib/go-1.26/bin/go"
-          test -x "$GO_BIN" || { echo "::error::OpenWrt host Go compiler not found"; exit 1; }
+          echo "===== Locate the Go compiler installed by the OpenWrt host package ====="
+          GO_BIN=""
+          # OpenWrt's golang-package.mk adds:
+          #   $(STAGING_DIR_HOSTPKG)/lib/go-$(GO_HOST_VERSION)/bin
+          # Do not hard-code a shortened Go version (for example go-1.26).
+          for candidate in staging_dir/hostpkg/lib/go-*/bin/go \
+                           staging_dir/hostpkg/bin/go \
+                           staging_dir/host/bin/go; do
+            if [ -x "$candidate" ]; then
+              GO_BIN="$PWD/$candidate"
+              break
+            fi
+          done
+          if [ -z "$GO_BIN" ]; then
+            echo "===== Go compiler candidates under staging_dir ====="
+            find staging_dir -path '*/bin/go' -print 2>/dev/null || true
+            echo "::error::OpenWrt host Go compiler was not found after toolchain/install"
+            exit 1
+          fi
+
+          echo "Using Go compiler: $GO_BIN"
           "$GO_BIN" version
+          "$GO_BIN" version | grep -q 'go1.26.6' || {
+            echo "::error::Expected OpenWrt host Go 1.26.6 for AdGuardHome"
+            exit 1
+          }
 
           echo "===== Fetch and validate google/go-cmp in isolated cache ====="
           TARGET_BUILD_DIR="$(find build_dir -maxdepth 1 -type d -name 'target-*' -print -quit)"
