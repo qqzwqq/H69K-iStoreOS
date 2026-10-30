@@ -384,11 +384,22 @@ jobs:
           fi
 
           echo "Using Go compiler: $GO_BIN"
-          "$GO_BIN" version
-          "$GO_BIN" version | grep -q 'go1.26.6' || {
-            echo "::error::Expected OpenWrt host Go 1.26.6 for AdGuardHome"
+          GO_VERSION_OUTPUT="$("$GO_BIN" version)"
+          echo "$GO_VERSION_OUTPUT"
+          GO_VERSION="$(printf '%s\\n' "$GO_VERSION_OUTPUT" | sed -nE 's/.* go([0-9]+\\.[0-9]+\\.[0-9]+).*/\\1/p')"
+          if [ -z "$GO_VERSION" ]; then
+            echo "::error::Cannot parse OpenWrt host Go version: $GO_VERSION_OUTPUT"
             exit 1
-          }
+          fi
+          IFS=. read -r GO_MAJOR GO_MINOR GO_PATCH <<< "$GO_VERSION"
+          echo "Detected OpenWrt host Go version: $GO_VERSION"
+          # AdGuardHome's go.mod requires Go 1.26.6; newer patch releases
+          # (for example the upstream feed's Go 1.26.9) are compatible.
+          if (( GO_MAJOR < 1 || (GO_MAJOR == 1 && GO_MINOR < 26) || \
+                (GO_MAJOR == 1 && GO_MINOR == 26 && GO_PATCH < 6) )); then
+            echo "::error::AdGuardHome requires Go >= 1.26.6; found $GO_VERSION"
+            exit 1
+          fi
 
           echo "===== Fetch and validate google/go-cmp in isolated cache ====="
           TARGET_BUILD_DIR="$(find build_dir -maxdepth 1 -type d -name 'target-*' -print -quit)"
