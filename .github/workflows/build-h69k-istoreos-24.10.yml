@@ -202,9 +202,18 @@ jobs:
           # 明确安装 Quickstart 和 LuCI 前端；若源码 feed 中缺少包则立即失败
           ./scripts/feeds install -p nas_packages quickstart
           ./scripts/feeds install -p nas_luci luci-app-quickstart
+          ./scripts/feeds install -p nas_luci luci-app-diskman
+          ./scripts/feeds install -p nas_luci luci-i18n-diskman-zh-cn
 
           test -s package/feeds/nas_packages/quickstart/Makefile -o -s package/feeds/nas_packages/net/quickstart/Makefile
           test -s package/feeds/nas_luci/luci-app-quickstart/Makefile -o -s package/feeds/nas_luci/luci/luci-app-quickstart/Makefile
+
+          echo "===== Verify DiskMan package sources ====="
+          DISKMAN_MAKEFILE="$(find package/feeds/nas_luci -type f -path '*/luci-app-diskman/Makefile' -print -quit)"
+          DISKMAN_I18N_MAKEFILE="$(find package/feeds/nas_luci -type f -path '*/luci-i18n-diskman-zh-cn/Makefile' -print -quit)"
+          test -n "$DISKMAN_MAKEFILE" || { echo "::error::nas_luci feed does not contain luci-app-diskman"; exit 1; }
+          test -n "$DISKMAN_I18N_MAKEFILE" || { echo "::error::nas_luci feed does not contain luci-i18n-diskman-zh-cn"; exit 1; }
+          echo "DiskMan and Simplified Chinese translation sources are present."
 
       # 9. 准备自定义软件包
       - name: Prepare H69K custom packages
@@ -395,6 +404,12 @@ jobs:
           check_config CONFIG_PACKAGE_smartmontools
           check_config CONFIG_PACKAGE_lsblk
           check_config CONFIG_PACKAGE_parted
+          check_config CONFIG_PACKAGE_luci-app-diskman
+          check_config CONFIG_PACKAGE_luci-i18n-diskman-zh-cn
+          check_config CONFIG_PACKAGE_luci-compat
+          check_config CONFIG_PACKAGE_swap-utils
+          check_config CONFIG_PACKAGE_blkid
+          check_config CONFIG_PACKAGE_e2fsprogs
 
           echo "===== 验证 SFTP 和文件管理组件 ====="
           check_config CONFIG_PACKAGE_openssh-sftp-server
