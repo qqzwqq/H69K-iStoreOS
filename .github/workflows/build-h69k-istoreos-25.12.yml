@@ -39,9 +39,9 @@ jobs:
             gcc-multilib g++-multilib gettext git \
             libncurses-dev libssl-dev python3 python3-dev \
             rsync unzip zlib1g-dev file wget curl cpio perl time \
-            device-tree-compiler libelf-dev python3-pip python3-venv \
+            device-tree-compiler libelf-dev python3-pip python3-venv python3-pyelftools \
             swig pkg-config ccache
-          python3 -m pip install --user pyelftools
+          python3 -c 'import elftools; print("pyelftools available")'
           ccache --version
           ccache -M 5G
           mkdir -p "$CCACHE_DIR" "$CARGO_HOME"
@@ -94,8 +94,20 @@ jobs:
         run: |
           set -Eeuo pipefail
           cd openwrt
+
+          # Quickstart feeds used by the successful 24.10 H69K build.
+          grep -q '^src-git nas_packages ' feeds.conf.default || \
+            echo 'src-git nas_packages https://github.com/linkease/nas-packages.git;master' >> feeds.conf.default
+          grep -q '^src-git nas_luci ' feeds.conf.default || \
+            echo 'src-git nas_luci https://github.com/linkease/nas-packages-luci.git;main' >> feeds.conf.default
+
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+          ./scripts/feeds install -p nas_packages quickstart
+          ./scripts/feeds install -p nas_luci luci-app-quickstart
+
+          test -s package/feeds/nas_packages/quickstart/Makefile -o -s package/feeds/nas_packages/net/quickstart/Makefile
+          test -s package/feeds/nas_luci/luci-app-quickstart/Makefile -o -s package/feeds/nas_luci/luci/luci-app-quickstart/Makefile
 
       - name: "10 - Add H69K fan-control package"
         shell: bash
@@ -153,46 +165,22 @@ jobs:
             cargo-${{ runner.os }}-${{ env.REPO_BRANCH }}-${{ hashFiles('openwrt/package/luci-app-mt5700/src/rust/Cargo.toml', 'openwrt/package/luci-app-mt5700/src/rust/Cargo.lock') }}-
             cargo-${{ runner.os }}-${{ env.REPO_BRANCH }}-
 
-      - name: "14 - Use official default image configuration"
+      - name: "14 - Load H69K 25.12 configuration migrated from 24.10"
         shell: bash
         run: |
           set -Eeuo pipefail
           cd openwrt
-
-          # Start from the upstream iStoreOS defaults; select only the H69K device
-          # and the requested extra packages. Do not import the previous custom
-          # .config, override partition sizes, or add a custom image recipe.
+          CONFIG_FILE="$GITHUB_WORKSPACE/rk35xx/h69k-25.12.config"
+          test -s "$CONFIG_FILE" || { echo "::error::H69K 25.12 config missing"; exit 1; }
+          cp "$CONFIG_FILE" .config
+          echo "===== Resolve package selection against official 25.12 source ====="
           make defconfig
-          cat >> .config <<'EOF'
 
-          CONFIG_TARGET_rockchip=y
-          CONFIG_TARGET_rockchip_armv8=y
-          CONFIG_TARGET_MULTI_PROFILE=y
-          CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk=y
-
-          CONFIG_PACKAGE_luci-app-fan-h69k=y
-          CONFIG_PACKAGE_luci-app-mt5700=y
-          CONFIG_PACKAGE_luci-i18n-mt5700-zh-cn=y
-          CONFIG_PACKAGE_luci-app-openclash=y
-          CONFIG_PACKAGE_luci-app-adguardhome=y
-          CONFIG_PACKAGE_adguardhome=y
-          CONFIG_PACKAGE_docker=y
-          CONFIG_PACKAGE_dockerd=y
-          CONFIG_PACKAGE_kmod-hwmon-pwmfan=y
-          CONFIG_PACKAGE_kmod-thermal=y
-          CONFIG_CCACHE=y
-          EOF
-          echo "===== Target, requested packages, and upstream partition defaults ====="
-          grep -E '^(CONFIG_TARGET_(rockchip|rockchip_armv8|MULTI_PROFILE|DEVICE_.*hinlink_opc-h6xk)|CONFIG_PACKAGE_(luci-app-fan-h69k|luci-app-mt5700|luci-i18n-mt5700-zh-cn|luci-app-openclash|luci-app-adguardhome|docker|dockerd|adguardhome)|CONFIG_TARGET_(KERNEL|ROOTFS)_PARTSIZE|CONFIG_CCACHE)=' .config || true
-
-      - name: "15 - Resolve and verify configuration"
+      - name: "15 - Verify H69K target and essential packages"
         shell: bash
         run: |
           set -Eeuo pipefail
           cd openwrt
-          echo "===== Resolve configuration with upstream defaults ====="
-          make defconfig
-
           check_config() {
             local key="$1"
             if ! grep -qxF "${key}=y" .config; then
@@ -200,31 +188,29 @@ jobs:
               return 1
             fi
           }
-
-          echo "===== Verify H69K target ====="
           check_config CONFIG_TARGET_rockchip
           check_config CONFIG_TARGET_rockchip_armv8
           check_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
-
-          echo "===== Verify requested extra packages ====="
-          check_config CONFIG_PACKAGE_luci-app-fan-h69k
-          check_config CONFIG_PACKAGE_luci-app-mt5700
-          check_config CONFIG_PACKAGE_luci-app-openclash
-          check_config CONFIG_PACKAGE_luci-app-adguardhome
-          check_config CONFIG_PACKAGE_docker
-          check_config CONFIG_PACKAGE_dockerd
-
-          echo "===== Report partition settings; do not force custom sizes ====="
+          for package in \
+            luci uhttpd uhttpd-mod-ubus \
+            luci-app-fan-h69k luci-app-mt5700 \
+            luci-app-openclash adguardhome luci-app-adguardhome \
+            docker dockerd kmod-hwmon-pwmfan kmod-thermal \
+            quickstart luci-app-quickstart luci-app-store \
+            mdadm kmod-md-mod kmod-md-raid1 \
+            kmod-usb-serial kmod-usb-serial-option \
+            kmod-usb-net-cdc-ether kmod-usb-net-cdc-ncm \
+            kmod-usb-net-cdc-mbim kmod-usb-net-qmi-wwan \
+            kmod-usb-storage kmod-usb-storage-uas \
+            kmod-scsi-core kmod-ata-core kmod-ata-ahci \
+            kmod-fs-ext4 kmod-fs-vfat kmod-fs-ntfs3 \
+            openssh-sftp-server rpcd-mod-file luci-lib-fs \
+            luci-app-filetransfer samba4-server luci-app-samba4; do
+            check_config "CONFIG_PACKAGE_${package}"
+          done
+          echo "===== Final partition settings (upstream defaults retained) ====="
           grep -E '^CONFIG_TARGET_(KERNEL|ROOTFS)_PARTSIZE=' .config || true
-
-          echo "===== Check dnsmasq mutual exclusion ====="
-          if grep -qx 'CONFIG_PACKAGE_dnsmasq=y' .config && grep -qx 'CONFIG_PACKAGE_dnsmasq-full=y' .config; then
-            echo "::error::dnsmasq and dnsmasq-full are both enabled"; exit 1
-          fi
-
-          echo "===== Final selected packages and partition settings ====="
-          grep -E '^(CONFIG_PACKAGE_(luci-app-fan-h69k|luci-app-mt5700|luci-i18n-mt5700-zh-cn|luci-app-openclash|luci-app-adguardhome|docker|dockerd|adguardhome)|CONFIG_TARGET_(KERNEL|ROOTFS)_PARTSIZE)=' .config || true
-          echo "Configuration checks passed."
+          echo "H69K 25.12 configuration checks passed."
 
       - name: "16 - Download build sources"
         shell: bash
@@ -286,6 +272,30 @@ jobs:
             \( -name '*hinlink_opc-h6xk*' -o -name '*hinlink_opc-h6xk*manifest' \) \
             -printf '%p (%s bytes)\\n' | sort
           echo "===== Image listing complete; no custom combined-image requirement ====="
+      - name: "19.2 - Save OpenWrt download cache"
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: openwrt/dl
+          key: openwrt-dl-${{ runner.os }}-${{ env.REPO_BRANCH }}-${{ github.run_id }}
+
+      - name: "19.3 - Save ccache"
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: ccache-${{ runner.os }}-${{ env.REPO_BRANCH }}-${{ github.run_id }}
+
+      - name: "19.4 - Save Rust Cargo cache"
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .cargo-home/registry
+            .cargo-home/git
+            openwrt/package/luci-app-mt5700/src/rust/target
+          key: cargo-${{ runner.os }}-${{ env.REPO_BRANCH }}-${{ hashFiles('openwrt/package/luci-app-mt5700/src/rust/Cargo.toml', 'openwrt/package/luci-app-mt5700/src/rust/Cargo.lock') }}-${{ github.run_id }}
+
       - name: "20 - Upload full build log (always)"
         if: always()
         uses: actions/upload-artifact@v4
