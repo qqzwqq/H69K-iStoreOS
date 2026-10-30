@@ -97,7 +97,7 @@ jobs:
           test -s "$PATCH_FILE" || { echo "::error::MT5700 option-driver patch is missing"; exit 1; }
           KERNEL_PATCH_DIR="target/linux/generic/hack-6.12"
           mkdir -p "$KERNEL_PATCH_DIR"
-          if grep -RqsE 'USB_DEVICE_INTERFACE_CLASS\\(0x3466, *0x3301, *0xff\\)' target/linux/generic target/linux/rockchip; then
+          if grep -RqsF 'USB_DEVICE_INTERFACE_CLASS(0x3466, 0x3301, 0xff)' target/linux/generic target/linux/rockchip; then
             echo "MT5700 USB ID 3466:3301 is already present in the source patches; no duplicate patch added."
           else
             cp "$PATCH_FILE" "$KERNEL_PATCH_DIR/950-usb-serial-option-add-tdtech-3466-3301.patch"
