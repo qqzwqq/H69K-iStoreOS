@@ -342,6 +342,11 @@ jobs:
           echo "===== Prepare upstream AdGuardHome source ====="
           make package/feeds/packages/adguardhome/prepare
 
+          echo "===== Build OpenWrt's Go host compiler explicitly ====="
+          # Go is a host package dependency, not part of make toolchain/install.
+          # Build it before running the dependency preflight below.
+          make package/feeds/packages/golang/host/compile -j2 V=s 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
+
           AGH_DIR="$(find build_dir/target-aarch64_generic_musl -maxdepth 1 -type d -name 'AdGuardHome-*' -print -quit)"
           test -n "$AGH_DIR" || { echo "::error::AdGuardHome source directory was not prepared"; exit 1; }
           test -s "$AGH_DIR/go.mod" || { echo "::error::AdGuardHome go.mod is missing"; exit 1; }
