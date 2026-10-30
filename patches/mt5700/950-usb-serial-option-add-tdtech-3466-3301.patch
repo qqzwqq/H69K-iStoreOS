@@ -1,6 +1,6 @@
 --- a/drivers/usb/serial/option.c
 +++ b/drivers/usb/serial/option.c
-@@ -2351,6 +2351,7 @@
+@@ -2352,3 +2352,4 @@
  	{ USB_DEVICE_INTERFACE_CLASS(0x33f8, 0x0802, 0xff),			/* Rolling RW350-GL (laptop MBIM) */
  	  .driver_info = RSVD(5) },
 +	{ USB_DEVICE_INTERFACE_CLASS(0x3466, 0x3301, 0xff) },		/* TDTECH MT5710-CN / MT5700M-CN */
