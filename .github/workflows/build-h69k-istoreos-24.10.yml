@@ -2,6 +2,12 @@ name: Build H69K iStoreOS 24.10
 
 on:
   workflow_dispatch:
+    inputs:
+      validation_only:
+        description: '仅验证软件包和驱动配置，不进行固件编译（建议先选 true）'
+        required: true
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -398,10 +404,28 @@ jobs:
             '^(CONFIG_PACKAGE_dnsmasq(-full)?=y|# CONFIG_PACKAGE_dnsmasq(-full)? is not set)$' \
             .config || true
 
+          echo "===== 8. 对配置文件中的全部预选软件包做保留性检查 ====="
+          CONFIG_FILE="$GITHUB_WORKSPACE/rk35xx/h69k-24.10.config"
+          dropped=0
+          while IFS= read -r symbol; do
+            [ -n "$symbol" ] || continue
+            if ! grep -qxF "${symbol}=y" .config; then
+              echo "::error::配置项未被 defconfig 保留：${symbol}=y"
+              dropped=$((dropped + 1))
+            fi
+          done < <(sed -nE 's/^(CONFIG_PACKAGE_[A-Za-z0-9_+-]+)=y$/\\1/p' "$CONFIG_FILE" | sort -u)
+
+          if [ "$dropped" -ne 0 ]; then
+            echo "::error::共有 $dropped 个预选软件包配置未保留；请根据上方日志修正包名、feed 或依赖。"
+            exit 1
+          fi
+
+          echo "配置文件中所有预选软件包均被 defconfig 保留。"
           echo "===== H69K 配置检查完成 ====="
 
       # 15. 下载并编译，保存完整日志
       - name: Compile H69K firmware
+        if: ${{ !inputs.validation_only }}
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -451,6 +475,7 @@ jobs:
 
       # 16. 验证 TF 卡启动镜像确实生成且 gzip 完整
       - name: Validate H69K TF combined image
+        if: ${{ !inputs.validation_only }}
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -524,6 +549,7 @@ jobs:
 
       # 17. 上传固件
       - name: Upload firmware artifacts
+        if: ${{ !inputs.validation_only }}
         if: success()
         uses: actions/upload-artifact@v4
         with:
@@ -537,6 +563,7 @@ jobs:
       
       # 18. 发布固件到 GitHub Releases（仅在编译及固件上传成功后执行）
       - name: Publish firmware to GitHub Releases
+        if: ${{ !inputs.validation_only }}
         if: success()
         uses: softprops/action-gh-release@v2
         with:
