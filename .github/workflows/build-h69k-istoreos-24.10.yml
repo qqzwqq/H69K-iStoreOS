@@ -152,14 +152,31 @@ jobs:
             ccache-${{ runner.os }}-${{ env.REPO_BRANCH }}-
             ccache-${{ runner.os }}-
 
-      # 8. 更新并安装官方 feeds
-      - name: Update and install feeds
+      # 8. 添加 Quickstart 官方软件源，并更新所有 feeds
+      - name: Add Quickstart feeds and install feeds
         shell: bash
         run: |
           set -Eeuo pipefail
           cd openwrt
+
+          # 独立 feed 名称，避免与 iStoreOS 自带 packages/luci/store feed 冲突
+          grep -q '^src-git nas_packages ' feeds.conf.default || \
+            echo 'src-git nas_packages https://github.com/linkease/nas-packages.git;master' >> feeds.conf.default
+          grep -q '^src-git nas_luci ' feeds.conf.default || \
+            echo 'src-git nas_luci https://github.com/linkease/nas-packages-luci.git;main' >> feeds.conf.default
+
+          echo "===== Quickstart feed entries ====="
+          grep -E '^src-git nas_(packages|luci) ' feeds.conf.default
+
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+
+          # 明确安装 Quickstart 和 LuCI 前端；若源码 feed 中缺少包则立即失败
+          ./scripts/feeds install -p nas_packages quickstart
+          ./scripts/feeds install -p nas_luci luci-app-quickstart
+
+          test -s package/feeds/nas_packages/quickstart/Makefile -o -s package/feeds/nas_packages/net/quickstart/Makefile
+          test -s package/feeds/nas_luci/luci-app-quickstart/Makefile -o -s package/feeds/nas_luci/luci/luci-app-quickstart/Makefile
 
       # 9. 准备自定义软件包
       - name: Prepare H69K custom packages
@@ -332,10 +349,24 @@ jobs:
           check_config CONFIG_PACKAGE_uhttpd-mod-ubus
           check_config CONFIG_PACKAGE_luci
 
-          echo "===== 5. 验证自定义软件包 ====="
+          echo "===== 5. 验证自定义软件包和首页向导 ====="
           check_config CONFIG_PACKAGE_luci-app-fan-h69k
           check_config CONFIG_PACKAGE_luci-app-openclash
           check_config CONFIG_PACKAGE_luci-app-mt5700
+          check_config CONFIG_PACKAGE_quickstart
+          check_config CONFIG_PACKAGE_luci-app-quickstart
+          check_config CONFIG_PACKAGE_luci-app-store
+
+          echo "===== 6. 验证 RAID 与磁盘管理组件 ====="
+          check_config CONFIG_PACKAGE_mdadm
+          check_config CONFIG_PACKAGE_kmod-md-mod
+          check_config CONFIG_PACKAGE_kmod-md-raid0
+          check_config CONFIG_PACKAGE_kmod-md-raid1
+          check_config CONFIG_PACKAGE_kmod-md-raid10
+          check_config CONFIG_PACKAGE_kmod-md-raid456
+          check_config CONFIG_PACKAGE_smartmontools
+          check_config CONFIG_PACKAGE_lsblk
+          check_config CONFIG_PACKAGE_parted
 
           echo "===== 6. 验证 ccache 配置 ====="
           if grep -qx 'CONFIG_CCACHE=y' .config; then
