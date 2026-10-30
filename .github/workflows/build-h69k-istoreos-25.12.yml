@@ -144,6 +144,42 @@ jobs:
           test -s package/feeds/nas_packages/quickstart/Makefile -o -s package/feeds/nas_packages/net/quickstart/Makefile
           test -s package/feeds/nas_luci/luci-app-quickstart/Makefile -o -s package/feeds/nas_luci/luci/luci-app-quickstart/Makefile
 
+      - name: "09.1 - Isolate upstream AdGuardHome Go module cache"
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd openwrt
+
+          AGH_MAKEFILE="feeds/packages/net/adguardhome/Makefile"
+          test -s "$AGH_MAKEFILE" || { echo "::error::Upstream AdGuardHome Makefile not found"; exit 1; }
+
+          # The shared OpenWrt dl/go-mod-cache was restored from prior runs.
+          # Give AdGuardHome its own module cache to avoid reusing an incomplete
+          # extracted module (the previous failure missed cmp/internal/flags).
+          python3 - "$AGH_MAKEFILE" <<'PY'
+          import pathlib
+          import sys
+
+          path = pathlib.Path(sys.argv[1])
+          text = path.read_text()
+          anchor = "include ../../lang/golang/golang-package.mk"
+          setting = "GO_MOD_CACHE_DIR:=$(DL_DIR)/go-mod-cache-adguardhome"
+          if setting not in text:
+              if anchor not in text:
+                  raise SystemExit("Cannot locate golang-package.mk include in AdGuardHome Makefile")
+              text = text.replace(
+                  anchor,
+                  anchor + "\n\n# H69K: isolate AdGuardHome Go modules from the shared cache.\n" + setting,
+                  1,
+              )
+              path.write_text(text)
+          PY
+
+          echo "===== AdGuardHome upstream package version ====="
+          grep -E '^(PKG_VERSION|PKG_RELEASE):=' "$AGH_MAKEFILE"
+          grep -q 'GO_MOD_CACHE_DIR:=$(DL_DIR)/go-mod-cache-adguardhome' "$AGH_MAKEFILE"
+          echo "AdGuardHome will use an isolated Go module cache."
+
       - name: "10 - Add H69K fan-control package"
         shell: bash
         run: |
@@ -276,6 +312,47 @@ jobs:
           LOG="$GITHUB_WORKSPACE/build.log"
           echo "===== Build toolchain =====" | tee -a "$LOG"
           make toolchain/install -j2 V=s 2>&1 | tee -a "$LOG"
+
+      - name: "18.1 - Prepare and verify AdGuardHome Go dependencies"
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd openwrt
+
+          echo "===== Prepare upstream AdGuardHome source ====="
+          make package/feeds/packages/adguardhome/prepare
+
+          AGH_DIR="$(find build_dir/target-aarch64_generic_musl -maxdepth 1 -type d -name 'AdGuardHome-*' -print -quit)"
+          test -n "$AGH_DIR" || { echo "::error::AdGuardHome source directory was not prepared"; exit 1; }
+          test -s "$AGH_DIR/go.mod" || { echo "::error::AdGuardHome go.mod is missing"; exit 1; }
+
+          echo "===== Verify upstream Go toolchain and pinned dependency ====="
+          grep -qx 'go 1.26.6' "$AGH_DIR/go.mod" || {
+            echo "::error::Unexpected AdGuardHome Go version requirement"
+            grep '^go ' "$AGH_DIR/go.mod"
+            exit 1
+          }
+          grep -qx '  github.com/google/go-cmp v0.7.0' "$AGH_DIR/go.mod" || {
+            echo "::error::Unexpected google/go-cmp version in upstream go.mod"
+            grep 'github.com/google/go-cmp' "$AGH_DIR/go.mod" || true
+            exit 1
+          }
+
+          GO_BIN="$PWD/staging_dir/hostpkg/lib/go-1.26/bin/go"
+          test -x "$GO_BIN" || { echo "::error::OpenWrt host Go compiler not found"; exit 1; }
+          "$GO_BIN" version
+
+          echo "===== Fetch and validate google/go-cmp in isolated cache ====="
+          export GOMODCACHE="$PWD/dl/go-mod-cache-adguardhome"
+          export GOTOOLCHAIN=local
+          mkdir -p "$GOMODCACHE"
+          cd "$AGH_DIR"
+          "$GO_BIN" mod download -json github.com/google/go-cmp@v0.7.0
+          test -s "$GOMODCACHE/github.com/google/go-cmp@v0.7.0/cmp/internal/flags/flags.go" || {
+            echo "::error::google/go-cmp v0.7.0 is incomplete in the isolated module cache"
+            exit 1
+          }
+          echo "AdGuardHome Go dependency preflight passed."
 
       - name: "19 - Compile H69K firmware"
         shell: bash
