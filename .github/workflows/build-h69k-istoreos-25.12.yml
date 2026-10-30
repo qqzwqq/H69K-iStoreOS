@@ -423,6 +423,44 @@ jobs:
           }
           echo "AdGuardHome Go dependency preflight passed."
 
+      - name: "18.2 - Isolate Docker Compose Go module cache"
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd openwrt
+
+          echo "===== Locate upstream Docker Compose package ====="
+          COMPOSE_MAKEFILE="$(find feeds -type f -path "*/docker-compose/Makefile" -print -quit)"
+          test -n "$COMPOSE_MAKEFILE" -a -s "$COMPOSE_MAKEFILE" || {
+            echo "::error::Docker Compose Makefile was not found in installed feeds"
+            exit 1
+          }
+          echo "Docker Compose Makefile: $COMPOSE_MAKEFILE"
+
+          echo "===== Give Docker Compose an isolated Go module cache ====="
+          python3 - "$COMPOSE_MAKEFILE" <<'PY'
+          import pathlib
+          import sys
+
+          path = pathlib.Path(sys.argv[1])
+          text = path.read_text()
+          anchor = "include ../../lang/golang/golang-package.mk"
+          setting = "GO_MOD_CACHE_DIR:=$(BUILD_DIR)/go-mod-cache-docker-compose-$(PKG_VERSION)"
+          if setting not in text:
+              if anchor not in text:
+                  raise SystemExit("Cannot locate golang-package.mk include in Docker Compose Makefile")
+              text = text.replace(
+                  anchor,
+                  anchor + "\n\n# H69K: isolate Docker Compose Go modules from the shared dl/go-mod-cache.\n" + setting,
+                  1,
+              )
+              path.write_text(text)
+          PY
+
+          grep -Fq "GO_MOD_CACHE_DIR:=$(BUILD_DIR)/go-mod-cache-docker-compose-$(PKG_VERSION)" "$COMPOSE_MAKEFILE"
+          echo "Docker Compose will use a package-specific Go module cache under build_dir."
+          echo "The shared dl/go-mod-cache will no longer be used by Docker Compose."
+
       - name: "19 - Compile H69K firmware"
         shell: bash
         run: |
