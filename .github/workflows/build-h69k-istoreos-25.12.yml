@@ -379,7 +379,7 @@ jobs:
           if [ -z "$GO_BIN" ]; then
             echo "===== Go compiler candidates under staging_dir ====="
             find staging_dir -path '*/bin/go' -print 2>/dev/null || true
-            echo "::error::OpenWrt host Go compiler was not found after toolchain/install"
+            echo "::error::OpenWrt host Go compiler was not found after golang/host/compile"
             exit 1
           fi
 
@@ -393,7 +393,10 @@ jobs:
           echo "===== Fetch and validate google/go-cmp in isolated cache ====="
           TARGET_BUILD_DIR="$(find build_dir -maxdepth 1 -type d -name 'target-*' -print -quit)"
           test -n "$TARGET_BUILD_DIR" || { echo "::error::OpenWrt target build directory not found"; exit 1; }
-          export GOMODCACHE="$TARGET_BUILD_DIR/go-mod-cache-adguardhome-0.107.79"
+          AGH_VERSION="$(sed -n 's/^PKG_VERSION:=//p' feeds/packages/net/adguardhome/Makefile | head -n1)"
+          test -n "$AGH_VERSION" || { echo "::error::Cannot read AdGuardHome PKG_VERSION"; exit 1; }
+          echo "AdGuardHome package version: $AGH_VERSION"
+          export GOMODCACHE="$TARGET_BUILD_DIR/go-mod-cache-adguardhome-$AGH_VERSION"
           export GOTOOLCHAIN=local
           # Start with a clean module cache so no partial extraction can survive.
           rm -rf "$GOMODCACHE"
