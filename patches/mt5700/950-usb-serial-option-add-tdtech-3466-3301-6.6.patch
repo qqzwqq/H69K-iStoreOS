@@ -1,0 +1,8 @@
+--- a/drivers/usb/serial/option.c
++++ b/drivers/usb/serial/option.c
+@@ -2262,6 +2262,7 @@
+ 	{ USB_DEVICE_INTERFACE_CLASS(0x2cb7, 0x01a2, 0xff) },			/* Fibocom FM101-GL (laptop MBIM) */
+ 	{ USB_DEVICE_INTERFACE_CLASS(0x2cb7, 0x01a4, 0xff),			/* Fibocom FM101-GL (laptop MBIM) */
+ 	  .driver_info = RSVD(4) },
++	{ USB_DEVICE_INTERFACE_CLASS(0x3466, 0x3301, 0xff) },		/* TDTECH MT5710-CN / MT5700M-CN */
+ 	{ USB_DEVICE_INTERFACE_CLASS(0x2df3, 0x9d03, 0xff) },		/* LongSung M5710 */
