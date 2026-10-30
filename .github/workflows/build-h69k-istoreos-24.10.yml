@@ -368,6 +368,24 @@ jobs:
           check_config CONFIG_PACKAGE_lsblk
           check_config CONFIG_PACKAGE_parted
 
+          echo "===== 验证 SFTP 和文件管理组件 ====="
+          check_config CONFIG_PACKAGE_openssh-sftp-server
+          check_config CONFIG_PACKAGE_rpcd-mod-file
+          check_config CONFIG_PACKAGE_luci-lib-fs
+          check_config CONFIG_PACKAGE_luci-app-filetransfer
+
+          echo "===== 验证磁盘总线、文件系统和诊断工具 ====="
+          for package in \
+            kmod-scsi-core kmod-ata-core kmod-ata-ahci \
+            kmod-ata-ahci-platform kmod-ata-ahci-dwc \
+            kmod-usb-storage kmod-usb-storage-uas kmod-nvme kmod-mmc kmod-loop \
+            kmod-fs-ext4 kmod-fs-vfat kmod-fs-exfat kmod-fs-ntfs3 \
+            kmod-fs-btrfs kmod-fs-xfs kmod-fs-hfs kmod-fs-hfsplus \
+            kmod-fs-jfs kmod-fs-udf kmod-fuse \
+            lsblk blkid lscpu strace sysstat lrzsz losetup; do
+            check_config "CONFIG_PACKAGE_${package}"
+          done
+
           echo "===== 6. 验证 ccache 配置 ====="
           if grep -qx 'CONFIG_CCACHE=y' .config; then
             echo "CONFIG_CCACHE=y"
