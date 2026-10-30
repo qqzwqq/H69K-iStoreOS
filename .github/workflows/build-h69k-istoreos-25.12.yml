@@ -140,9 +140,18 @@ jobs:
           ./scripts/feeds install -a
           ./scripts/feeds install -p nas_packages quickstart
           ./scripts/feeds install -p nas_luci luci-app-quickstart
+          ./scripts/feeds install -p nas_luci luci-app-diskman
+          ./scripts/feeds install -p nas_luci luci-i18n-diskman-zh-cn
 
           test -s package/feeds/nas_packages/quickstart/Makefile -o -s package/feeds/nas_packages/net/quickstart/Makefile
           test -s package/feeds/nas_luci/luci-app-quickstart/Makefile -o -s package/feeds/nas_luci/luci/luci-app-quickstart/Makefile
+
+          echo "===== Verify DiskMan package sources ====="
+          DISKMAN_MAKEFILE="$(find package/feeds/nas_luci -type f -path '*/luci-app-diskman/Makefile' -print -quit)"
+          DISKMAN_I18N_MAKEFILE="$(find package/feeds/nas_luci -type f -path '*/luci-i18n-diskman-zh-cn/Makefile' -print -quit)"
+          test -n "$DISKMAN_MAKEFILE" || { echo "::error::nas_luci feed does not contain luci-app-diskman"; exit 1; }
+          test -n "$DISKMAN_I18N_MAKEFILE" || { echo "::error::nas_luci feed does not contain luci-i18n-diskman-zh-cn"; exit 1; }
+          echo "DiskMan and Simplified Chinese translation sources are present."
 
       - name: "09.1 - Isolate upstream AdGuardHome Go module cache"
         shell: bash
@@ -267,6 +276,8 @@ jobs:
             luci-app-openclash adguardhome luci-app-adguardhome \
             docker dockerd kmod-hwmon-pwmfan kmod-thermal \
             quickstart luci-app-quickstart luci-app-store \
+            luci-app-diskman luci-i18n-diskman-zh-cn luci-compat \
+            swap-utils parted smartmontools lsblk blkid e2fsprogs \
             mdadm kmod-md-mod kmod-md-raid1 \
             kmod-usb-serial kmod-usb-serial-option \
             kmod-usb-net-cdc-ether kmod-usb-net-cdc-ncm \
