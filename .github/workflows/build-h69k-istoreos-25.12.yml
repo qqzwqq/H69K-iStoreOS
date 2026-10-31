@@ -651,3 +651,17 @@ jobs:
             --latest
 
           echo "Combined release published: $TAG"
+
+
+          echo "===== New combined release exists; clean older combined releases ====="
+          OLD_TAGS="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
+            --json tagName --jq '.[].tagName | select(startswith("h69k-unified-25.12-"))')"
+
+          while IFS= read -r old_tag; do
+            [ -n "$old_tag" ] || continue
+            [ "$old_tag" = "$TAG" ] && continue
+            echo "Deleting older combined release: $old_tag"
+            gh release delete "$old_tag" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+          done <<< "$OLD_TAGS"
+
+          echo "Latest combined release retained: $TAG"
