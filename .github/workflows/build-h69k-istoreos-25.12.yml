@@ -510,6 +510,31 @@ jobs:
           ccache -s | tee -a "$LOG"
           echo "===== Build completed =====" | tee -a "$LOG"
 
+      - name: "19.05 - Export standalone OTA package"
+        if: success()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          OTA_APK="$(find openwrt/bin/packages -type f -name 'luci-app-ota*.apk' -print -quit)"
+          if [ -z "$OTA_APK" ] || [ ! -s "$OTA_APK" ]; then
+            echo "::error::luci-app-ota APK was not produced by the H69K 25.12 build"
+            find openwrt/bin/packages -type f -name '*ota*' -print || true
+            exit 1
+          fi
+          mkdir -p ota-package
+          cp "$OTA_APK" ota-package/luci-app-ota.apk
+          echo "===== Standalone OTA package ====="
+          ls -lh ota-package/luci-app-ota.apk
+
+      - name: "19.06 - Upload standalone OTA package"
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: H69K-iStoreOS-25.12-OTA-Package
+          path: ota-package/luci-app-ota.apk
+          if-no-files-found: error
+          retention-days: 30
+
       - name: "19.1 - List official-format firmware images"
         if: success()
         shell: bash
@@ -599,6 +624,15 @@ jobs:
           echo "===== Locate the current 25.12 build output ====="
           cp -a openwrt/bin/targets/rockchip/. "$V25_DIR/"
 
+          echo "===== Include standalone OTA APK in the 25.12 release ====="
+          OTA_APK="$(find openwrt/bin/packages -type f -name 'luci-app-ota*.apk' -print -quit)"
+          test -n "$OTA_APK" -a -s "$OTA_APK" || {
+            echo "::error::Standalone luci-app-ota APK is missing; refusing to publish an incomplete release."
+            exit 1
+          }
+          mkdir -p "$V25_DIR/packages"
+          cp "$OTA_APK" "$V25_DIR/packages/luci-app-ota.apk"
+
           # Release staging now has a safe copy of the images; remove large build intermediates
           # before downloading the 24.10 assets to keep runner disk usage under control.
           rm -rf openwrt/build_dir openwrt/staging_dir openwrt/dl openwrt/tmp
@@ -618,7 +652,8 @@ jobs:
               \( -name '*hinlink_opc-h6xk*.img.gz' \
                  -o -name '*hinlink_opc-h6xk*.bin' \
                  -o -name '*hinlink_opc-h6xk*.manifest' \
-                 -o -name '*hinlink_opc-h6xk*.buildinfo' \) -print0)
+                 -o -name '*hinlink_opc-h6xk*.buildinfo' \
+                 -o -name 'luci-app-ota*.apk' \) -print0)
 
             if [ "$count" -eq 0 ]; then
               echo "::error::${version} 未找到 H69K 固件镜像，停止发布。"
