@@ -555,14 +555,26 @@ jobs:
           set -Eeuo pipefail
 
           echo "===== Locate the latest successful 24.10 build ====="
-          V24_RUN_ID="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-h69k-istoreos-24.10.yml/runs?status=success&per_page=30" \
-            --jq '[.workflow_runs[] | select(.conclusion == "success" and .head_branch == "main")] | sort_by(.created_at) | last | .id')"
+          V24_RUN_ID=""
+          V24_RUNS="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-h69k-istoreos-24.10.yml/runs?status=success&per_page=30" \
+            --jq '.workflow_runs[] | select(.conclusion == "success" and .head_branch == "main") | .id')"
 
-          if [ -z "${V24_RUN_ID}" ] || [ "${V24_RUN_ID}" = "null" ]; then
-            echo "::error::没有找到成功的 iStoreOS 24.10 构建记录，取消合并发布。"
+          # Skip expired/missing artifacts and fall back to the next most recent successful 24.10 build.
+          while IFS= read -r candidate; do
+            [ -n "$candidate" ] || continue
+            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+              --jq '.artifacts[]? | select(.name == "H69K-iStoreOS-24.10-Firmware" and .expired == false) | .id' | head -n 1)"
+            if [ -n "$artifact_id" ]; then
+              V24_RUN_ID="$candidate"
+              break
+            fi
+          done <<< "$V24_RUNS"
+
+          if [ -z "${V24_RUN_ID}" ]; then
+            echo "::error::最近 30 次成功的 24.10 构建中没有可下载的固件 artifact，取消合并发布。"
             exit 1
           fi
-          echo "Latest successful 24.10 workflow run: ${V24_RUN_ID}"
+          echo "Selected successful 24.10 workflow run with an available firmware artifact: ${V24_RUN_ID}"
 
           echo "===== Download the 24.10 firmware artifact ====="
           WORK_DIR="$RUNNER_TEMP/h69k-combined-release"
