@@ -299,8 +299,13 @@ jobs:
             luci-app-filetransfer samba4-server luci-app-samba4; do
             check_config "CONFIG_PACKAGE_${package}"
           done
-          echo "===== Final partition settings (upstream defaults retained) ====="
+          echo "===== H69K 25.12 rootfs image capacity ====="
           grep -E '^CONFIG_TARGET_(KERNEL|ROOTFS)_PARTSIZE=' .config || true
+          if ! grep -qxF 'CONFIG_TARGET_ROOTFS_PARTSIZE=1024' .config; then
+            echo "::error::H69K rootfs image capacity must be 1024 MiB for the selected built-in packages"
+            exit 1
+          fi
+          echo "H69K rootfs capacity check passed (1024 MiB)."
           echo "H69K 25.12 configuration checks passed."
 
       - name: "16 - Download build sources"
