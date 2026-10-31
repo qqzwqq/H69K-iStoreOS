@@ -578,6 +578,12 @@ jobs:
           echo "===== Locate the current 25.12 build output ====="
           cp -a openwrt/bin/targets/rockchip/. "$V25_DIR/"
 
+          # Release staging now has a safe copy of the images; remove large build intermediates
+          # before downloading the 24.10 assets to keep runner disk usage under control.
+          rm -rf openwrt/build_dir openwrt/staging_dir openwrt/dl openwrt/tmp
+          echo "===== Disk space before release staging ====="
+          df -h
+
           copy_firmware() {
             local version="$1"
             local source_dir="$2"
@@ -628,9 +634,9 @@ jobs:
           - **iStoreOS 25.12**：来自本次成功的 25.12 工作流（Run ID：${GITHUB_RUN_ID}）
 
           ### 文件说明
-          - `H69K-iStoreOS-24.10-*`：24.10 固件及相关构建信息
-          - `H69K-iStoreOS-25.12-*`：25.12 固件及相关构建信息
-          - `SHA256SUMS-24.10.txt` / `SHA256SUMS-25.12.txt`：对应版本文件的 SHA256 校验值
+          - \`H69K-iStoreOS-24.10-*\`：24.10 固件及相关构建信息
+          - \`H69K-iStoreOS-25.12-*\`：25.12 固件及相关构建信息
+          - \`SHA256SUMS-24.10.txt\` / \`SHA256SUMS-25.12.txt\`：对应版本文件的 SHA256 校验值
 
           适用设备：HINLINK OPC-H69K（hinlink_opc-h6xk）。
 
