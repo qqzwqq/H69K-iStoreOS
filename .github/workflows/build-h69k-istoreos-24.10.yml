@@ -274,6 +274,69 @@ jobs:
               "$GITHUB_WORKSPACE/build-output/build.log"
           fi
 
+
+      - name: Publish H69K iStoreOS 24.10 release and clean older releases
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+
+          cd "$GITHUB_WORKSPACE"
+          SOURCE_DIR="openwrt/bin/targets/rockchip/armv8"
+          ASSET_DIR="$GITHUB_WORKSPACE/release-assets"
+          mkdir -p "$ASSET_DIR"
+
+          echo "===== Collect H69K 24.10 release assets ====="
+          find "$SOURCE_DIR" -maxdepth 1 -type f \\
+            \\( -name '*hinlink_opc-h6xk*.img.gz' \\
+               -o -name '*hinlink_opc-h6xk*.bin' \\
+               -o -name '*hinlink_opc-h6xk*.manifest' \\
+               -o -name '*hinlink_opc-h6xk*.buildinfo' \\) \\
+            -print
+
+          shopt -s nullglob
+          files=( "$SOURCE_DIR"/*hinlink_opc-h6xk*.img.gz \\
+                  "$SOURCE_DIR"/*hinlink_opc-h6xk*.bin \\
+                  "$SOURCE_DIR"/*hinlink_opc-h6xk*.manifest \\
+                  "$SOURCE_DIR"/*hinlink_opc-h6xk*.buildinfo )
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::No H69K firmware image or metadata found."
+            exit 1
+          fi
+
+          for file in "${files[@]}"; do
+            base="$(basename "$file")"
+            cp -f "$file" "$ASSET_DIR/H69K-iStoreOS-24.10-$base"
+          done
+
+          (
+            cd "$ASSET_DIR"
+            sha256sum H69K-iStoreOS-24.10-* > SHA256SUMS-24.10.txt
+          )
+
+          TAG="v24.10.8-h69k-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          TITLE="H69K iStoreOS 24.10 固件（Build #${GITHUB_RUN_NUMBER}）"
+
+          echo "===== Create the new 24.10 release ====="
+          gh release create "$TAG" "$ASSET_DIR"/* \\
+            --repo "$GITHUB_REPOSITORY" \\
+            --title "$TITLE" \\
+            --notes "HINLINK OPC-H69K 专用 iStoreOS 24.10 固件。\n\n构建编号：#${GITHUB_RUN_NUMBER}\n提交：${GITHUB_SHA}\n\n包含固件文件及 SHA256 校验和。"
+
+          echo "===== New release created; clean older 24.10 releases ====="
+          OLD_TAGS="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \\
+            --json tagName --jq '.[].tagName | select(startswith("v24.10.8-h69k-"))')"
+
+          while IFS= read -r old_tag; do
+            [ -n "$old_tag" ] || continue
+            [ "$old_tag" = "$TAG" ] && continue
+            echo "Deleting older 24.10 release: $old_tag"
+            gh release delete "$old_tag" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+          done <<< "$OLD_TAGS"
+
+          echo "24.10 release published. Latest release retained: $TAG"
+
       - name: Upload build outputs
         if: always()
         uses: actions/upload-artifact@v4
