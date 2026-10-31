@@ -216,6 +216,41 @@ jobs:
           test -s package/luci-app-fan-h69k/Makefile
           echo "H69K fan-control package prepared."
 
+      - name: "10.1 - Add H69K SSD1306 OLED package"
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd openwrt
+          rm -rf /tmp/luci-app-oled package/luci-app-oled
+          git clone --depth=1 --branch master https://github.com/NateLol/luci-app-oled.git /tmp/luci-app-oled
+          test -s /tmp/luci-app-oled/luci-app-oled/Makefile
+          mkdir -p package/luci-app-oled
+          cp -a /tmp/luci-app-oled/luci-app-oled/. package/luci-app-oled/
+
+          # H69K's built-in SSD1306 is wired to RK3568 I2C5, not I2C0.
+          python3 - <<'PY'
+          from pathlib import Path
+          replacements = {
+              "luasrc/model/cbi/oled/setting.lua": ("o.default='/dev/i2c-0'", "o.default='/dev/i2c-5'"),
+              "root/etc/config/oled": ("option path '/dev/i2c-0'", "option path '/dev/i2c-5'"),
+              "src/I2C_Library/I2C.h": ('#define I2C_DEV0_PATH "/dev/i2c-0"', '#define I2C_DEV0_PATH "/dev/i2c-5"'),
+          }
+          for relative, (old, new) in replacements.items():
+              path = Path("package/luci-app-oled") / relative
+              if not path.is_file():
+                  raise SystemExit(f"Missing expected OLED source file: {path}")
+              text = path.read_text()
+              if new not in text:
+                  if text.count(old) != 1:
+                      raise SystemExit(f"Expected exactly one I2C0 default in {path}")
+                  path.write_text(text.replace(old, new, 1))
+          PY
+          test -s package/luci-app-oled/Makefile
+          grep -Fq "o.default='/dev/i2c-5'" package/luci-app-oled/luasrc/model/cbi/oled/setting.lua
+          grep -Fq "option path '/dev/i2c-5'" package/luci-app-oled/root/etc/config/oled
+          grep -Fq '#define I2C_DEV0_PATH "/dev/i2c-5"' package/luci-app-oled/src/I2C_Library/I2C.h
+          echo "H69K SSD1306 OLED package prepared with I2C5 defaults."
+
       - name: "11 - Add OpenClash package"
         shell: bash
         run: |
@@ -297,7 +332,8 @@ jobs:
           fi
           for package in \
             luci uhttpd uhttpd-mod-ubus \
-            luci-app-fan-h69k luci-app-mt5700 \
+            luci-app-fan-h69k luci-app-mt5700 luci-app-oled \
+            kmod-i2c-core i2c-tools \
             luci-app-openclash adguardhome luci-app-adguardhome \
             docker dockerd kmod-hwmon-pwmfan kmod-thermal \
             quickstart luci-app-quickstart luci-app-store \
