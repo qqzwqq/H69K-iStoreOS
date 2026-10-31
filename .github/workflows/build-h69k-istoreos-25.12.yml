@@ -253,7 +253,10 @@ jobs:
           grep -Fq "o.default='/dev/i2c-5'" package/luci-app-oled/luasrc/model/cbi/oled/setting.lua
           grep -Fq "option path '/dev/i2c-5'" package/luci-app-oled/root/etc/config/oled
           grep -Fq '#define I2C_DEV0_PATH "/dev/i2c-5"' package/luci-app-oled/src/I2C_Library/I2C.h
-          echo "H69K SSD1306 OLED package prepared with I2C5 defaults."
+          test -s package/luci-app-oled/root/etc/init.d/oled
+          grep -Fq 'hinlink,opc-h69k)' package/luci-app-oled/root/etc/uci-defaults/oled
+          grep -Fq "uci_write_config '/dev/i2c-5' 1 1 eth0" package/luci-app-oled/root/etc/uci-defaults/oled
+          echo "H69K SSD1306 OLED package prepared; its board defaults enable I2C5, rotation, and network-speed display."
 
       - name: "11 - Add OpenClash package"
         shell: bash
