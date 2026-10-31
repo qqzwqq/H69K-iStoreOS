@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: write
 
 env:
@@ -555,26 +554,15 @@ jobs:
           set -Eeuo pipefail
 
           echo "===== Locate the latest successful 24.10 build ====="
-          V24_RUN_ID=""
-          V24_RUNS="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-h69k-istoreos-24.10.yml/runs?status=success&per_page=30" \
-            --jq '.workflow_runs[] | select(.conclusion == "success" and .head_branch == "main") | .id')"
+          V24_TAG="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
+            --json tagName,publishedAt,isDraft \
+            --jq '[.[] | select((.tagName | startswith("v24.10.8-h69k-")) and (.isDraft == false))] | sort_by(.publishedAt) | last | .tagName')"
 
-          # Skip expired/missing artifacts and fall back to the next most recent successful 24.10 build.
-          while IFS= read -r candidate; do
-            [ -n "$candidate" ] || continue
-            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
-              --jq '.artifacts[]? | select(.name == "H69K-iStoreOS-24.10-Firmware" and .expired == false) | .id' | head -n 1)"
-            if [ -n "$artifact_id" ]; then
-              V24_RUN_ID="$candidate"
-              break
-            fi
-          done <<< "$V24_RUNS"
-
-          if [ -z "${V24_RUN_ID}" ]; then
-            echo "::error::最近 30 次成功的 24.10 构建中没有可下载的固件 artifact，取消合并发布。"
+          if [ -z "${V24_TAG}" ] || [ "${V24_TAG}" = "null" ]; then
+            echo "::error::没有找到 24.10 工作流发布的正式固件 Release，取消合并发布。"
             exit 1
           fi
-          echo "Selected successful 24.10 workflow run with an available firmware artifact: ${V24_RUN_ID}"
+          echo "Latest 24.10 firmware release: ${V24_TAG}"
 
           echo "===== Download the 24.10 firmware artifact ====="
           WORK_DIR="$RUNNER_TEMP/h69k-combined-release"
@@ -583,9 +571,8 @@ jobs:
           RELEASE_DIR="$WORK_DIR/release-assets"
           mkdir -p "$V24_DIR" "$V25_DIR" "$RELEASE_DIR"
 
-          gh run download "$V24_RUN_ID" \
+          gh release download "$V24_TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            --name "H69K-iStoreOS-24.10-Firmware" \
             --dir "$V24_DIR"
 
           echo "===== Locate the current 25.12 build output ====="
@@ -637,7 +624,7 @@ jobs:
 
           本次 Release 将两个版本的 H69K 固件放在同一发布页，文件名以版本号区分：
 
-          - **iStoreOS 24.10**：来自最近一次成功的 24.10 工作流（Run ID：${V24_RUN_ID}）
+          - **iStoreOS 24.10**：来自最近一次成功的 24.10 正式发布（Tag：${V24_TAG}）
           - **iStoreOS 25.12**：来自本次成功的 25.12 工作流（Run ID：${GITHUB_RUN_ID}）
 
           ### 文件说明
