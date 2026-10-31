@@ -100,13 +100,23 @@ jobs:
           set -Eeuo pipefail
           cd openwrt
 
-          # Build and install the OpenWrt host-side tools first. The Lua host
-          # package extraction requires staging_dir/host/bin/libdeflate-gzip.
-          # A direct package compile can reach Lua before this helper exists.
+          # Bootstrap OpenWrt host tools required by package extraction/build.
           make -j"$(nproc)" tools/install
           test -x staging_dir/host/bin/libdeflate-gzip
 
-          # Then compile only OLED and its required dependencies for H69K.
+          # Build and install the target cross-toolchain before compiling
+          # packages. Without this stage, libc's ld-musl runtime files are
+          # missing and package/libs/toolchain fails during IPK creation.
+          make -j"$(nproc)" toolchain/install
+          TOOLCHAIN_LIB="$(find staging_dir -maxdepth 3 -type f -name 'ld-musl-*.so*' -print -quit)"
+          if [ -z "$TOOLCHAIN_LIB" ]; then
+            echo "::error::musl runtime loader was not installed by toolchain/install"
+            find staging_dir -maxdepth 4 -type f -name '*musl*' -print | head -100
+            exit 1
+          fi
+          echo "Verified toolchain runtime: $TOOLCHAIN_LIB"
+
+          # Compile OLED and its required dependencies for H69K.
           make -j"$(nproc)" package/luci-app-oled/compile V=s
 
           echo "===== Locate generated OLED IPKs ====="
