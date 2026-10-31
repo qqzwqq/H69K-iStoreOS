@@ -247,9 +247,11 @@ jobs:
           cd openwrt
 
           rm -rf /tmp/luci-app-oled package/luci-app-oled
-          git clone --depth=1 --branch master \
-            https://github.com/NateLol/luci-app-oled.git \
-            /tmp/luci-app-oled
+          git init /tmp/luci-app-oled
+          git -C /tmp/luci-app-oled remote add origin https://github.com/NateLol/luci-app-oled.git
+          git -C /tmp/luci-app-oled fetch --depth=1 origin ad7132558b2b66a88d7c491d5fbaec532cc2e9e1
+          git -C /tmp/luci-app-oled checkout --detach FETCH_HEAD
+          test "$(git -C /tmp/luci-app-oled rev-parse HEAD)" = "ad7132558b2b66a88d7c491d5fbaec532cc2e9e1"
 
           test -s /tmp/luci-app-oled/luci-app-oled/Makefile
           mkdir -p package/luci-app-oled
