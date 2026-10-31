@@ -465,6 +465,7 @@ jobs:
           check_config CONFIG_PACKAGE_luci-app-openclash
           check_config CONFIG_PACKAGE_luci-app-mt5700
           check_config CONFIG_PACKAGE_luci-app-oled
+          check_config CONFIG_PACKAGE_luci-i18n-oled-zh-cn
           check_config CONFIG_PACKAGE_kmod-i2c-core
           check_config CONFIG_PACKAGE_i2c-tools
           check_config CONFIG_PACKAGE_quickstart
