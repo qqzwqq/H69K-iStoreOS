@@ -99,11 +99,20 @@ jobs:
         run: |
           set -Eeuo pipefail
           cd openwrt
+
+          # Build and install the OpenWrt host-side tools first. The Lua host
+          # package extraction requires staging_dir/host/bin/libdeflate-gzip.
+          # A direct package compile can reach Lua before this helper exists.
+          make -j"$(nproc)" tools/install
+          test -x staging_dir/host/bin/libdeflate-gzip
+
+          # Then compile only OLED and its required dependencies for H69K.
           make -j"$(nproc)" package/luci-app-oled/compile V=s
+
           echo "===== Locate generated OLED IPKs ====="
-          find bin/packages -type f \( -name 'luci-app-oled_*.ipk' -o -name 'luci-i18n-oled-zh-cn_*.ipk' \\) -print
+          find bin/packages -type f \( -name 'luci-app-oled_*.ipk' -o -name 'luci-i18n-oled-zh-cn_*.ipk' \) -print
           mkdir -p "$GITHUB_WORKSPACE/oled-ipk"
-          find bin/packages -type f \( -name 'luci-app-oled_*.ipk' -o -name 'luci-i18n-oled-zh-cn_*.ipk' \\) -exec cp -v {} "$GITHUB_WORKSPACE/oled-ipk/" \;
+          find bin/packages -type f \( -name 'luci-app-oled_*.ipk' -o -name 'luci-i18n-oled-zh-cn_*.ipk' \) -exec cp -v {} "$GITHUB_WORKSPACE/oled-ipk/" \;
           test -n "$(find "$GITHUB_WORKSPACE/oled-ipk" -type f -name '*.ipk' -print -quit)"
 
       - name: Upload H69K OLED IPK artifact
