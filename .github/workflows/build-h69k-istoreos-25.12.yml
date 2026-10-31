@@ -280,6 +280,10 @@ jobs:
           check_config CONFIG_TARGET_rockchip
           check_config CONFIG_TARGET_rockchip_armv8
           check_config CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_hinlink_opc-h6xk
+          if ! grep -qxF 'CONFIG_TARGET_KERNEL_PARTSIZE=64' .config; then
+            echo "::error::H69K kernel partition size must be 64 MiB"
+            exit 1
+          fi
           for package in \
             luci uhttpd uhttpd-mod-ubus \
             luci-app-fan-h69k luci-app-mt5700 \
