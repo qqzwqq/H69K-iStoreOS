@@ -457,7 +457,7 @@ jobs:
               path.write_text(text)
           PY
 
-          grep -Fq "GO_MOD_CACHE_DIR:=$(BUILD_DIR)/go-mod-cache-docker-compose-$(PKG_VERSION)" "$COMPOSE_MAKEFILE"
+          grep -Fq 'GO_MOD_CACHE_DIR:=$(BUILD_DIR)/go-mod-cache-docker-compose-$(PKG_VERSION)' "$COMPOSE_MAKEFILE"
           echo "Docker Compose will use a package-specific Go module cache under build_dir."
           echo "The shared dl/go-mod-cache will no longer be used by Docker Compose."
 
