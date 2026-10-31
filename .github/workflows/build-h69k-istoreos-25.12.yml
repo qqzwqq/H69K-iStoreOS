@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  actions: read
+  contents: write
 
 env:
   TZ: Asia/Shanghai
@@ -543,3 +544,105 @@ jobs:
             !openwrt/bin/targets/rockchip/**/packages/**
           if-no-files-found: error
           retention-days: 14
+
+      # 22. 25.12 编译成功后，自动下载最近一次成功的 24.10 固件并合并发布
+      - name: "22 - Publish combined 24.10 + 25.12 H69K release"
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+
+          echo "===== Locate the latest successful 24.10 build ====="
+          V24_RUN_ID="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-h69k-istoreos-24.10.yml/runs?status=success&per_page=30" \
+            --jq '[.workflow_runs[] | select(.conclusion == "success" and .head_branch == "main")] | sort_by(.created_at) | last | .id')"
+
+          if [ -z "${V24_RUN_ID}" ] || [ "${V24_RUN_ID}" = "null" ]; then
+            echo "::error::没有找到成功的 iStoreOS 24.10 构建记录，取消合并发布。"
+            exit 1
+          fi
+          echo "Latest successful 24.10 workflow run: ${V24_RUN_ID}"
+
+          echo "===== Download the 24.10 firmware artifact ====="
+          WORK_DIR="$RUNNER_TEMP/h69k-combined-release"
+          V24_DIR="$WORK_DIR/24.10-artifact"
+          V25_DIR="$WORK_DIR/25.12-artifact"
+          RELEASE_DIR="$WORK_DIR/release-assets"
+          mkdir -p "$V24_DIR" "$V25_DIR" "$RELEASE_DIR"
+
+          gh run download "$V24_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "H69K-iStoreOS-24.10-Firmware" \
+            --dir "$V24_DIR"
+
+          echo "===== Locate the current 25.12 build output ====="
+          cp -a openwrt/bin/targets/rockchip/. "$V25_DIR/"
+
+          copy_firmware() {
+            local version="$1"
+            local source_dir="$2"
+            local count=0
+            while IFS= read -r -d '' file; do
+              local base
+              base="$(basename "$file")"
+              cp -f "$file" "$RELEASE_DIR/H69K-iStoreOS-${version}-${base}"
+              count=$((count + 1))
+            done < <(find "$source_dir" -type f \
+              \( -name '*hinlink_opc-h6xk*.img.gz' \
+                 -o -name '*hinlink_opc-h6xk*.bin' \
+                 -o -name '*hinlink_opc-h6xk*.manifest' \
+                 -o -name '*hinlink_opc-h6xk*.buildinfo' \) -print0)
+
+            if [ "$count" -eq 0 ]; then
+              echo "::error::${version} 未找到 H69K 固件镜像，停止发布。"
+              find "$source_dir" -maxdepth 4 -type f | head -n 80 || true
+              return 1
+            fi
+
+            (
+              cd "$RELEASE_DIR"
+              sha256sum H69K-iStoreOS-${version}-* > "SHA256SUMS-${version}.txt"
+            )
+            echo "${version}: collected $count firmware/metadata files."
+          }
+
+          echo "===== Collect 24.10 and 25.12 firmware ====="
+          copy_firmware "24.10" "$V24_DIR"
+          copy_firmware "25.12" "$V25_DIR"
+
+          echo "===== Release assets ====="
+          ls -lh "$RELEASE_DIR"
+          test -n "$(find "$RELEASE_DIR" -maxdepth 1 -type f -name '*.img.gz' -print -quit)" || {
+            echo "::error::合并发布目录中没有可刷写镜像"
+            exit 1
+          }
+
+          TAG="h69k-unified-25.12-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          NOTES="$WORK_DIR/release-notes.md"
+          cat > "$NOTES" <<EOF
+          ## HINLINK OPC-H69K 双版本固件
+
+          本次 Release 将两个版本的 H69K 固件放在同一发布页，文件名以版本号区分：
+
+          - **iStoreOS 24.10**：来自最近一次成功的 24.10 工作流（Run ID：${V24_RUN_ID}）
+          - **iStoreOS 25.12**：来自本次成功的 25.12 工作流（Run ID：${GITHUB_RUN_ID}）
+
+          ### 文件说明
+          - `H69K-iStoreOS-24.10-*`：24.10 固件及相关构建信息
+          - `H69K-iStoreOS-25.12-*`：25.12 固件及相关构建信息
+          - `SHA256SUMS-24.10.txt` / `SHA256SUMS-25.12.txt`：对应版本文件的 SHA256 校验值
+
+          适用设备：HINLINK OPC-H69K（hinlink_opc-h6xk）。
+
+          刷机前请确认版本和镜像类型，并备份现有配置。构建成功不等于已经完成实机启动及全部功能验证。
+          EOF
+
+          echo "===== Create combined GitHub Release ====="
+          gh release create "$TAG" "$RELEASE_DIR"/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "H69K iStoreOS 24.10 + 25.12 双版本固件（Build #${GITHUB_RUN_NUMBER}）" \
+            --notes-file "$NOTES" \
+            --latest
+
+          echo "Combined release published: $TAG"
