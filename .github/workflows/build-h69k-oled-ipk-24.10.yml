@@ -108,13 +108,24 @@ jobs:
           # packages. Without this stage, libc's ld-musl runtime files are
           # missing and package/libs/toolchain fails during IPK creation.
           make -j"$(nproc)" toolchain/install
-          TOOLCHAIN_LIB="$(find staging_dir -maxdepth 3 -type f -name 'ld-musl-*.so*' -print -quit)"
-          if [ -z "$TOOLCHAIN_LIB" ]; then
-            echo "::error::musl runtime loader was not installed by toolchain/install"
-            find staging_dir -maxdepth 4 -type f -name '*musl*' -print | head -100
+          TOOLCHAIN_DIR="$(find staging_dir -maxdepth 1 -type d -name 'toolchain-*' -print -quit)"
+          if [ -z "$TOOLCHAIN_DIR" ]; then
+            echo "::error::OpenWrt target toolchain directory was not created"
+            find staging_dir -maxdepth 2 -type d -print | head -100
             exit 1
           fi
-          echo "Verified toolchain runtime: $TOOLCHAIN_LIB"
+          echo "===== Inspect musl runtime files ====="
+          ls -la "$TOOLCHAIN_DIR/lib" || true
+          # ld-musl may be a symlink; the previous -type f search missed it.
+          TOOLCHAIN_LIB="$(find "$TOOLCHAIN_DIR/lib" -maxdepth 1 \\( -type f -o -type l \\) -name 'ld-musl-*.so*' -print -quit 2>/dev/null || true)"
+          if [ -z "$TOOLCHAIN_LIB" ]; then
+            echo "::error::musl runtime loader is missing from $TOOLCHAIN_DIR/lib"
+            find staging_dir -maxdepth 6 \\( -type f -o -type l \\) -name 'ld-musl*' -print
+            exit 1
+          fi
+          echo "Verified toolchain runtime entry: $TOOLCHAIN_LIB"
+          ls -l "$TOOLCHAIN_LIB"
+          test -e "$TOOLCHAIN_LIB"
 
           # Compile OLED and its required dependencies for H69K.
           make -j"$(nproc)" package/luci-app-oled/compile V=s
