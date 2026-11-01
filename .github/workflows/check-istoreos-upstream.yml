@@ -66,8 +66,14 @@ jobs:
             echo "- Current upstream SHA: $head_sha"
 
             if [[ "$base_sha" == "$head_sha" ]]; then
-              echo "- Status: No upstream changes."
-              echo
+              {
+                echo "## iStoreOS $version"
+                echo "- Project branch: $project_branch"
+                echo "- Official branch: $upstream_branch"
+                echo "- Current upstream SHA: $head_sha"
+                echo "- Status: No upstream changes."
+                echo
+              } >> "$REPORT"
               return
             fi
 
