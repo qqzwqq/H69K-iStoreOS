@@ -60,10 +60,10 @@ jobs:
             fi
 
             echo "### iStoreOS $version"
-            echo "- Project branch: `$project_branch`"
-            echo "- Official branch: `$upstream_branch`"
-            echo "- Tracked upstream SHA: `$base_sha`"
-            echo "- Current upstream SHA: `$head_sha`"
+            echo "- Project branch: $project_branch"
+            echo "- Official branch: $upstream_branch"
+            echo "- Tracked upstream SHA: $base_sha"
+            echo "- Current upstream SHA: $head_sha"
 
             if [[ "$base_sha" == "$head_sha" ]]; then
               echo "- Status: No upstream changes."
@@ -83,11 +83,11 @@ jobs:
 
             {
               echo "## iStoreOS $version"
-              echo "- Project branch: `$project_branch`"
-              echo "- Official branch: `$upstream_branch`"
-              echo "- Previously checked SHA: `$base_sha`"
-              echo "- Current upstream SHA: `$head_sha`"
-              echo "- Status: **Official upstream changed** (`$status`; ahead by $ahead, behind by $behind)."
+              echo "- Project branch: $project_branch"
+              echo "- Official branch: $upstream_branch"
+              echo "- Previously checked SHA: $base_sha"
+              echo "- Current upstream SHA: $head_sha"
+              echo "- Status: Official upstream changed ($status; ahead by $ahead, behind by $behind)."
               echo "- Compare: $compare_url"
               echo "- Commits:"
               jq -r '.commits[]? | "- `\(.sha[0:7])` \(.commit.message | split("\n")[0])"' <<< "$compare_json" | head -80
