@@ -1,0 +1,16 @@
+{
+  "upstream_repository": "https://github.com/istoreos/istoreos",
+  "purpose": "Tracks the official branch heads already checked. Updating these SHAs does not merge upstream code into the H69K build branches.",
+  "versions": {
+    "24.10": {
+      "upstream_branch": "istoreos-24.10",
+      "project_branch": "main",
+      "sha": "45f8da64fc38cf31096659f5e19f3e43a92cc9bd"
+    },
+    "25.12": {
+      "upstream_branch": "istoreos-25.12",
+      "project_branch": "build-25.12",
+      "sha": "6575c302154ca788e0983a1652a7ba5eeedcafc3"
+    }
+  }
+}
