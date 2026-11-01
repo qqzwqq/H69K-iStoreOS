@@ -117,10 +117,10 @@ jobs:
           echo "===== Inspect musl runtime files ====="
           ls -la "$TOOLCHAIN_DIR/lib" || true
           # ld-musl may be a symlink; the previous -type f search missed it.
-          TOOLCHAIN_LIB="$(find "$TOOLCHAIN_DIR/lib" -maxdepth 1 \\( -type f -o -type l \\) -name 'ld-musl-*.so*' -print -quit 2>/dev/null || true)"
+          TOOLCHAIN_LIB="$(find "$TOOLCHAIN_DIR/lib" -maxdepth 1  -name 'ld-musl-*.so*' -print -quit 2>/dev/null || true)"
           if [ -z "$TOOLCHAIN_LIB" ]; then
             echo "::error::musl runtime loader is missing from $TOOLCHAIN_DIR/lib"
-            find staging_dir -maxdepth 6 \\( -type f -o -type l \\) -name 'ld-musl*' -print
+            find staging_dir -maxdepth 6  -name 'ld-musl*' -print
             exit 1
           fi
           echo "Verified toolchain runtime entry: $TOOLCHAIN_LIB"
