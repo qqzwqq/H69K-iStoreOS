@@ -82,6 +82,11 @@ jobs:
             compare_url="$(jq -r '.html_url // empty' <<< "$compare_json")"
 
             {
+              echo "## iStoreOS $version"
+              echo "- Project branch: `$project_branch`"
+              echo "- Official branch: `$upstream_branch`"
+              echo "- Previously checked SHA: `$base_sha`"
+              echo "- Current upstream SHA: `$head_sha`"
               echo "- Status: **Official upstream changed** (`$status`; ahead by $ahead, behind by $behind)."
               echo "- Compare: $compare_url"
               echo "- Commits:"
