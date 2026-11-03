@@ -35,13 +35,13 @@ define Package/luci-app-fan-h69k/install
 	$(INSTALL_BIN) ./etc/uci-defaults/89-hinlinkfan-migrate $(1)/etc/uci-defaults/89-hinlinkfan-migrate
 	$(INSTALL_BIN) ./etc/uci-defaults/luci-app-fan-h69k $(1)/etc/uci-defaults/luci-app-fan-h69k
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller
-	$(INSTALL_DATA) ./lib/lua/luci/controller/hinlinkfan.lua $(1)/usr/lib/lua/luci/controller/hinlinkfan.lua
+	$(INSTALL_DATA) ./usr/lib/lua/luci/controller/hinlinkfan.lua $(1)/usr/lib/lua/luci/controller/hinlinkfan.lua
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi
-	$(INSTALL_DATA) ./lib/lua/luci/model/cbi/hinlinkfan.lua $(1)/usr/lib/lua/luci/model/cbi/hinlinkfan.lua
+	$(INSTALL_DATA) ./usr/lib/lua/luci/model/cbi/hinlinkfan.lua $(1)/usr/lib/lua/luci/model/cbi/hinlinkfan.lua
 	$(INSTALL_DIR) $(1)/usr/lib/hinlinkfan
-	$(INSTALL_DATA) ./lib/hinlinkfan/common.sh $(1)/usr/lib/hinlinkfan/common.sh
+	$(INSTALL_DATA) ./usr/lib/hinlinkfan/common.sh $(1)/usr/lib/hinlinkfan/common.sh
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) ./sbin/hinlinkfan-daemon $(1)/usr/sbin/hinlinkfan-daemon
+	$(INSTALL_BIN) ./usr/sbin/hinlinkfan-daemon $(1)/usr/sbin/hinlinkfan-daemon
 endef
 
 $(eval $(call BuildPackage,luci-app-fan-h69k))
