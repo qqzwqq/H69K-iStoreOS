@@ -14,13 +14,16 @@ define Package/luci-app-fan-h69k
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=HINLINK OPC-H69K Fan Control (Tuning Master)
-  DEPENDS:=+luci-base +luci-compat +luci-lua-runtime +kmod-hwmon-pwmfan
+  # This is an architecture-independent LuCI application. The H69K firmware
+  # already provides kmod-hwmon-pwmfan; do not pull a target-specific kernel
+  # module into this standalone package build (kernel ABI depends on target).
+  DEPENDS:=+luci-base +luci-compat +luci-lua-runtime
   PKGARCH:=all
 endef
 
 define Package/luci-app-fan-h69k/description
  LuCI PWM fan control for HINLINK OPC-H69K with kernel, manual curve,
- off and full-speed modes.
+ off and full-speed modes. Requires the H69K firmware PWM fan kernel module.
 endef
 
 define Build/Compile
