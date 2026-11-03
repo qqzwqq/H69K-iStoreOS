@@ -323,12 +323,27 @@ local function status_card()
 		'<div class="hinfan-tile-s">%s · 占空比约 %d%%</div></div>',
 		pwm or "--", fan, pwm_pct, fan_label, pwm_pct)
 
+	-- 将设备树实时信息并入顶部内核档位卡片。
+	local kernel_details = {}
+	kernel_details[#kernel_details + 1] = '<div class="hinfan-kernel-intro">以下为 sysfs 实时读取的只读信息，用于核对驱动、温度传感器和内核温控档位。</div>'
+	kernel_details[#kernel_details + 1] = '<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时自动把控制权交还内核。</div>'
+	kernel_details[#kernel_details + 1] = string.format('<div class="hinfan-kv"><b>风扇驱动节点</b><span>%s</span></div>', hw or "未找到 pwm-fan hwmon")
+	kernel_details[#kernel_details + 1] = string.format('<div class="hinfan-kv"><b>内核 cooling device</b><span>%s（type=%s，当前档位 %s/%s）</span></div>', cdev and cdev:gsub("^/sys/class/thermal/", "") or "未注册", cdev and (read(cdev .. "/type") or "?") or "?", cur or "?", maxs or "?")
+	kernel_details[#kernel_details + 1] = string.format('<div class="hinfan-kv"><b>温度传感器</b><span>%s</span></div>', zone or "未找到 cpu-thermal")
+	for detail_i, detail_tp in ipairs(zone and read_trips(zone) or {}) do
+		kernel_details[#kernel_details + 1] = string.format('<div class="hinfan-kv"><b>温度阶梯 #%d</b><span>%.0f°C　类型 %s　回差 %.0f°C</span></div>', detail_i, detail_tp.temp, detail_tp.type, detail_tp.hyst)
+	end
+	local detail_st = read_state()
+	local detail_report = detail_st.mode and string.format("模式 %s　温度 %s°C　PWM %s（目标 %s）　档位 %s", detail_st.mode, detail_st.temp or "--", detail_st.pwm or "--", detail_st.target or "--", detail_st.level or "--") or "暂无状态文件（守护进程未运行）"
+	kernel_details[#kernel_details + 1] = string.format('<div class="hinfan-kv"><b>守护进程上报</b><span>%s</span></div>', detail_report)
 	h[#h + 1] = string.format(
-		'<div class="hinfan-tile"><div class="hinfan-tile-k">内核档位</div>' ..
+		'<div class="hinfan-tile hinfan-kernel-tile"><div class="hinfan-tile-k">内核设备树温控</div>' ..
 		'<div class="hinfan-tile-v">%s<span class="hinfan-unit">/%s</span></div>' ..
-		'<div class="hinfan-tile-s">%s</div></div>',
+		'<div class="hinfan-tile-s">%s</div>' ..
+		'<details class="hinfan-kernel-details"><summary>展开设备树与内核状态</summary><div class="hinfan-kernel-content">%s</div></details></div>',
 		cur or "--", maxs or "--",
-		cdev and "档位表来自设备树 cooling-levels" or "未注册 cooling device")
+		cdev and "档位表来自设备树 cooling-levels" or "未注册 cooling device",
+		table.concat(kernel_details))
 
 	h[#h + 1] = string.format(
 		'<div class="hinfan-tile"><div class="hinfan-tile-k">守护进程</div>' ..
@@ -728,6 +743,23 @@ html[data-darkmode="true"] .cbi-section:nth-of-type(3) .cbi-value-field,html.dar
  .cbi-section .cbi-value-title,.cbi-section .cbi-value-field,.cbi-section .cbi-value-description{grid-column:1!important;width:100%!important;max-width:100%!important;text-align:left!important}
  .cbi-section .cbi-value-description{margin-top:2px!important}
 }
+/* 1.5.1：设备树 / 内核状态详情整合进顶部内核档位卡片 */
+.hinfan-kernel-tile{grid-column:span 2!important}
+.hinfan-kernel-details{margin-top:12px;border-top:1px solid #dce8f7;padding-top:9px}
+.hinfan-kernel-details>summary{cursor:pointer;display:inline-flex;align-items:center;gap:7px;color:#2563c7;font-size:12px;font-weight:750;min-height:34px}
+.hinfan-kernel-content{margin-top:9px;padding:10px 12px;border:1px solid #dce8f7;border-radius:10px;background:#f7faff}
+.hinfan-kernel-intro{font-size:12px;line-height:1.7;color:#607895;margin-bottom:9px}
+.hinfan-kernel-content .hinfan-help{margin-bottom:10px}
+.hinfan-kv{display:grid;grid-template-columns:minmax(120px,30%) minmax(0,1fr);gap:10px;padding:8px 2px;border-bottom:1px solid #e5edf8;font-size:12px;line-height:1.65}
+.hinfan-kv:last-child{border-bottom:0}
+.hinfan-kv b{color:#31547f}
+.hinfan-kv span{min-width:0;overflow-wrap:anywhere;color:#29496f}
+html[data-darkmode="true"] .hinfan-kernel-details,html.dark .hinfan-kernel-details,body.dark .hinfan-kernel-details{border-color:#405675}
+html[data-darkmode="true"] .hinfan-kernel-details>summary,html.dark .hinfan-kernel-details>summary,body.dark .hinfan-kernel-details>summary{color:#93c5fd}
+html[data-darkmode="true"] .hinfan-kernel-content,html.dark .hinfan-kernel-content,body.dark .hinfan-kernel-content{background:#24364e;border-color:#405a7a}
+html[data-darkmode="true"] .hinfan-kernel-intro,html.dark .hinfan-kernel-intro,body.dark .hinfan-kernel-intro,html[data-darkmode="true"] .hinfan-kv b,html.dark .hinfan-kv b,body.dark .hinfan-kv b,html[data-darkmode="true"] .hinfan-kv span,html.dark .hinfan-kv span,body.dark .hinfan-kv span{color:#dbeafe}
+html[data-darkmode="true"] .hinfan-kv,html.dark .hinfan-kv,body.dark .hinfan-kv{border-color:#405675}
+@media(max-width:700px){.hinfan-kernel-tile{grid-column:1/-1!important}.hinfan-kv{grid-template-columns:minmax(0,1fr)!important;gap:3px!important}.hinfan-kv span{padding-left:2px}}
 </style>
 ]] .. (m.description or "")
 
@@ -903,66 +935,7 @@ o = s2:option(Value, "ramp", "降温步长",
 o.datatype = "range(1,255)"
 o.default = "32"
 
--- ---------------- 3. 设备树 / 内核状态（只读） ----------------
-
-local hw = find_hwmon()
-local zone = find_temp_zone()
-local cdev = find_cdev()
-local trips = zone and read_trips(zone) or {}
-
-local s3 = m:section(TypedSection, "global", "设备树与内核状态",
-	[[以下数据直接读取 sysfs，只读展示驱动、温度传感器、内核 cooling device 与温控阶梯。
-<div class="hinfan-help">
-<b>两层温控，互不打架：</b>
-默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档台阶，
-70°C 起 CPU 还会自动降频，95°C 由 tsadc 硬件过温保护兜底）；
-勾选<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。
-</div>]])
-s3.anonymous = true
-s3.addremove = false
-
-
-o = s3:option(DummyValue, "_drv", "风扇驱动节点")
-function o.cfgvalue()
-	return hw or "未找到 pwm-fan hwmon"
-end
-
-o = s3:option(DummyValue, "_cdev", "内核 cooling device")
-function o.cfgvalue()
-	if not cdev then
-		return "未注册（检查设备树 fan 节点与 cooling-maps）"
-	end
-	local cur = read(cdev .. "/cur_state") or "?"
-	local mx = read(cdev .. "/max_state") or "?"
-	return string.format("%s（type=%s，当前档位 %s/%s）",
-		cdev:gsub("^/sys/class/thermal/", ""), read(cdev .. "/type") or "?", cur, mx)
-end
-
-o = s3:option(DummyValue, "_zone", "温度传感器")
-function o.cfgvalue()
-	return zone or "未找到 cpu-thermal"
-end
-
-local i
-for i = 1, #trips do
-	local tp = trips[i]
-	o = s3:option(DummyValue, "_trip" .. i,
-		string.format("温度阶梯 #%d", i))
-	o.cfgvalue = function()
-		return string.format("%.0f°C　类型 %s　回差 %.0f°C", tp.temp, tp.type, tp.hyst)
-	end
-end
-
-o = s3:option(DummyValue, "_st", "守护进程上报")
-function o.cfgvalue()
-	local st = read_state()
-	if not st.mode then
-		return "暂无状态文件（守护进程未运行）"
-	end
-	return string.format("模式 %s　温度 %s°C　PWM %s（目标 %s）　档位 %s",
-		st.mode or "?", st.temp or "--", st.pwm or "--",
-		st.target or "--", st.level or "--")
-end
+-- 设备树 / 内核状态信息已整合进顶部「内核设备树温控」卡片。
 
 m.on_commit = function()
 	run("/etc/init.d/hinlinkfaninit restart >/dev/null 2>&1")
