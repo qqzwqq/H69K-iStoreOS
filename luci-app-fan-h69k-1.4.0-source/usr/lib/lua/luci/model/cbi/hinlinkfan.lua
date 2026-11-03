@@ -326,7 +326,6 @@ local function status_card()
 	-- 将设备树实时信息并入顶部内核档位卡片。
 	local kernel_details = {}
 	kernel_details[#kernel_details + 1] = '<div class="hinfan-kernel-intro">以下为 sysfs 实时读取的只读信息，用于核对驱动、温度传感器和内核温控档位。</div>'
-	kernel_details[#kernel_details + 1] = '<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时自动把控制权交还内核。</div>'
 	kernel_details[#kernel_details + 1] = string.format('<div class="hinfan-kv"><b>风扇驱动节点</b><span>%s</span></div>', hw or "未找到 pwm-fan hwmon")
 	kernel_details[#kernel_details + 1] = string.format('<div class="hinfan-kv"><b>内核 cooling device</b><span>%s（type=%s，当前档位 %s/%s）</span></div>', cdev and cdev:gsub("^/sys/class/thermal/", "") or "未注册", cdev and (read(cdev .. "/type") or "?") or "?", cur or "?", maxs or "?")
 	kernel_details[#kernel_details + 1] = string.format('<div class="hinfan-kv"><b>温度传感器</b><span>%s</span></div>', zone or "未找到 cpu-thermal")
@@ -340,6 +339,7 @@ local function status_card()
 		'<div class="hinfan-tile hinfan-kernel-tile"><div class="hinfan-tile-k">内核设备树温控</div>' ..
 		'<div class="hinfan-tile-v">%s<span class="hinfan-unit">/%s</span></div>' ..
 		'<div class="hinfan-tile-s">%s</div>' ..
+		'<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时自动把控制权交还内核。</div>' ..
 		'<details class="hinfan-kernel-details"><summary>展开设备树与内核状态</summary><div class="hinfan-kernel-content">%s</div></details></div>',
 		cur or "--", maxs or "--",
 		cdev and "档位表来自设备树 cooling-levels" or "未注册 cooling device",
@@ -355,9 +355,10 @@ local function status_card()
 	h[#h + 1] = "</div>" -- hinfan-grid
 
 
-	if current_curve_html ~= "" then
-		h[#h + 1] = '<section class="hinfan-curve-panel"><div class="hinfan-panel-heading"><span>温度 / PWM 曲线</span><small>当前已保存的控制曲线</small></div>' .. current_curve_html .. '</section>'
+	if current_curve_html == "" then
+		current_curve_html = '<div class="hinfan-curve-empty">暂未读取到有效曲线节点。请在下方“温度曲线与高级调节”中设置并保存，例如 45:90、55:120、65:165、75:210。</div>'
 	end
+	h[#h + 1] = '<section class="hinfan-curve-panel"><div class="hinfan-panel-heading"><span>温度 / PWM 曲线</span><small>当前已保存的控制曲线</small></div>' .. current_curve_html .. '</section>'
 
 	if st.note and st.note ~= "" then
 		h[#h + 1] = string.format('<div class="hinfan-note">%s</div>', st.note)
@@ -385,6 +386,7 @@ m.description = [[
 .hinfan-t-ok{color:#39cf9a}.hinfan-t-info{color:#5ba3f5}.hinfan-t-warn{color:#f1b64f}.hinfan-t-hot,.hinfan-t-bad{color:#f06464}
 .hinfan-bar{height:6px;background:var(--border-color,#444);border-radius:99px;overflow:hidden;margin-top:9px}.hinfan-bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#32c995,#8ce6bb);transition:width .35s ease}
 .hinfan-fanwrap{display:inline-flex;vertical-align:middle;margin-left:8px;color:#36c995}.hinfan-fanwrap svg{display:block}.hinfan-fan-ring{fill:none;stroke:currentColor;stroke-opacity:.24;stroke-width:2}.hinfan-fan-blades{fill:currentColor}.hinfan-fan-hub{fill:currentColor}.hinfan-fan-stop{color:#9299a3}.hinfan-fan-slow{color:#60cfa5}.hinfan-fan-mid{color:#35c995}.hinfan-fan-fast{color:#f1b64f}.hinfan-fan-max{color:#f06464}
+.hinfan-curve-empty{padding:22px 16px;border:1px dashed var(--border-color,#9aa8ba);border-radius:10px;text-align:center;color:var(--secondary-text-color,#52657d);font-size:13px;line-height:1.8;background:rgba(128,128,128,.045)}
 .hinfan-curve-current{box-sizing:border-box;width:100%;max-width:1080px;margin:10px auto 14px;padding:14px 16px;border:1px solid var(--border-color,#454545);border-radius:10px;background:rgba(128,128,128,.06)}.hinfan-curve-title{font-weight:700;margin-bottom:8px}.hinfan-curve-current svg{display:block;width:100%;max-width:760px;height:auto;min-height:150px;margin:0 auto}.hinfan-curve-caption{font-size:11px;opacity:.72;text-align:center}
 .hinfan-note,.hinfan-help{border-radius:9px;padding:12px 14px;margin:0 0 14px;background:var(--secondary-bg,#f3f6fa);border-left:3px solid #4c72e8;line-height:1.75;font-size:12px}.hinfan-help code{font-size:11px}
 /* 保留 LuCI 原有页面与卡片边框宽度，只将表单内容区居中 */
