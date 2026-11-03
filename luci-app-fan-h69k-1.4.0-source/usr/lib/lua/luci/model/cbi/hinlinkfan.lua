@@ -744,7 +744,7 @@ html[data-darkmode="true"] .cbi-section:nth-of-type(3) .cbi-value-field,html.dar
  .cbi-section .cbi-value-description{margin-top:2px!important}
 }
 /* 1.5.1：设备树 / 内核状态详情整合进顶部内核档位卡片 */
-.hinfan-kernel-tile{grid-column:span 2!important}
+.hinfan-kernel-tile{grid-column:auto!important}
 .hinfan-kernel-details{margin-top:12px;border-top:1px solid #dce8f7;padding-top:9px}
 .hinfan-kernel-details>summary{cursor:pointer;display:inline-flex;align-items:center;gap:7px;color:#2563c7;font-size:12px;font-weight:750;min-height:34px}
 .hinfan-kernel-content{margin-top:9px;padding:10px 12px;border:1px solid #dce8f7;border-radius:10px;background:#f7faff}
