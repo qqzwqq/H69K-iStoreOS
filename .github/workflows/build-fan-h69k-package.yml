@@ -44,6 +44,21 @@ jobs:
           git clone --depth=1 --branch "${{ matrix.ref }}" \
             https://github.com/istoreos/istoreos.git openwrt
 
+      # Cache OpenWrt downloads and host/ARM64 toolchain build products.
+      # Separate keys per upstream branch so 24.10 and 25.12 never mix ABI outputs.
+      - name: Restore OpenWrt build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            openwrt/dl
+            openwrt/build_dir/host
+            openwrt/build_dir/toolchain-*
+            openwrt/staging_dir/host
+            openwrt/staging_dir/toolchain-*
+          key: istoreos-${{ matrix.ref }}-rockchip-armv8-${{ runner.os }}-v1
+          restore-keys: |
+            istoreos-${{ matrix.ref }}-rockchip-armv8-${{ runner.os }}-
+
       - name: Prepare package from uploaded installation tree
         run: |
           set -eux
