@@ -77,6 +77,14 @@ jobs:
           # the actual fan package is reached.
           make tools/install -j"$(nproc)" V=s
 
+      - name: Build target toolchain
+        working-directory: openwrt
+        run: |
+          # A fresh full source checkout has no target libgcc runtime staged yet.
+          # Build/install the target toolchain before compiling packages; otherwise
+          # package/libs/toolchain fails while collecting libgcc_s.so.*.
+          make toolchain/install -j"$(nproc)" V=s
+
       - name: Compile package
         working-directory: openwrt
         run: |
