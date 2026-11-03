@@ -48,8 +48,8 @@ jobs:
           set -eux
           src="$GITHUB_WORKSPACE/luci-app-fan-h69k-1.4.0-source"
           test -s "$src/control"
-          test -s "$src/usr/sbin/hinlinkfan-daemon"
-          test -s "$src/usr/lib/lua/luci/model/cbi/hinlinkfan.lua"
+          test -s "$src/sbin/hinlinkfan-daemon"
+          test -s "$src/lib/lua/luci/model/cbi/hinlinkfan.lua"
           mkdir -p openwrt/package/luci-app-fan-h69k
           cp -a "$src/." openwrt/package/luci-app-fan-h69k/
           cp "$GITHUB_WORKSPACE/package/luci-app-fan-h69k/Makefile" \
