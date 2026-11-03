@@ -760,6 +760,52 @@ html[data-darkmode="true"] .hinfan-kernel-content,html.dark .hinfan-kernel-conte
 html[data-darkmode="true"] .hinfan-kernel-intro,html.dark .hinfan-kernel-intro,body.dark .hinfan-kernel-intro,html[data-darkmode="true"] .hinfan-kv b,html.dark .hinfan-kv b,body.dark .hinfan-kv b,html[data-darkmode="true"] .hinfan-kv span,html.dark .hinfan-kv span,body.dark .hinfan-kv span{color:#dbeafe}
 html[data-darkmode="true"] .hinfan-kv,html.dark .hinfan-kv,body.dark .hinfan-kv{border-color:#405675}
 @media(max-width:700px){.hinfan-kernel-tile{grid-column:1/-1!important}.hinfan-kv{grid-template-columns:minmax(0,1fr)!important;gap:3px!important}.hinfan-kv span{padding-left:2px}}
+
+/* 1.5.2：页面横向铺满可用空间，修复暗色主题文字对比度 */
+.main .container:has(.hinfan-card){width:100%!important;max-width:none!important;box-sizing:border-box!important}
+.cbi-map{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important}
+.cbi-map > .cbi-section,.cbi-map > .cbi-section-node,.cbi-section{width:100%!important;max-width:none!important;box-sizing:border-box!important}
+.cbi-section .cbi-value,.cbi-section .cbi-section-descr{max-width:none!important}
+.hinfan-card,.hinfan-curve-panel{width:100%!important;max-width:none!important;box-sizing:border-box!important}
+.hinfan-curve-current{max-width:none!important}
+.hinfan-curve-current svg{max-width:100%!important}
+@media(min-width:768px){
+ .cbi-section{padding-left:clamp(18px,2.2vw,34px)!important;padding-right:clamp(18px,2.2vw,34px)!important}
+ .cbi-section .cbi-value{grid-template-columns:minmax(210px,24%) minmax(0,1fr)!important}
+}
+@media(max-width:767px){
+ .main .container:has(.hinfan-card){padding-left:10px!important;padding-right:10px!important}
+ .cbi-map,.cbi-section{width:100%!important;max-width:none!important}
+}
+/* 暗色模式：覆盖表单说明、字段、曲线节点、折叠详情等低对比文字 */
+html[data-darkmode="true"] .hinfan-card,
+html[data-theme="dark"] .hinfan-card,
+html.dark .hinfan-card,body.dark .hinfan-card{color:#f1f5fb!important}
+html[data-darkmode="true"] .hinfan-tile-k,html[data-theme="dark"] .hinfan-tile-k,html.dark .hinfan-tile-k,body.dark .hinfan-tile-k,
+html[data-darkmode="true"] .hinfan-tile-s,html[data-theme="dark"] .hinfan-tile-s,html.dark .hinfan-tile-s,body.dark .hinfan-tile-s,
+html[data-darkmode="true"] .hinfan-unit,html[data-theme="dark"] .hinfan-unit,html.dark .hinfan-unit,body.dark .hinfan-unit{color:#cbd8e9!important}
+html[data-darkmode="true"] .hinfan-tile-v,html[data-theme="dark"] .hinfan-tile-v,html.dark .hinfan-tile-v,body.dark .hinfan-tile-v{color:#f1f5fb!important}
+html[data-darkmode="true"] .hinfan-t-ok,html[data-theme="dark"] .hinfan-t-ok,html.dark .hinfan-t-ok,body.dark .hinfan-t-ok{color:#6ee7b7!important}
+html[data-darkmode="true"] .hinfan-t-info,html[data-theme="dark"] .hinfan-t-info,html.dark .hinfan-t-info,body.dark .hinfan-t-info{color:#93c5fd!important}
+html[data-darkmode="true"] .hinfan-t-warn,html[data-theme="dark"] .hinfan-t-warn,html.dark .hinfan-t-warn,body.dark .hinfan-t-warn{color:#fcd34d!important}
+html[data-darkmode="true"] .hinfan-t-hot,html[data-theme="dark"] .hinfan-t-hot,html.dark .hinfan-t-hot,body.dark .hinfan-t-hot,
+html[data-darkmode="true"] .hinfan-t-bad,html[data-theme="dark"] .hinfan-t-bad,html.dark .hinfan-t-bad,body.dark .hinfan-t-bad{color:#fca5a5!important}
+html[data-darkmode="true"] .cbi-section .cbi-section-descr,html[data-theme="dark"] .cbi-section .cbi-section-descr,html.dark .cbi-section .cbi-section-descr,body.dark .cbi-section .cbi-section-descr,
+html[data-darkmode="true"] .cbi-value-title,html[data-theme="dark"] .cbi-value-title,html.dark .cbi-value-title,body.dark .cbi-value-title,
+html[data-darkmode="true"] .cbi-value-description,html[data-theme="dark"] .cbi-value-description,html.dark .cbi-value-description,body.dark .cbi-value-description{color:#d2deed!important}
+html[data-darkmode="true"] .cbi-value-field,html[data-theme="dark"] .cbi-value-field,html.dark .cbi-value-field,body.dark .cbi-value-field{color:#f1f5fb!important}
+html[data-darkmode="true"] .cbi-value-field input,html[data-theme="dark"] .cbi-value-field input,html.dark .cbi-value-field input,body.dark .cbi-value-field input,
+html[data-darkmode="true"] .cbi-value-field select,html[data-theme="dark"] .cbi-value-field select,html.dark .cbi-value-field select,body.dark .cbi-value-field select,
+html[data-darkmode="true"] .cbi-value-field textarea,html[data-theme="dark"] .cbi-value-field textarea,html.dark .cbi-value-field textarea,body.dark .cbi-value-field textarea{background:#172638!important;color:#f8fafc!important;border-color:#526b89!important}
+html[data-darkmode="true"] .cbi-value-field input::placeholder,html[data-theme="dark"] .cbi-value-field input::placeholder,html.dark .cbi-value-field input::placeholder,body.dark .cbi-value-field input::placeholder{color:#a9bad0!important;opacity:1!important}
+html[data-darkmode="true"] .cbi-value-field ul li,html[data-theme="dark"] .cbi-value-field ul li,html.dark .cbi-value-field ul li,body.dark .cbi-value-field ul li,
+html[data-darkmode="true"] .cbi-value-field label,html[data-theme="dark"] .cbi-value-field label,html.dark .cbi-value-field label,body.dark .cbi-value-field label{color:#edf4ff!important}
+html[data-darkmode="true"] .hinfan-kernel-intro,html[data-theme="dark"] .hinfan-kernel-intro,html.dark .hinfan-kernel-intro,body.dark .hinfan-kernel-intro,
+html[data-darkmode="true"] .hinfan-kv b,html[data-theme="dark"] .hinfan-kv b,html.dark .hinfan-kv b,body.dark .hinfan-kv b,
+html[data-darkmode="true"] .hinfan-kv span,html[data-theme="dark"] .hinfan-kv span,html.dark .hinfan-kv span,body.dark .hinfan-kv span{color:#e2ecf8!important}
+html[data-darkmode="true"] .hinfan-curve-caption,html[data-theme="dark"] .hinfan-curve-caption,html.dark .hinfan-curve-caption,body.dark .hinfan-curve-caption{color:#cbd8e9!important;opacity:1!important}
+html[data-darkmode="true"] .hinfan-curve-panel,html[data-theme="dark"] .hinfan-curve-panel,html.dark .hinfan-curve-panel,body.dark .hinfan-curve-panel{color:#e5edf8!important}
+
 </style>
 ]] .. (m.description or "")
 
