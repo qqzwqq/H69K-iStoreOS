@@ -63,11 +63,24 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install luci-base luci-compat luci-lua-runtime
 
-      - name: Configure package build
+      - name: Configure package build for H69K ARM64
         working-directory: openwrt
         run: |
-          echo 'CONFIG_PACKAGE_luci-app-fan-h69k=m' >> .config
+          set -eux
+          # The upstream branches otherwise fall back to the generic MIPS
+          # default when no device config is selected. H69K is Rockchip ARMv8.
+          cat > .config <<'EOF'
+          CONFIG_TARGET_rockchip=y
+          CONFIG_TARGET_rockchip_armv8=y
+          CONFIG_TARGET_ARCH_PACKAGES="aarch64_generic"
+          CONFIG_PACKAGE_luci-app-fan-h69k=m
+          EOF
           make defconfig
+          grep -E '^(CONFIG_TARGET_rockchip=y|CONFIG_TARGET_rockchip_armv8=y|CONFIG_TARGET_ARCH_PACKAGES="aarch64_generic")$' .config
+          if grep -q 'CONFIG_TARGET_ARCH_PACKAGES="mips' .config; then
+            echo "::error::错误地选择了 MIPS 工具链，停止构建"
+            exit 1
+          fi
 
       - name: Build OpenWrt host tools
         working-directory: openwrt
