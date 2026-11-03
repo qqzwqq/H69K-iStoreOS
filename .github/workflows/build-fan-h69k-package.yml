@@ -69,6 +69,14 @@ jobs:
           echo 'CONFIG_PACKAGE_luci-app-fan-h69k=m' >> .config
           make defconfig
 
+      - name: Build OpenWrt host tools
+        working-directory: openwrt
+        run: |
+          # Package compilation also needs host utilities (openssl, libdeflate-gzip, etc.).
+          # Build and stage them first; otherwise a fresh source tree fails before
+          # the actual fan package is reached.
+          make tools/install -j"$(nproc)" V=s
+
       - name: Compile package
         working-directory: openwrt
         run: |
