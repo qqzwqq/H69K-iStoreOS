@@ -355,10 +355,6 @@ local function status_card()
 	h[#h + 1] = "</div>" -- hinfan-grid
 
 
-	if current_curve_html == "" then
-		current_curve_html = '<div class="hinfan-curve-empty">暂未读取到有效曲线节点。请在下方“温度曲线与高级调节”中设置并保存，例如 45:90、55:120、65:165、75:210。</div>'
-	end
-	h[#h + 1] = '<section class="hinfan-curve-panel"><div class="hinfan-panel-heading"><span>温度 / PWM 曲线</span><small>当前已保存的控制曲线</small></div>' .. current_curve_html .. '</section>'
 
 	if st.note and st.note ~= "" then
 		h[#h + 1] = string.format('<div class="hinfan-note">%s</div>', st.note)
