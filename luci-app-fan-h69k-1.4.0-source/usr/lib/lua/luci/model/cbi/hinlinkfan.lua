@@ -727,11 +727,13 @@ o:value("off", "强制停转（谨慎）",
 
 -- ---------------- 2. 自定义曲线 ----------------
 
-local s2 = m:section(TypedSection, "global", "自定义曲线",
-	"仅当控制方式选『自定义曲线』时生效。温度按升序，转速必须跟着单调不减；" ..
-	"填错会自动排序/纠正，实在不可用则回退到设备树档位对应的默认曲线。")
-s2.anonymous = true
-s2.addremove = false
+-- 所有控制项共用同一个 CBI section：视觉上是一张连续的控制面板，
+-- 不再把模式、曲线和设备树信息拆成三张独立卡片。
+local s2 = s
+local curve_heading = s2:option(DummyValue, "_curve_heading", "温度曲线与高级调节")
+curve_heading.rawhtml = false
+curve_heading.description = "设置曲线预设、温度/PWM 节点、采样周期、降档回差和降温步长。"
+
 
 -- 预设和曲线在同一次 CBI 提交中按选项顺序写入：
 -- 先由 preset.write 记录本次明确选择的预设，再由 curve.write 统一写最终曲线，
@@ -880,11 +882,11 @@ local zone = find_temp_zone()
 local cdev = find_cdev()
 local trips = zone and read_trips(zone) or {}
 
-local s3 = m:section(TypedSection, "global", "设备树与内核状态（只读）",
-	"下面这些值直接读自 sysfs，反映的是当前生效的设备树配置，用来核对上面设置有没有落实。")
-s3.anonymous = true
-s3.addremove = false
-s3.readonly = true
+local s3 = s
+local device_heading = s3:option(DummyValue, "_device_heading", "设备树与内核状态")
+device_heading.rawhtml = false
+device_heading.description = "以下为 sysfs 实时读取的只读信息，用于核对驱动、温度传感器和内核温控档位。"
+
 
 o = s3:option(DummyValue, "_drv", "风扇驱动节点")
 function o.cfgvalue()
