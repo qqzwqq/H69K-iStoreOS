@@ -804,6 +804,86 @@ html[data-darkmode="true"] .hinfan-kv span,html[data-theme="dark"] .hinfan-kv sp
 html[data-darkmode="true"] .hinfan-curve-caption,html[data-theme="dark"] .hinfan-curve-caption,html.dark .hinfan-curve-caption,body.dark .hinfan-curve-caption{color:#cbd8e9!important;opacity:1!important}
 html[data-darkmode="true"] .hinfan-curve-panel,html[data-theme="dark"] .hinfan-curve-panel,html.dark .hinfan-curve-panel,body.dark .hinfan-curve-panel{color:#e5edf8!important}
 
+
+/* 顶栏响应式优化：桌面横向分区，手机纵向堆叠 */
+.hinfan-hero{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  min-width:0!important;
+  padding:18px clamp(14px,2vw,24px)!important;
+}
+.hinfan-hero-main{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  gap:10px 12px!important;
+}
+.hinfan-badge{
+  flex:0 0 auto!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:34px!important;
+  padding:6px 13px!important;
+  border:1px solid rgba(255,255,255,.32)!important;
+  border-radius:9px!important;
+  background:rgba(255,255,255,.16)!important;
+  line-height:1.35!important;
+}
+.hinfan-hero-note{
+  min-width:0!important;
+  line-height:1.65!important;
+  overflow-wrap:anywhere!important;
+}
+.hinfan-hero-sub{
+  flex:0 1 auto!important;
+  min-width:0!important;
+  max-width:42%!important;
+  margin:0!important;
+  padding:8px 11px!important;
+  border:1px solid rgba(255,255,255,.24)!important;
+  border-radius:9px!important;
+  background:rgba(8,42,94,.14)!important;
+  line-height:1.55!important;
+  overflow-wrap:anywhere!important;
+}
+@media(max-width:900px){
+  .hinfan-hero{align-items:flex-start!important;gap:10px!important}
+  .hinfan-hero-sub{max-width:48%!important;font-size:11px!important}
+}
+@media(max-width:600px){
+  .hinfan-hero{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:10px!important;
+    padding:14px!important;
+    border-radius:12px!important;
+  }
+  .hinfan-hero-main{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    gap:7px!important;
+    width:100%!important;
+  }
+  .hinfan-badge{min-height:32px!important;font-size:15px!important}
+  .hinfan-hero-note{font-size:12px!important;line-height:1.6!important}
+  .hinfan-hero-sub{
+    display:block!important;
+    width:100%!important;
+    max-width:none!important;
+    box-sizing:border-box!important;
+    padding:8px 10px!important;
+    font-size:11px!important;
+    line-height:1.6!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .hinfan-hero,.hinfan-hero *{transition:none!important}
+}
+
 </style>
 ]] .. (m.description or "")
 
