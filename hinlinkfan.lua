@@ -273,7 +273,6 @@ local function status_card()
 
 	-- 独立温度→PWM曲线区域：不再挤在 CPU 温度卡片内，手机端也能完整阅读。
 	local current_curve_html = ""
-	local current_curve_html = ""
 	local ok_uci, uci = pcall(require, "luci.model.uci")
 	local curve_points, curve_label = {}, "当前自定义曲线"
 	if ok_uci and uci then
