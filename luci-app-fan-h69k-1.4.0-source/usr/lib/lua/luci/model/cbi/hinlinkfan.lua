@@ -694,6 +694,40 @@ body.dark .cbi-value-field ul:has(input[type="radio"]) li:has(input:checked){
  border-color:#60a5fa!important;background:#263d5b!important;
 }
 
+
+/* 1.5.0：真正分区的控制台布局，不再把所有字段堆进同一个 CBI 表单 */
+.hinfan-card{margin-bottom:22px!important}
+.hinfan-hero{background:linear-gradient(115deg,#1768d5 0%,#3989f5 58%,#67b5ff 100%)!important;border:1px solid rgba(255,255,255,.22)!important;box-shadow:0 12px 28px rgba(37,99,235,.18)!important}
+.hinfan-grid{gap:14px!important;margin-bottom:18px!important}
+.hinfan-tile{padding:17px!important;border:1px solid #d8e6fa!important;border-radius:15px!important;background:linear-gradient(160deg,#fff 0%,#f5f9ff 100%)!important;box-shadow:0 7px 20px rgba(31,78,145,.07)!important}
+.hinfan-tile-k{font-size:13px!important;letter-spacing:.025em!important}
+.hinfan-tile-v{font-size:clamp(25px,2.8vw,34px)!important}
+.cbi-map{max-width:1240px!important}
+.cbi-section{position:relative!important;margin:0 0 20px!important;padding:18px 22px 22px!important;border:1px solid #d8e6fa!important;border-radius:16px!important;background:linear-gradient(180deg,#fff 0%,#fbfdff 100%)!important;box-shadow:0 8px 24px rgba(31,78,145,.065)!important}
+.cbi-section>legend{width:auto!important;margin:0 0 14px!important;padding:13px 16px!important;border:0!important;border-left:4px solid #347ff0!important;border-radius:9px!important;background:linear-gradient(90deg,#edf5ff,#f9fbff)!important;color:#174b91!important;font-size:17px!important;font-weight:800!important}
+.cbi-section .cbi-section-descr{max-width:100%!important;margin:0 0 14px!important;padding:0 2px!important;color:#617b9e!important;font-size:13px!important;line-height:1.8!important}
+.cbi-section .cbi-value{display:grid!important;grid-template-columns:minmax(180px,28%) minmax(0,1fr)!important;align-items:center!important;column-gap:22px!important;row-gap:5px!important;padding:13px 5px!important;border-bottom:1px solid #edf2fa!important}
+.cbi-section .cbi-value-title{max-width:none!important;text-align:left!important;font-weight:750!important;color:#29496f!important}
+.cbi-section .cbi-value-field{max-width:none!important;width:100%!important}
+.cbi-section .cbi-value-description{grid-column:2!important;max-width:none!important;margin:0!important;text-align:left!important;color:#7186a4!important}
+.cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),.cbi-section .cbi-value-field select,.cbi-section .cbi-value-field textarea{max-width:100%!important}
+.cbi-section:nth-of-type(2) .cbi-value-field ul:has(input[type=radio]){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.cbi-section:nth-of-type(3) .cbi-value{grid-template-columns:minmax(160px,25%) minmax(0,1fr)!important}
+.cbi-section:nth-of-type(3) .cbi-value-field{padding:10px 13px!important;border:1px solid #e2ecf9!important;border-radius:9px!important;background:#f7faff!important;color:#23466f!important;overflow-wrap:anywhere!important}
+html[data-darkmode="true"] .cbi-section,html.dark .cbi-section,body.dark .cbi-section{background:linear-gradient(180deg,#1d2b3e,#192638)!important;border-color:#344d6d!important}
+html[data-darkmode="true"] .cbi-section>legend,html.dark .cbi-section>legend,body.dark .cbi-section>legend{background:linear-gradient(90deg,#263d5c,#203149)!important;color:#dbeafe!important}
+html[data-darkmode="true"] .cbi-section .cbi-value-title,html.dark .cbi-section .cbi-value-title,body.dark .cbi-section .cbi-value-title{color:#c8dcf7!important}
+html[data-darkmode="true"] .cbi-section .cbi-value-field,html.dark .cbi-section .cbi-value-field,body.dark .cbi-section .cbi-value-field{color:#dbeafe!important}
+html[data-darkmode="true"] .cbi-section:nth-of-type(3) .cbi-value-field,html.dark .cbi-section:nth-of-type(3) .cbi-value-field,body.dark .cbi-section:nth-of-type(3) .cbi-value-field{background:#24364e!important;border-color:#405a7a!important;color:#dbeafe!important}
+@media(max-width:700px){
+ .hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ .hinfan-tile{padding:12px!important}
+ .cbi-section{padding:12px!important;margin-bottom:13px!important}
+ .cbi-section>legend{font-size:15px!important;padding:10px 12px!important}
+ .cbi-section .cbi-value,.cbi-section:nth-of-type(3) .cbi-value{grid-template-columns:minmax(0,1fr)!important;gap:7px!important;padding:11px 2px!important}
+ .cbi-section .cbi-value-title,.cbi-section .cbi-value-field,.cbi-section .cbi-value-description{grid-column:1!important;width:100%!important;max-width:100%!important;text-align:left!important}
+ .cbi-section .cbi-value-description{margin-top:2px!important}
+}
 </style>
 ]] .. (m.description or "")
 
@@ -727,9 +761,11 @@ o:value("off", "强制停转（谨慎）",
 
 -- ---------------- 2. 自定义曲线 ----------------
 
--- 所有控制项共用同一个 CBI section：视觉上是一张连续的控制面板，
--- 不再把模式、曲线和设备树信息拆成三张独立卡片。
-local s2 = s
+-- 独立的曲线/高级设置卡片：与顶部状态区、控制模式、设备树状态形成清晰分区。
+local s2 = m:section(TypedSection, "global", "温度曲线与高级调节",
+	"在这里编辑温度到 PWM 的控制曲线。只有选择「自定义曲线」时，这组曲线才会接管风扇。")
+s2.anonymous = true
+s2.addremove = false
 local curve_heading = s2:option(DummyValue, "_curve_heading", "温度曲线与高级调节")
 curve_heading.rawhtml = false
 curve_heading.description = "设置曲线预设、温度/PWM 节点、采样周期、降档回差和降温步长。"
@@ -882,10 +918,10 @@ local zone = find_temp_zone()
 local cdev = find_cdev()
 local trips = zone and read_trips(zone) or {}
 
-local s3 = s
-local device_heading = s3:option(DummyValue, "_device_heading", "设备树与内核状态")
-device_heading.rawhtml = false
-device_heading.description = "以下为 sysfs 实时读取的只读信息，用于核对驱动、温度传感器和内核温控档位。"
+local s3 = m:section(TypedSection, "global", "设备树与内核状态",
+	"以下数据直接读取 sysfs，只读展示驱动、温度传感器、内核 cooling device 与温控阶梯。")
+s3.anonymous = true
+s3.addremove = false
 
 
 o = s3:option(DummyValue, "_drv", "风扇驱动节点")
