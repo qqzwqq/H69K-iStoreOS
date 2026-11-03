@@ -731,14 +731,6 @@ html[data-darkmode="true"] .cbi-section:nth-of-type(3) .cbi-value-field,html.dar
 </style>
 ]] .. (m.description or "")
 
-m.description = m.description .. [[
-<div class="hinfan-help">
-<b>两层温控，互不打架：</b>
-默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档台阶，
-70°C 起 CPU 还会自动降频，95°C 由 tsadc 硬件过温保护兜底）；
-勾选<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。
-</div>
-]]
 
 -- ---------------- 1. 控制模式 ----------------
 
@@ -919,7 +911,13 @@ local cdev = find_cdev()
 local trips = zone and read_trips(zone) or {}
 
 local s3 = m:section(TypedSection, "global", "设备树与内核状态",
-	"以下数据直接读取 sysfs，只读展示驱动、温度传感器、内核 cooling device 与温控阶梯。")
+	[[以下数据直接读取 sysfs，只读展示驱动、温度传感器、内核 cooling device 与温控阶梯。
+<div class="hinfan-help">
+<b>两层温控，互不打架：</b>
+默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档台阶，
+70°C 起 CPU 还会自动降频，95°C 由 tsadc 硬件过温保护兜底）；
+勾选<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。
+</div>]])
 s3.anonymous = true
 s3.addremove = false
 
