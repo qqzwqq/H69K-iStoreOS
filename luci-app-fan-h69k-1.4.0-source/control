@@ -1,7 +1,7 @@
 Package: luci-app-fan-h69k
-Version: 1.4.3-1
+Version: 1.4.4-1
 Depends: libc, luci-base, luci-compat, luci-lua-runtime, kmod-hwmon-pwmfan
 Section: luci
 Architecture: all
 Maintainer: Daocaoren
-Description: LuCI PWM fan control for HINLINK OPC-H69K with blue dashboard, responsive mode cards and separate temperature/PWM curve panel
+Description: LuCI PWM fan control for HINLINK OPC-H69K with a unified single-panel blue dashboard and responsive controls
