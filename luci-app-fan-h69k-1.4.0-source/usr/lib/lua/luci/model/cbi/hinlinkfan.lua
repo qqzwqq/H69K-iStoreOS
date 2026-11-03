@@ -270,9 +270,8 @@ local function status_card()
 		temp_class(temp),
 		temp and string.format("%.1f", temp) or "--",
 		zone and zone:gsub("^/sys/class/thermal/", "") or "未找到 thermal zone")
-	local cpu_tile_index = #h
 
-	-- 构建当前已保存的温度→PWM蓝色曲线，稍后放入 CPU 温度卡片。
+	-- 独立温度→PWM曲线区域：不再挤在 CPU 温度卡片内，手机端也能完整阅读。
 	local current_curve_html = ""
 	local ok_uci, uci = pcall(require, "luci.model.uci")
 	local curve_points, curve_label = {}, "当前自定义曲线"
@@ -341,8 +340,9 @@ local function status_card()
 	h[#h + 1] = "</div>" -- hinfan-grid
 
 
-	-- 已按需求移除 CPU 温度/PWM 历史曲线图，仅保留温度数值卡片。
-	h[cpu_tile_index] = h[cpu_tile_index] .. current_curve_html .. "</div>"
+	if current_curve_html ~= "" then
+		h[#h + 1] = '<section class="hinfan-curve-panel"><div class="hinfan-panel-heading"><span>温度 / PWM 曲线</span><small>当前已保存的控制曲线</small></div>' .. current_curve_html .. '</section>'
+	end
 
 	if st.note and st.note ~= "" then
 		h[#h + 1] = string.format('<div class="hinfan-note">%s</div>', st.note)
@@ -528,143 +528,171 @@ html[data-darkmode="true"] .cbi-value-field input:not([type=radio]):not([type=ch
 .cbi-section .cbi-value-field { text-align: left !important; }
 .cbi-section .cbi-value-title { text-align: center !important; }
 
-/* 1.4.0 responsive + dual-theme refinement */
-.cbi-map, .cbi-map > form, .cbi-section, .hinfan-grid, .hinfan-tile { min-width:0!important; }
-.hinfan-hero, .hinfan-tile, .hinfan-curve-current, .hinfan-note, .hinfan-help {
-  border-radius:14px!important;
+/* 1.4.2：重新组织信息层级。状态仪表盘、曲线、控制表单各自独立。 */
+.hinfan-card{display:block;width:100%;max-width:1180px;margin:0 auto 22px;box-sizing:border-box}
+.hinfan-hero{padding:18px 22px;border-radius:16px;margin-bottom:14px}
+.hinfan-hero-main{gap:12px;align-items:center}
+.hinfan-badge{font-size:18px;letter-spacing:.02em}
+.hinfan-hero-note{font-size:13px}
+.hinfan-hero-sub{font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.hinfan-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;margin:0!important}
+.hinfan-tile{min-width:0;padding:16px!important;border-radius:14px!important;background:var(--card-bg,var(--secondary-bg,#fff))!important;box-shadow:0 3px 12px rgba(20,35,60,.07)!important}
+.hinfan-tile-k{font-size:13px!important;font-weight:650;letter-spacing:.02em;margin-bottom:9px!important}
+.hinfan-tile-v{font-size:clamp(22px,2.4vw,30px)!important;line-height:1.2!important;font-variant-numeric:tabular-nums}
+.hinfan-tile-s{font-size:12px!important;line-height:1.55!important;margin-top:8px!important}
+.hinfan-temp-tile{display:block!important}
+.hinfan-temp-info{display:block!important}
+.hinfan-curve-panel{box-sizing:border-box;width:100%;margin:14px 0 0;padding:16px 18px;border:1px solid var(--border-color,#d8dee8);border-radius:14px;background:var(--secondary-bg,rgba(128,128,128,.045))}
+.hinfan-panel-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px;font-weight:750;font-size:15px}
+.hinfan-panel-heading small{font-size:11px;font-weight:400;opacity:.7}
+.hinfan-curve-current{width:100%!important;max-width:100%!important;margin:0!important;padding:8px 0!important;border:0!important;background:transparent!important}
+.hinfan-curve-current svg{display:block;width:100%!important;max-width:900px!important;height:auto!important;min-height:0!important;margin:0 auto}
+.hinfan-curve-caption{font-size:11px;margin-top:5px}
+.cbi-map{max-width:1180px!important;margin-left:auto!important;margin-right:auto!important}
+.cbi-section{margin:0 0 18px!important;padding:16px 20px 20px!important;border-radius:14px!important;overflow:visible!important}
+.cbi-section>legend{font-size:16px!important;font-weight:750!important;padding:10px 12px!important;margin-bottom:8px!important}
+.cbi-section .cbi-section-descr{max-width:820px!important;margin:4px auto 14px!important;text-align:center;line-height:1.65!important;font-size:12px!important}
+.cbi-section .cbi-value{max-width:820px!important;margin-left:auto!important;margin-right:auto!important;padding:12px 0!important;gap:6px!important}
+.cbi-section .cbi-value-title{max-width:820px!important;text-align:left!important;font-size:13px!important;font-weight:650!important}
+.cbi-section .cbi-value-field,.cbi-section .cbi-value-description{max-width:820px!important}
+.cbi-section .cbi-value-description{text-align:left!important;font-size:11px!important;line-height:1.5!important}
+.cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),.cbi-section .cbi-value-field select,.cbi-section .cbi-value-field textarea{min-height:40px!important;border-radius:8px!important}
+.cbi-section .cbi-value-field label:has(input[type=radio]),.cbi-section .cbi-value-field label:has(input[type=checkbox]){display:flex!important;align-items:center;gap:8px;padding:10px 12px!important;margin:4px 0!important;border:1px solid var(--border-color,rgba(128,128,128,.25));border-radius:9px;background:var(--secondary-bg,rgba(128,128,128,.04));font-size:13px!important;line-height:1.45!important}
+.cbi-section .cbi-value-field input[type=radio],.cbi-section .cbi-value-field input[type=checkbox]{transform:scale(1.05);margin:0 5px 0 0!important}
+.hinfan-help{max-width:1180px;margin:14px auto 20px!important;padding:14px 17px!important;font-size:13px!important}
+@media(max-width:900px){
+ .hinfan-card,.cbi-map{max-width:100%!important}
+ .hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .cbi-section{padding:14px 16px 18px!important}
 }
-.hinfan-curve-current svg { max-width:100%!important; }
-.cbi-value-field input:not([type=radio]):not([type=checkbox]),
-.cbi-value-field select,.cbi-value-field textarea {
-  background:var(--input-bg,var(--content-bg,#fff))!important;
-  color:var(--content-color,#202938)!important;
-  border-color:var(--border-color,#cbd5e1)!important;
+@media(max-width:600px){
+ .hinfan-hero{padding:15px!important;border-radius:12px!important}
+ .hinfan-hero-main{align-items:flex-start!important;flex-direction:column;gap:5px}
+ .hinfan-grid{grid-template-columns:minmax(0,1fr)!important;gap:9px!important}
+ .hinfan-tile{padding:13px 15px!important}
+ .hinfan-tile-v{font-size:25px!important}
+ .hinfan-curve-panel{padding:12px!important;margin-top:10px}
+ .hinfan-panel-heading{align-items:flex-start;flex-direction:column;gap:3px}
+ .hinfan-curve-current svg{min-height:0!important}
+ .cbi-section{padding:12px 12px 15px!important;border-radius:11px!important}
+ .cbi-section .cbi-value{padding:10px 0!important}
+ .cbi-section .cbi-value-title,.cbi-section .cbi-value-field,.cbi-section .cbi-value-description{max-width:100%!important;width:100%!important}
+ .cbi-section .cbi-value-field ul{display:flex;flex-direction:column;gap:7px!important}
+ .cbi-section .cbi-value-field ul li{width:100%;box-sizing:border-box}
 }
-.cbi-value-field .cbi-button, .cbi-value-field button, .cbi-value-field input[type=button] {
-  min-height:40px!important; padding:8px 13px!important; border-radius:9px!important;
-}
-.cbi-value-field label:has(input[type=radio]),
-.cbi-value-field label:has(input[type=checkbox]) {
-  min-height:40px!important; display:flex!important; align-items:center!important;
-  gap:8px!important; padding:8px 11px!important; font-size:13px!important;
-}
-@media(max-width:767px) {
-  .cbi-map { padding-left:0!important; padding-right:0!important; overflow-x:hidden!important; }
-  .hinfan-grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:9px!important; }
-  .hinfan-tile { padding:10px!important; min-width:0!important; }
-  .hinfan-tile-k { font-size:12px!important; }
-  .hinfan-tile-v { font-size:clamp(17px,5vw,22px)!important; overflow-wrap:anywhere!important; }
-  .hinfan-temp-tile { grid-template-columns:1fr!important; gap:8px!important; }
-  .hinfan-temp-info { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
-  .hinfan-temp-tile .hinfan-curve-current { width:100%!important; padding:6px 2px!important; }
-  .hinfan-temp-tile .hinfan-curve-current svg { width:100%!important; height:auto!important; }
-  .cbi-section { margin:0 0 12px!important; padding:10px 11px 12px!important; border-radius:12px!important; }
-  .cbi-section>legend { font-size:15px!important; padding:11px!important; }
-  .cbi-section .cbi-value { padding:9px 0!important; gap:5px!important; }
-  .cbi-section .cbi-value-title,.cbi-section .cbi-value-field,
-  .cbi-section .cbi-value-description { max-width:100%!important; width:100%!important; }
-  .cbi-section .cbi-value-title { text-align:left!important; font-size:13px!important; }
-  .cbi-section .cbi-value-description { font-size:11px!important; line-height:1.5!important; }
-  .cbi-value-field input:not([type=radio]):not([type=checkbox]),
-  .cbi-value-field select,.cbi-value-field textarea { min-height:42px!important; font-size:16px!important; }
-  .cbi-value-field .cbi-dynlist { max-width:100%!important; }
-  .cbi-value-field .cbi-dynlist input:not([type=radio]):not([type=checkbox]) {
-    width:calc(100% - 42px)!important; max-width:calc(100% - 42px)!important;
-  }
-  .cbi-value-field ul { gap:6px!important; }
-  .cbi-value-field ul li { padding:7px 8px!important; }
-}
-@media(max-width:380px) {
-  .hinfan-grid { gap:6px!important; }
-  .hinfan-tile { padding:8px!important; }
-  .hinfan-tile-k { font-size:11px!important; }
-  .hinfan-tile-v { font-size:16px!important; }
-}
-html[data-darkmode="true"] .cbi-value-field input:not([type=radio]):not([type=checkbox]),
-html.dark .cbi-value-field input:not([type=radio]):not([type=checkbox]),
-body.dark .cbi-value-field input:not([type=radio]):not([type=checkbox]),
-html[data-darkmode="true"] .cbi-value-field select,html.dark .cbi-value-field select,body.dark .cbi-value-field select,
-html[data-darkmode="true"] .cbi-value-field textarea,html.dark .cbi-value-field textarea,body.dark .cbi-value-field textarea {
-  background:#292d35!important;color:#e7ebf2!important;border-color:#505866!important;
-}
+@media(prefers-reduced-motion:reduce){.hinfan-tile,.hinfan-bar span{transition:none!important}}
 
 
-/* 1.4.1：蓝白视觉统一 + 真正响应式布局（覆盖旧版累积样式） */
-.hinfan-card{color:#172b4d!important}
-.hinfan-hero{background:linear-gradient(120deg,#1d4ed8 0%,#3b82f6 55%,#60a5fa 100%)!important;color:#fff!important;border:1px solid rgba(37,99,235,.18)!important;box-shadow:0 8px 24px rgba(37,99,235,.18)!important}
+/* 1.4.3：按蓝白效果图统一仪表盘视觉；覆盖旧版累积样式 */
+.hinfan-card{color:#172b4d!important;width:100%;max-width:1180px;margin:0 auto 22px!important;box-sizing:border-box}
+.hinfan-hero{background:linear-gradient(120deg,#1d4ed8 0%,#3b82f6 55%,#60a5fa 100%)!important;color:#fff!important;border:1px solid rgba(37,99,235,.18)!important;box-shadow:0 8px 24px rgba(37,99,235,.18)!important;border-radius:16px!important;padding:18px 22px!important}
 .hinfan-hero.bad{background:linear-gradient(120deg,#b91c1c,#ef4444)!important}
 .hinfan-hero.warn{background:linear-gradient(120deg,#b45309,#f59e0b)!important}
 .hinfan-hero.info{background:linear-gradient(120deg,#1d4ed8,#60a5fa)!important}
-.hinfan-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:12px!important;align-items:stretch!important}
-.hinfan-temp-tile{grid-column:span 2!important}
-.hinfan-tile{min-width:0!important;padding:13px!important;border:1px solid #dbeafe!important;border-radius:14px!important;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%)!important;color:#172b4d!important;box-shadow:0 4px 14px rgba(30,64,175,.07)!important}
-.hinfan-tile-k{color:#52709a!important;font-size:12px!important;font-weight:650!important}
-.hinfan-tile-v{color:#173b73!important;font-size:clamp(19px,1.7vw,27px)!important;font-weight:800!important;line-height:1.25!important}
+.hinfan-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;margin:0!important;align-items:stretch!important}
+.hinfan-tile{min-width:0!important;padding:16px!important;border:1px solid #dbeafe!important;border-radius:14px!important;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%)!important;color:#172b4d!important;box-shadow:0 4px 14px rgba(30,64,175,.07)!important}
+.hinfan-tile-k{color:#52709a!important;font-size:13px!important;font-weight:650!important;letter-spacing:.02em;margin-bottom:9px!important}
+.hinfan-tile-v{color:#173b73!important;font-size:clamp(22px,2.4vw,30px)!important;font-weight:800!important;line-height:1.2!important;font-variant-numeric:tabular-nums}
 .hinfan-unit,.hinfan-tile-s{color:#6882a6!important}
 .hinfan-t-ok{color:#16845b!important}.hinfan-t-info{color:#2563eb!important}.hinfan-t-warn{color:#c27a12!important}.hinfan-t-hot,.hinfan-t-bad{color:#dc2626!important}
 .hinfan-bar{background:#e5eefc!important}.hinfan-bar span{background:linear-gradient(90deg,#2563eb,#60a5fa)!important}
 .hinfan-fanwrap{color:#2563eb!important}.hinfan-fan-slow,.hinfan-fan-mid{color:#2563eb!important}
-.hinfan-curve-current{border:1px solid #e2ecfb!important;border-radius:11px!important;background:#f7faff!important}
+.hinfan-curve-panel{border:1px solid #dbeafe!important;border-radius:14px!important;background:linear-gradient(180deg,#fff,#f7faff)!important;box-shadow:0 4px 14px rgba(30,64,175,.055)}
+.hinfan-curve-current{border:0!important;background:transparent!important}
 .hinfan-curve-caption{color:#6882a6!important;opacity:1!important}
+.hinfan-panel-heading{color:#1e40af!important}
 .hinfan-note,.hinfan-help{background:#eff6ff!important;border:1px solid #dbeafe!important;border-left:4px solid #3b82f6!important;color:#24436d!important;border-radius:11px!important}
-.cbi-section{border:1px solid #dbeafe!important;border-radius:14px!important;background:#fff!important;box-shadow:0 5px 18px rgba(30,64,175,.055)!important;color:#172b4d!important}
+.cbi-map{width:100%!important;max-width:1180px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box!important}
+.cbi-section{border:1px solid #dbeafe!important;border-radius:14px!important;background:#fff!important;box-shadow:0 5px 18px rgba(30,64,175,.055)!important;color:#172b4d!important;padding:16px 20px 20px!important}
 .cbi-section>legend{background:linear-gradient(90deg,#eff6ff,#fff)!important;color:#1e40af!important;border-left:4px solid #3b82f6!important;border-radius:9px!important}
 .cbi-section .cbi-section-descr,.cbi-value-description{color:#647b9c!important}
 .cbi-value-title{color:#24436d!important}
-.cbi-value-field input:not([type=radio]):not([type=checkbox]),.cbi-value-field select,.cbi-value-field textarea{background:#fff!important;color:#172b4d!important;border:1px solid #cbdcf5!important;border-radius:9px!important}
+.cbi-value-field input:not([type=radio]):not([type=checkbox]),.cbi-value-field select,.cbi-value-field textarea{background:#fff!important;color:#172b4d!important;border:1px solid #cbdcf5!important;border-radius:9px!important;min-height:40px!important;box-sizing:border-box!important}
 .cbi-value-field input:focus,.cbi-value-field select:focus,.cbi-value-field textarea:focus{border-color:#3b82f6!important;box-shadow:0 0 0 3px rgba(59,130,246,.14)!important}
 .cbi-value-field input[type=radio],.cbi-value-field input[type=checkbox]{accent-color:#2563eb!important}
 .cbi-value-field ul li,.cbi-value-field label:has(input[type=radio]),.cbi-value-field label:has(input[type=checkbox]){background:#f7faff!important;border-color:#dbeafe!important;color:#24436d!important}
 .cbi-value-field ul li:hover,.cbi-value-field label:has(input[type=radio]):hover,.cbi-value-field label:has(input[type=checkbox]):hover{background:#eff6ff!important;border-color:#93c5fd!important}
-.cbi-value-field .cbi-button,.cbi-value-field button,.cbi-value-field input[type=button]{min-height:42px!important;border-radius:9px!important}
-@media(max-width:1100px){
- .hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
- .hinfan-temp-tile{grid-column:span 2!important}
-}
-@media(max-width:767px){
+@media(max-width:900px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.hinfan-card,.cbi-map{max-width:100%!important}}
+@media(max-width:600px){
  .cbi-map,.cbi-map>form{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:hidden!important}
  .hinfan-card{width:100%!important;max-width:100%!important}
  .hinfan-hero{padding:14px!important;margin-bottom:11px!important;border-radius:12px!important}
  .hinfan-hero-main{gap:7px!important;font-size:14px!important}
  .hinfan-hero-sub{font-size:11px!important;line-height:1.5!important;overflow-wrap:anywhere!important}
  .hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
- .hinfan-temp-tile{grid-column:1/-1!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important}
- .hinfan-temp-info{display:flex!important;align-items:baseline!important;gap:8px!important;flex-wrap:wrap!important}
- .hinfan-temp-tile .hinfan-curve-current{width:100%!important;max-width:100%!important;padding:7px 2px!important}
- .hinfan-temp-tile .hinfan-curve-current svg{width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important}
- .hinfan-tile{padding:10px!important;border-radius:11px!important}
+ .hinfan-tile{padding:11px!important;border-radius:11px!important}
+ .hinfan-tile-k{font-size:11px!important}
  .hinfan-tile-v{font-size:clamp(17px,5vw,22px)!important}
+ .hinfan-tile-s{font-size:10px!important;overflow-wrap:anywhere!important}
+ .hinfan-curve-panel{padding:12px!important;margin-top:10px!important;min-width:0!important}
+ .hinfan-panel-heading{align-items:flex-start;flex-direction:column;gap:3px}
+ .hinfan-curve-current svg{width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important}
  .cbi-section{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;padding:10px 11px 12px!important;margin-bottom:12px!important}
  .cbi-section>legend{width:auto!important;margin:0 0 10px!important;padding:10px 11px!important;font-size:14px!important}
  .cbi-section .cbi-value{display:flex!important;flex-direction:column!important;align-items:stretch!important;width:100%!important;max-width:100%!important;padding:9px 0!important;gap:5px!important}
  .cbi-section .cbi-value-title,.cbi-section .cbi-value-field,.cbi-section .cbi-value-description{width:100%!important;max-width:100%!important;min-width:0!important;text-align:left!important}
- .cbi-section .cbi-value-title{font-size:13px!important}
- .cbi-section .cbi-value-description{font-size:11px!important;line-height:1.5!important}
- .cbi-value-field input:not([type=radio]):not([type=checkbox]),.cbi-value-field select,.cbi-value-field textarea{width:100%!important;max-width:100%!important;min-height:43px!important;font-size:16px!important;box-sizing:border-box!important}
+ .cbi-value-field input:not([type=radio]):not([type=checkbox]),.cbi-value-field select,.cbi-value-field textarea{width:100%!important;max-width:100%!important;min-height:43px!important;font-size:16px!important}
  .cbi-value-field .cbi-dynlist{width:100%!important;max-width:100%!important}
  .cbi-value-field .cbi-dynlist input:not([type=radio]):not([type=checkbox]){width:calc(100% - 42px)!important;max-width:calc(100% - 42px)!important}
  .cbi-value-field ul{width:100%!important;max-width:100%!important}
  .cbi-value-field ul li,.cbi-value-field label:has(input[type=radio]),.cbi-value-field label:has(input[type=checkbox]){width:100%!important;max-width:100%!important;min-height:40px!important;box-sizing:border-box!important;white-space:normal!important}
 }
-@media(max-width:380px){
- .hinfan-grid{gap:6px!important}
- .hinfan-tile{padding:8px!important}
- .hinfan-tile-k{font-size:11px!important}
- .hinfan-tile-v{font-size:16px!important}
- .hinfan-curve-caption{font-size:9px!important}
-}
-/* 暗色主题：保留蓝色强调，卡片和表单改为深蓝灰，不强制浅色背景 */
+@media(max-width:380px){.hinfan-grid{gap:6px!important}.hinfan-tile{padding:8px!important}.hinfan-tile-v{font-size:16px!important}.hinfan-curve-caption{font-size:9px!important}}
+/* 暗色主题：蓝色强调不变，主体切换为深蓝灰 */
 html[data-darkmode="true"] .hinfan-card,html.dark .hinfan-card,body.dark .hinfan-card{color:#e5edf9!important}
 html[data-darkmode="true"] .hinfan-tile,html.dark .hinfan-tile,body.dark .hinfan-tile{background:linear-gradient(180deg,#202b3b,#1b2635)!important;border-color:#344966!important;color:#e5edf9!important}
 html[data-darkmode="true"] .hinfan-tile-v,html.dark .hinfan-tile-v,body.dark .hinfan-tile-v{color:#dbeafe!important}
 html[data-darkmode="true"] .hinfan-tile-k,html.dark .hinfan-tile-k,body.dark .hinfan-tile-k,html[data-darkmode="true"] .hinfan-unit,html.dark .hinfan-unit,body.dark .hinfan-unit,html[data-darkmode="true"] .hinfan-tile-s,html.dark .hinfan-tile-s,body.dark .hinfan-tile-s{color:#a9bdd8!important}
-html[data-darkmode="true"] .hinfan-curve-current,html.dark .hinfan-curve-current,body.dark .hinfan-curve-current{background:#1b2635!important;border-color:#344966!important}
+html[data-darkmode="true"] .hinfan-curve-panel,html.dark .hinfan-curve-panel,body.dark .hinfan-curve-panel,html[data-darkmode="true"] .hinfan-curve-current,html.dark .hinfan-curve-current,body.dark .hinfan-curve-current{background:#1b2635!important;border-color:#344966!important}
+html[data-darkmode="true"] .hinfan-panel-heading,html.dark .hinfan-panel-heading,body.dark .hinfan-panel-heading{color:#bfdbfe!important}
 html[data-darkmode="true"] .hinfan-note,html.dark .hinfan-note,body.dark .hinfan-note,html[data-darkmode="true"] .hinfan-help,html.dark .hinfan-help,body.dark .hinfan-help{background:#1e3048!important;border-color:#34557f!important;color:#dbeafe!important}
 html[data-darkmode="true"] .cbi-section,html.dark .cbi-section,body.dark .cbi-section{background:#1c2635!important;border-color:#344966!important;color:#e5edf9!important}
 html[data-darkmode="true"] .cbi-section>legend,html.dark .cbi-section>legend,body.dark .cbi-section>legend{background:#26364b!important;color:#dbeafe!important}
 html[data-darkmode="true"] .cbi-value-title,html.dark .cbi-value-title,body.dark .cbi-value-title,html[data-darkmode="true"] .cbi-value-description,html.dark .cbi-value-description,body.dark .cbi-value-description{color:#b6c7df!important}
 html[data-darkmode="true"] .cbi-value-field input:not([type=radio]):not([type=checkbox]),html.dark .cbi-value-field input:not([type=radio]):not([type=checkbox]),body.dark .cbi-value-field input:not([type=radio]):not([type=checkbox]),html[data-darkmode="true"] .cbi-value-field select,html.dark .cbi-value-field select,body.dark .cbi-value-field select,html[data-darkmode="true"] .cbi-value-field textarea,html.dark .cbi-value-field textarea,body.dark .cbi-value-field textarea{background:#202b3b!important;color:#e5edf9!important;border-color:#405675!important}
 html[data-darkmode="true"] .cbi-value-field ul li,html.dark .cbi-value-field ul li,body.dark .cbi-value-field ul li,html[data-darkmode="true"] .cbi-value-field label:has(input[type=radio]),html.dark .cbi-value-field label:has(input[type=radio]),body.dark .cbi-value-field label:has(input[type=radio]){background:#243449!important;border-color:#405675!important;color:#dbeafe!important}
+
+
+/* 1.4.3 蓝白效果图：把控制模式与预设选项呈现为可点击的卡片 */
+.cbi-value-field ul:has(input[type="radio"]){
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:10px!important;width:100%!important;margin:0!important;padding:0!important;
+}
+.cbi-value-field ul:has(input[type="radio"]) li{
+ display:flex!important;align-items:center!important;min-width:0!important;
+ min-height:58px!important;padding:12px 14px!important;
+ border:1px solid #d7e5f8!important;border-radius:12px!important;
+ background:linear-gradient(145deg,#fff,#f4f8ff)!important;
+ box-shadow:0 3px 10px rgba(37,99,235,.055)!important;
+}
+.cbi-value-field ul:has(input[type="radio"]) li:has(input:checked){
+ border:1.5px solid #3b82f6!important;
+ background:linear-gradient(145deg,#eaf3ff,#f7fbff)!important;
+ box-shadow:0 0 0 3px rgba(59,130,246,.10)!important;
+}
+.cbi-value-field ul:has(input[type="radio"]) li label{
+ display:flex!important;align-items:center!important;gap:9px!important;
+ width:100%!important;min-width:0!important;font-weight:650!important;
+}
+.cbi-value-field ul:has(input[type="radio"]) input[type="radio"]{
+ flex:0 0 auto!important;width:17px!important;height:17px!important;
+ accent-color:#2563eb!important;
+}
+@media(max-width:600px){
+ .cbi-value-field ul:has(input[type="radio"]){grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+ .cbi-value-field ul:has(input[type="radio"]) li{min-height:52px!important;padding:9px!important}
+}
+html[data-darkmode="true"] .cbi-value-field ul:has(input[type="radio"]) li,
+html.dark .cbi-value-field ul:has(input[type="radio"]) li,
+body.dark .cbi-value-field ul:has(input[type="radio"]) li{
+ background:linear-gradient(145deg,#243449,#1d2a3b)!important;
+ border-color:#405675!important;color:#dbeafe!important;
+}
+html[data-darkmode="true"] .cbi-value-field ul:has(input[type="radio"]) li:has(input:checked),
+html.dark .cbi-value-field ul:has(input[type="radio"]) li:has(input:checked),
+body.dark .cbi-value-field ul:has(input[type="radio"]) li:has(input:checked){
+ border-color:#60a5fa!important;background:#263d5b!important;
+}
 
 </style>
 ]] .. (m.description or "")
