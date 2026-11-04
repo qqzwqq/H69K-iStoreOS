@@ -1518,6 +1518,37 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 	}
 }
 
+/* 1.6.3：控制模式标题、单选组与下方表单标题/输入列统一左边界。
+ * 标题此前被全局 text-align:center 居中，而单选组从字段列左侧开始，
+ * 因此视觉上标题与选项错位。固定同一 760px 内容列并统一左对齐。
+ */
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-title{
+	box-sizing:border-box!important;
+	width:100%!important;
+	max-width:760px!important;
+	margin-left:auto!important;
+	margin-right:auto!important;
+	padding:0!important;
+	text-align:left!important;
+}
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field{
+	box-sizing:border-box!important;
+	width:100%!important;
+	max-width:760px!important;
+	margin-left:auto!important;
+	margin-right:auto!important;
+	padding-left:0!important;
+	padding-right:0!important;
+	text-align:left!important;
+}
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field ul,
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field .cbi-input-radio{
+	justify-content:flex-start!important;
+	margin-left:0!important;
+	padding-left:0!important;
+}
+
+
 
 /* 1.6.3：风扇控制方式标题与单选项统一左对齐。
  * 将该行改为上下布局：标题占满一行，选项从标题文字的同一左边缘开始；
