@@ -905,6 +905,8 @@ html[data-darkmode="true"] .hinfan-curve-panel,html[data-theme="dark"] .hinfan-c
 .hinfan-fanwrap{color:inherit!important}
 .hinfan-kernel-tile .hinfan-tile-v{color:#203b66!important}
 .hinfan-kernel-strip{box-sizing:border-box;width:100%;margin:0 0 12px;padding:11px 15px;border-left:4px solid #6678ff;border-radius:8px;background:#edf1fb;color:#405779;font-size:13px;line-height:1.5}
+/* 同一说明区域若重复输出内核设备树温控标题，只保留第一条 */
+.hinfan-kernel-strip~.hinfan-kernel-strip{display:none!important}
 .hinfan-help{box-sizing:border-box;width:100%;max-width:none!important;margin:0 0 14px!important;padding:12px 15px!important;border:0!important;border-radius:10px!important;border-left:3px solid #6678ff!important;background:#f0f2f5!important;color:#53677f!important;font-size:12px!important;line-height:1.75!important}
 .hinfan-kernel-details{margin:0 0 16px;padding:0 2px 10px;border-bottom:1px solid #e5eaf1}
 .hinfan-kernel-details>summary{cursor:pointer;color:#386fc1;font-size:12px;font-weight:700;padding:5px 0}
