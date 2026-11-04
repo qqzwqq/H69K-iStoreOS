@@ -359,6 +359,22 @@ local function status_card()
 	-- 将内核设备树温控档位栏放在两层温控说明栏上方；其余状态卡片与设置区保持原样。
 	h[#h + 1] = string.format('<div class="hinfan-kernel-strip"><b>内核设备树温控</b>（档位 %s/%s）</div>', cur or "--", maxs or "--")
 	h[#h + 1] = '<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档）；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。</div>'
+	-- LuCI 主题可能把 Map 描述内容放进不同容器，CSS 的同级选择器无法跨容器去重。
+	-- 页面加载完成后全局检查，只保留第一条内核设备树温控标题。
+	h[#h + 1] = [[
+<script>
+(function () {
+	function removeDuplicateKernelStrip() {
+		var strips = document.querySelectorAll('.hinfan-kernel-strip');
+		for (var i = 1; i < strips.length; i++) {
+			strips[i].parentNode && strips[i].parentNode.removeChild(strips[i]);
+		}
+	}
+	if (document.readyState === 'complete') removeDuplicateKernelStrip();
+	else window.addEventListener('load', removeDuplicateKernelStrip, { once: true });
+})();
+</script>
+]]
 
 
 	if st.note and st.note ~= "" then
