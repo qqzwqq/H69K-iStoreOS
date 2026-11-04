@@ -1585,31 +1585,119 @@ html.hinfan-theme-dark .hinfan-panel-heading{color:#c6d8ed!important}
 html.hinfan-theme-dark .cbi-button,
 html.hinfan-theme-dark button{color:#edf4fc!important}
 
+
+/* 1.6.2：深色模式强制灰蓝覆盖层。
+ * 必须放在所有 1.5.x 浅色视觉样式之后，覆盖其 !important 白底。
+ */
+html.hinfan-theme-dark .hinfan-card,
+html.hinfan-theme-dark .cbi-map,
+html.hinfan-theme-dark .cbi-map .cbi-section{
+ color:#e3e7ec!important;
+}
+html.hinfan-theme-dark .cbi-map .cbi-section{
+ background:#30343a!important;background-image:none!important;
+ border-color:#4a5058!important;box-shadow:0 4px 14px rgba(0,0,0,.22)!important;
+}
+html.hinfan-theme-dark .cbi-map .cbi-section>legend{
+ background:#3b4149!important;background-image:none!important;
+ color:#f0f2f5!important;border-left-color:#8a9aaa!important;
+}
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value,
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-title,
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-description,
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-section-descr{
+ background:transparent!important;background-image:none!important;
+ color:#d5dbe2!important;
+}
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field,
+html.hinfan-theme-dark .cbi-map .cbi-section:nth-of-type(3) .cbi-value-field{
+ background:#3a4048!important;background-image:none!important;
+ border-color:#555e69!important;color:#e1e5ea!important;
+ box-shadow:none!important;
+}
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field select,
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field textarea,
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field .cbi-dynlist .item,
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field .cbi-dynlist>div{
+ background:#454c55!important;background-image:none!important;
+ color:#f0f2f5!important;border:1px solid #626d79!important;
+ box-shadow:none!important;
+}
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field input::placeholder,
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field textarea::placeholder{
+ color:#b9c2cc!important;opacity:1!important;
+}
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field ul,
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field ul li,
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field label:has(input[type=radio]),
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field label:has(input[type=checkbox]){
+ background:#414850!important;background-image:none!important;
+ border-color:#5b6672!important;color:#e3e7ec!important;
+}
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field ul li:has(input:checked),
+html.hinfan-theme-dark .cbi-map .cbi-section .cbi-value-field label:has(input:checked){
+ background:#505e6d!important;border-color:#91a6bb!important;color:#fff!important;
+}
+html.hinfan-theme-dark .hinfan-kernel-content,
+html.hinfan-theme-dark .hinfan-kv,
+html.hinfan-theme-dark .hinfan-kernel-intro,
+html.hinfan-theme-dark .hinfan-curve-panel,
+html.hinfan-theme-dark .hinfan-curve-current{
+ background:#3a4149!important;background-image:none!important;
+ border-color:#59636e!important;color:#e1e5ea!important;
+}
+html.hinfan-theme-dark .hinfan-kv b,
+html.hinfan-theme-dark .hinfan-kv span,
+html.hinfan-theme-dark .hinfan-panel-heading,
+html.hinfan-theme-dark .hinfan-curve-caption{
+ color:#d2d9e1!important;
+}
+html.hinfan-theme-dark .hinfan-help,
+html.hinfan-theme-dark .hinfan-note{
+ background:#3d4854!important;background-image:none!important;
+ border-color:#657486!important;color:#e7ebf0!important;
+}
+html.hinfan-theme-dark .hinfan-tile{
+ background:linear-gradient(145deg,#303943,#272f38)!important;
+ background-color:#303943!important;border-color:#4b5662!important;color:#edf1f5!important;
+}
+html.hinfan-theme-dark .hinfan-tile-k,
+html.hinfan-theme-dark .hinfan-unit,
+html.hinfan-theme-dark .hinfan-tile-s{color:#c0cad5!important}
+
 </style>
 <script>
 (function(){
   function rgbIsDark(value){
     var m=String(value||'').match(/[0-9.]+/g);
     if(!m || m.length<3) return false;
+    if(m.length>3 && +m[3]===0) return false;
     var r=+m[0],g=+m[1],b=+m[2];
-    return (0.2126*r+0.7152*g+0.0722*b)<125;
+    return (0.2126*r+0.7152*g+0.0722*b)<145;
   }
   function detectDark(){
-    var root=document.documentElement, body=document.body, dark=false, nodes=[root,body];
-    for(var i=0;i<nodes.length;i++){
-      var n=nodes[i]; if(!n) continue;
-      var cs=window.getComputedStyle(n);
-      if(cs.colorScheme==='dark' || rgbIsDark(cs.backgroundColor)){ dark=true; break; }
+    var root=document.documentElement, dark=false, nodes=[];
+    var explicit='[data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode';
+    if(root.matches(explicit) || (document.body && document.body.matches(explicit))) dark=true;
+    if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) dark=true;
+    var map=document.querySelector('.cbi-map');
+    for(var n=map;n;n=n.parentElement) nodes.push(n);
+    nodes.push(document.body,root);
+    for(var i=0;i<nodes.length && !dark;i++){
+      var el=nodes[i]; if(!el) continue;
+      var cs=window.getComputedStyle(el);
+      if(cs.colorScheme==='dark' || rgbIsDark(cs.backgroundColor)) dark=true;
     }
     if(dark) root.classList.add('hinfan-theme-dark');
     else root.classList.remove('hinfan-theme-dark');
   }
   detectDark();
   window.addEventListener('load',detectDark);
+  window.addEventListener('DOMContentLoaded',detectDark);
   if(window.MutationObserver){
     var observer=new MutationObserver(function(){detectDark();});
-    observer.observe(document.documentElement,{attributes:true,attributeFilter:['class','data-theme','data-darkmode','data-bs-theme']});
-    if(document.body) observer.observe(document.body,{attributes:true,attributeFilter:['class','data-theme','data-darkmode','data-bs-theme']});
+    observer.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme','data-darkmode','data-bs-theme','data-color-scheme'],childList:true,subtree:true});
   }
 })();
 </script>
