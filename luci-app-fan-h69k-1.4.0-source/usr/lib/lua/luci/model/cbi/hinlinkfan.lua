@@ -1006,6 +1006,17 @@ html[data-darkmode="true"] .hinfan-kernel-content,html.dark .hinfan-kernel-conte
 .hinfan-fanwrap.hinfan-fan-fast{color:#e6a12b!important}
 .hinfan-fanwrap.hinfan-fan-max{color:#e65353!important}
 
+
+/* 明确锁定经典顶部四栏顺序：CPU 温度 → 风扇转速 → 内核档位 → 守护进程 */
+.hinfan-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-areas:"cpu fan kernel daemon"!important;align-items:stretch!important;width:100%!important}
+.hinfan-grid>.hinfan-temp-tile{grid-area:cpu!important}
+.hinfan-grid>.hinfan-tile:nth-child(2){grid-area:fan!important}
+.hinfan-grid>.hinfan-kernel-tile{grid-area:kernel!important}
+.hinfan-grid>.hinfan-tile:nth-child(4){grid-area:daemon!important}
+.hinfan-kernel-strip{display:block!important;width:100%!important;margin:12px 0 7px!important}
+.hinfan-kernel-details{display:block!important;width:100%!important;margin:0 0 12px!important}
+@media(max-width:900px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-areas:"cpu fan" "kernel daemon"!important}}
+
 </style>
 ]] .. (m.description or "")
 
