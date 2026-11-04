@@ -960,6 +960,26 @@ html[data-darkmode="true"] .cbi-section .cbi-value-title,html.dark .cbi-section 
 html[data-darkmode="true"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),html.dark .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),body.dark .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),html[data-darkmode="true"] .cbi-section .cbi-value-field select,html.dark .cbi-section .cbi-value-field select,body.dark .cbi-section .cbi-value-field select,html[data-darkmode="true"] .cbi-section .cbi-value-field textarea,html.dark .cbi-section .cbi-value-field textarea,body.dark .cbi-section .cbi-value-field textarea{background:#27364a!important;color:#e5edf9!important;border-color:#465d7c!important}
 html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-section .cbi-value-field ul li,body.dark .cbi-section .cbi-value-field ul li,html[data-darkmode="true"] .cbi-section .cbi-value-field label:has(input[type=radio]),html.dark .cbi-section .cbi-value-field label:has(input[type=radio]),body.dark .cbi-section .cbi-value-field label:has(input[type=radio]){color:#dbeafe!important;background:transparent!important}
 
+
+/* 1.5.2：页面内容左右铺满主内容区，不保留主题 container 的窄版留白 */
+.main .container:has(.hinfan-card){
+  width:100%!important;
+  max-width:none!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  padding-left:0!important;
+  padding-right:0!important;
+  box-sizing:border-box!important;
+}
+.main .container:has(.hinfan-card) .cbi-map,
+.main .container:has(.hinfan-card) .hinfan-card,
+.main .container:has(.hinfan-card) .cbi-section{
+  width:100%!important;
+  max-width:none!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  box-sizing:border-box!important;
+}
 </style>
 ]] .. (m.description or "")
 
