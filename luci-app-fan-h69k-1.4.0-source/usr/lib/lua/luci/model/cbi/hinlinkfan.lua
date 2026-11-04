@@ -994,6 +994,18 @@ html[data-darkmode="true"] .hinfan-kernel-content,html.dark .hinfan-kernel-conte
 .hinfan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
 @media(max-width:900px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 
+
+/* 风扇图标按 PWM 档位恢复动态分色，叶片/圆环/中心点统一跟随 currentColor */
+.hinfan-fanwrap{display:inline-flex!important;align-items:center!important;justify-content:center!important;vertical-align:middle!important;margin-left:8px!important;color:inherit!important}
+.hinfan-fanwrap svg{display:block!important;overflow:visible!important}
+.hinfan-fanwrap .hinfan-fan-ring{fill:none!important;stroke:currentColor!important;stroke-opacity:.28!important;stroke-width:2!important}
+.hinfan-fanwrap .hinfan-fan-blades,.hinfan-fanwrap .hinfan-fan-hub{fill:currentColor!important}
+.hinfan-fanwrap.hinfan-fan-stop{color:#9299a3!important}
+.hinfan-fanwrap.hinfan-fan-slow{color:#22a879!important}
+.hinfan-fanwrap.hinfan-fan-mid{color:#16b8b0!important}
+.hinfan-fanwrap.hinfan-fan-fast{color:#e6a12b!important}
+.hinfan-fanwrap.hinfan-fan-max{color:#e65353!important}
+
 </style>
 ]] .. (m.description or "")
 
