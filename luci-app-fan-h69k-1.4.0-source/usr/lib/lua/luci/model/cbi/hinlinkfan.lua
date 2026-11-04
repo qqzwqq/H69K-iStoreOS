@@ -1546,34 +1546,11 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 
 
 
-/* 1.6.4：风扇控制方式与一键预设统一左边缘。
- * 两组均采用标题在上、选项在下的单列布局；
- * 标题、单选项及选项说明从同一条左边缘开始，不改变预设保存逻辑。
+/* 1.6.5：只调整「风扇控制方式」四个单选项的左边缘。
+ * 一键预设区域完全沿用原有样式，不对 preset 选项添加任何覆盖规则。
  */
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"]),
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[type="radio"]){
- box-sizing:border-box!important;
- width:100%!important;
- margin-left:0!important;
- margin-right:0!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-title,
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-field{
- box-sizing:border-box!important;
- display:block!important;
- float:none!important;
- width:100%!important;
- max-width:none!important;
- margin-left:0!important;
- margin-right:0!important;
- padding-left:0!important;
- text-align:left!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-title{
- margin-bottom:10px!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-field ul,
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-field .cbi-input-radio{
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"])>.cbi-value-field ul,
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"])>.cbi-value-field .cbi-input-radio{
  display:flex!important;
  flex-direction:column!important;
  align-items:flex-start!important;
@@ -1582,9 +1559,15 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
  margin:0!important;
  padding:0!important;
 }
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-field ul>li{
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"])>.cbi-value-field ul>li{
  align-self:flex-start!important;
  width:100%!important;
+ margin:0!important;
+ padding:0!important;
+ text-align:left!important;
+}
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"])>.cbi-value-field ul>li>label,
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"])>.cbi-value-field label:has(input[type="radio"]){
  margin-left:0!important;
  padding-left:0!important;
  text-align:left!important;
