@@ -369,10 +369,10 @@ local function status_card()
 	 * 不能只在 window.load 时检查 .hinfan-kernel-strip；
 	 * 同时按标题文字全局去重，并持续监听后续 DOM 插入。
 	 */
-	var titlePattern = /^内核设备树温控\\s*[（(]档位\\s*\\d+\\s*\\/\\s*\\d+[）)]$/;
+	var titlePattern = /^内核设备树温控\s*[（(]档位\s*\d+\s*\/\s*\d+[）)]$/;
 
 	function normalizedText(node) {
-		return String(node && node.textContent || '').replace(/\\s+/g, ' ').trim();
+		return String(node && node.textContent || '').replace(/\s+/g, ' ').trim();
 	}
 
 	function isKernelTitle(node) {
