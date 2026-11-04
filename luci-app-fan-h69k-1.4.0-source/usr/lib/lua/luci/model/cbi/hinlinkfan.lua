@@ -1546,9 +1546,9 @@ html.hinfan-theme-dark button{color:#edf4fc!important}
 <script>
 (function(){
   function rgbIsDark(value){
-    var m=String(value||'').match(/rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)/i);
-    if(!m) return false;
-    var r=+m[1],g=+m[2],b=+m[3];
+    var m=String(value||'').match(/[0-9.]+/g);
+    if(!m || m.length<3) return false;
+    var r=+m[0],g=+m[1],b=+m[2];
     return (0.2126*r+0.7152*g+0.0722*b)<125;
   }
   function detectDark(){
