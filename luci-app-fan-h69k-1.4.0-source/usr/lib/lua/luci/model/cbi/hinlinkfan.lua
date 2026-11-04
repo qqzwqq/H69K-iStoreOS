@@ -1434,24 +1434,34 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 }
 
 
-/* 控制模式：单选项组左对齐到下方表单控件的起始列 */
-.cbi-map > .cbi-section:first-of-type .cbi-value-field{
+/* 控制模式：单选项组左边缘与下方表单输入控件的起始列严格对齐
+ * LuCI 的 .cbi-value-field 本身就是表单字段列；不能使用左右 auto margin，
+ * 否则会把字段列内的单选组再次居中，造成左右错位。
+ */
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field{
+	box-sizing:border-box!important;
+	width:100%!important;
+	max-width:none!important;
+	margin:0!important;
+	padding-left:0!important;
+	padding-right:0!important;
+	justify-self:stretch!important;
 	text-align:left!important;
-	margin-left:auto!important;
-	margin-right:auto!important;
 }
-.cbi-map > .cbi-section:first-of-type .cbi-value-field ul,
-.cbi-map > .cbi-section:first-of-type .cbi-value-field .cbi-input-radio{
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field ul,
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field .cbi-input-radio{
 	display:flex!important;
 	flex-direction:row!important;
 	justify-content:flex-start!important;
 	align-items:center!important;
 	flex-wrap:wrap!important;
-	gap:8px!important;
 	width:100%!important;
+	margin:0!important;
+	padding:0!important;
 	text-align:left!important;
+	gap:8px!important;
 }
-.cbi-map > .cbi-section:first-of-type .cbi-value-field ul li{
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field ul>li{
 	display:inline-flex!important;
 	align-items:center!important;
 	width:auto!important;
@@ -1459,8 +1469,8 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 	margin:0!important;
 }
 @media(max-width:767px){
-	.cbi-map > .cbi-section:first-of-type .cbi-value-field ul,
-	.cbi-map > .cbi-section:first-of-type .cbi-value-field .cbi-input-radio{
+	.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field ul,
+	.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field .cbi-input-radio{
 		align-items:flex-start!important;
 	}
 }
