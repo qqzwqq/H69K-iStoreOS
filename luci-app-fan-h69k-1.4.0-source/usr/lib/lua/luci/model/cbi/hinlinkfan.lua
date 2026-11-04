@@ -354,10 +354,8 @@ local function status_card()
 
 	-- 按经典布局：内核温控说明独立放在四张状态卡下方，设备树详情可展开查看。
 	h[#h + 1] = string.format('<div class="hinfan-kernel-strip">内核设备树温控（档位 %s/%s）</div>', cur or "--", maxs or "--")
-	-- 设备树与内核状态紧贴标题栏，默认折叠，点击后再查看详细信息。
-	h[#h + 1] = '<details class="hinfan-kernel-details"><summary>设备树与内核状态（点击展开）</summary><div class="hinfan-kernel-content">' .. table.concat(kernel_details) .. '</div></details>'
+	h[#h + 1] = '<details class="hinfan-kernel-details"><summary>展开设备树与内核状态</summary><div class="hinfan-kernel-content">' .. table.concat(kernel_details) .. '</div></details>'
 	h[#h + 1] = '<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档）；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。</div>'
-
 
 
 	if st.note and st.note ~= "" then
@@ -961,61 +959,6 @@ html[data-darkmode="true"] .cbi-section .cbi-value,html.dark .cbi-section .cbi-v
 html[data-darkmode="true"] .cbi-section .cbi-value-title,html.dark .cbi-section .cbi-value-title,body.dark .cbi-section .cbi-value-title,html[data-darkmode="true"] .cbi-section .cbi-value-description,html.dark .cbi-section .cbi-value-description,body.dark .cbi-section .cbi-value-description,html[data-darkmode="true"] .cbi-section .cbi-value-field,html.dark .cbi-section .cbi-value-field,body.dark .cbi-section .cbi-value-field{color:#c7d7ec!important}
 html[data-darkmode="true"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),html.dark .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),body.dark .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),html[data-darkmode="true"] .cbi-section .cbi-value-field select,html.dark .cbi-section .cbi-value-field select,body.dark .cbi-section .cbi-value-field select,html[data-darkmode="true"] .cbi-section .cbi-value-field textarea,html.dark .cbi-section .cbi-value-field textarea,body.dark .cbi-section .cbi-value-field textarea{background:#27364a!important;color:#e5edf9!important;border-color:#465d7c!important}
 html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-section .cbi-value-field ul li,body.dark .cbi-section .cbi-value-field ul li,html[data-darkmode="true"] .cbi-section .cbi-value-field label:has(input[type=radio]),html.dark .cbi-section .cbi-value-field label:has(input[type=radio]),body.dark .cbi-section .cbi-value-field label:has(input[type=radio]){color:#dbeafe!important;background:transparent!important}
-
-
-/* 1.5.3 layout correction: four equal status tiles, then kernel heading + accordion */
-.hinfan-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-auto-rows:1fr!important;align-items:stretch!important;gap:12px!important;width:100%!important}
-.hinfan-grid>.hinfan-tile{box-sizing:border-box!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;width:100%!important;min-width:0!important;min-height:154px!important;height:100%!important;margin:0!important;padding:15px!important}
-.hinfan-grid>.hinfan-tile .hinfan-tile-s{margin-top:auto!important;padding-top:7px!important;min-width:0!important;overflow-wrap:anywhere!important}
-.hinfan-grid>.hinfan-tile .hinfan-tile-v{white-space:nowrap!important}
-.hinfan-grid>.hinfan-tile .hinfan-bar{width:100%!important;margin-top:12px!important}
-.hinfan-kernel-strip{margin:0 0 8px!important}
-.hinfan-kernel-details{box-sizing:border-box!important;display:block!important;width:100%!important;margin:0 0 12px!important;padding:0!important;border:1px solid #dfe7f4!important;border-radius:10px!important;background:#f8faff!important;overflow:hidden!important}
-.hinfan-kernel-details>summary{display:block!important;box-sizing:border-box!important;width:100%!important;padding:10px 13px!important;cursor:pointer!important;list-style:none!important;color:#315f9e!important;font-size:12px!important;font-weight:700!important}
-.hinfan-kernel-details>summary::-webkit-details-marker{display:none!important}
-.hinfan-kernel-details>summary:before{content:"＋";display:inline-block;margin-right:7px;color:#5878d9;font-weight:800}
-.hinfan-kernel-details[open]>summary:before{content:"－"}
-.hinfan-kernel-content{margin:0 10px 10px!important;padding:10px 12px!important;border:1px solid #e0e8f3!important;border-radius:8px!important;background:#fff!important}
-@media(max-width:900px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.hinfan-grid>.hinfan-tile{min-height:140px!important}}
-@media(max-width:700px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.hinfan-grid>.hinfan-tile{min-height:132px!important;padding:10px!important}}
-@media(max-width:360px){.hinfan-grid>.hinfan-tile{min-height:124px!important;padding:8px!important}}
-html[data-darkmode="true"] .hinfan-kernel-details,html.dark .hinfan-kernel-details,body.dark .hinfan-kernel-details{background:#243247!important;border-color:#405675!important}
-html[data-darkmode="true"] .hinfan-kernel-details>summary,html.dark .hinfan-kernel-details>summary,body.dark .hinfan-kernel-details>summary{color:#b9d5ff!important}
-html[data-darkmode="true"] .hinfan-kernel-content,html.dark .hinfan-kernel-content,body.dark .hinfan-kernel-content{background:#202c3e!important;border-color:#405a7a!important}
-
-
-/* 页面横向铺满：取消旧版 1180px 限宽，让状态区和设置卡片延伸到内容区两侧 */
-.cbi-map,.cbi-map>form,.cbi-map>.cbi-section,.cbi-map .cbi-section,
-.hinfan-card,.hinfan-hero,.hinfan-grid,.hinfan-kernel-strip,.hinfan-kernel-details,.hinfan-help{
- box-sizing:border-box!important;width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important
-}
-.cbi-map{padding-left:0!important;padding-right:0!important}
-.hinfan-card{padding-left:0!important;padding-right:0!important}
-.hinfan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
-@media(max-width:900px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-
-
-/* 风扇图标按 PWM 档位恢复动态分色，叶片/圆环/中心点统一跟随 currentColor */
-.hinfan-fanwrap{display:inline-flex!important;align-items:center!important;justify-content:center!important;vertical-align:middle!important;margin-left:8px!important;color:inherit!important}
-.hinfan-fanwrap svg{display:block!important;overflow:visible!important}
-.hinfan-fanwrap .hinfan-fan-ring{fill:none!important;stroke:currentColor!important;stroke-opacity:.28!important;stroke-width:2!important}
-.hinfan-fanwrap .hinfan-fan-blades,.hinfan-fanwrap .hinfan-fan-hub{fill:currentColor!important}
-.hinfan-fanwrap.hinfan-fan-stop{color:#9299a3!important}
-.hinfan-fanwrap.hinfan-fan-slow{color:#22a879!important}
-.hinfan-fanwrap.hinfan-fan-mid{color:#16b8b0!important}
-.hinfan-fanwrap.hinfan-fan-fast{color:#e6a12b!important}
-.hinfan-fanwrap.hinfan-fan-max{color:#e65353!important}
-
-
-/* 明确锁定经典顶部四栏顺序：CPU 温度 → 风扇转速 → 内核档位 → 守护进程 */
-.hinfan-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-areas:"cpu fan kernel daemon"!important;align-items:stretch!important;width:100%!important}
-.hinfan-grid>.hinfan-temp-tile{grid-area:cpu!important}
-.hinfan-grid>.hinfan-tile:nth-child(2){grid-area:fan!important}
-.hinfan-grid>.hinfan-kernel-tile{grid-area:kernel!important}
-.hinfan-grid>.hinfan-tile:nth-child(4){grid-area:daemon!important}
-.hinfan-kernel-strip{display:block!important;width:100%!important;margin:12px 0 7px!important}
-.hinfan-kernel-details{display:block!important;width:100%!important;margin:0 0 12px!important}
-@media(max-width:900px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-areas:"cpu fan" "kernel daemon"!important}}
 
 </style>
 ]] .. (m.description or "")
