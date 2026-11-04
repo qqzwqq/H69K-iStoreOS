@@ -1433,6 +1433,38 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
  color:#b9c7d8!important;
 }
 
+
+/* 控制模式：单选项组左对齐到下方表单控件的起始列 */
+.cbi-map > .cbi-section:first-of-type .cbi-value-field{
+	text-align:left!important;
+	margin-left:auto!important;
+	margin-right:auto!important;
+}
+.cbi-map > .cbi-section:first-of-type .cbi-value-field ul,
+.cbi-map > .cbi-section:first-of-type .cbi-value-field .cbi-input-radio{
+	display:flex!important;
+	flex-direction:row!important;
+	justify-content:flex-start!important;
+	align-items:center!important;
+	flex-wrap:wrap!important;
+	gap:8px!important;
+	width:100%!important;
+	text-align:left!important;
+}
+.cbi-map > .cbi-section:first-of-type .cbi-value-field ul li{
+	display:inline-flex!important;
+	align-items:center!important;
+	width:auto!important;
+	min-width:0!important;
+	margin:0!important;
+}
+@media(max-width:767px){
+	.cbi-map > .cbi-section:first-of-type .cbi-value-field ul,
+	.cbi-map > .cbi-section:first-of-type .cbi-value-field .cbi-input-radio{
+		align-items:flex-start!important;
+	}
+}
+
 </style>
 ]] .. (m.description or "")
 
