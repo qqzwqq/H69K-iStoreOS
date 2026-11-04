@@ -1251,6 +1251,23 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 }
 
 
+
+/* 1.6.0：控制模式单选项从字段列左边缘开始排列，与下方曲线输入框对齐 */
+.cbi-section:first-of-type .cbi-value:has(input[type="radio"]) .cbi-value-field{
+  grid-column:2!important;justify-self:stretch!important;width:100%!important;
+  max-width:none!important;margin-left:0!important;margin-right:0!important;text-align:left!important;
+}
+.cbi-section:first-of-type .cbi-value:has(input[type="radio"]) .cbi-value-field ul{
+  display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
+  justify-content:flex-start!important;align-items:center!important;
+  width:100%!important;max-width:none!important;margin:0!important;padding:0!important;
+  gap:8px 18px!important;
+}
+.cbi-section:first-of-type .cbi-value:has(input[type="radio"]) .cbi-value-field ul li{
+  flex:0 0 auto!important;width:auto!important;min-width:0!important;
+  margin:0!important;padding:3px 2px!important;text-align:left!important;
+}
+
 /* 1.5.9：控制选项左边缘与 45:90 曲线输入框对齐 */
 .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-title,
 .cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-title,
