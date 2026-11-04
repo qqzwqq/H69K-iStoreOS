@@ -962,6 +962,27 @@ html[data-darkmode="true"] .cbi-section .cbi-value-title,html.dark .cbi-section 
 html[data-darkmode="true"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),html.dark .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),body.dark .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),html[data-darkmode="true"] .cbi-section .cbi-value-field select,html.dark .cbi-section .cbi-value-field select,body.dark .cbi-section .cbi-value-field select,html[data-darkmode="true"] .cbi-section .cbi-value-field textarea,html.dark .cbi-section .cbi-value-field textarea,body.dark .cbi-section .cbi-value-field textarea{background:#27364a!important;color:#e5edf9!important;border-color:#465d7c!important}
 html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-section .cbi-value-field ul li,body.dark .cbi-section .cbi-value-field ul li,html[data-darkmode="true"] .cbi-section .cbi-value-field label:has(input[type=radio]),html.dark .cbi-section .cbi-value-field label:has(input[type=radio]),body.dark .cbi-section .cbi-value-field label:has(input[type=radio]){color:#dbeafe!important;background:transparent!important}
 
+
+/* 1.5.3 layout correction: four equal status tiles, then kernel heading + accordion */
+.hinfan-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-auto-rows:1fr!important;align-items:stretch!important;gap:12px!important;width:100%!important}
+.hinfan-grid>.hinfan-tile{box-sizing:border-box!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;width:100%!important;min-width:0!important;min-height:154px!important;height:100%!important;margin:0!important;padding:15px!important}
+.hinfan-grid>.hinfan-tile .hinfan-tile-s{margin-top:auto!important;padding-top:7px!important;min-width:0!important;overflow-wrap:anywhere!important}
+.hinfan-grid>.hinfan-tile .hinfan-tile-v{white-space:nowrap!important}
+.hinfan-grid>.hinfan-tile .hinfan-bar{width:100%!important;margin-top:12px!important}
+.hinfan-kernel-strip{margin:0 0 8px!important}
+.hinfan-kernel-details{box-sizing:border-box!important;display:block!important;width:100%!important;margin:0 0 12px!important;padding:0!important;border:1px solid #dfe7f4!important;border-radius:10px!important;background:#f8faff!important;overflow:hidden!important}
+.hinfan-kernel-details>summary{display:block!important;box-sizing:border-box!important;width:100%!important;padding:10px 13px!important;cursor:pointer!important;list-style:none!important;color:#315f9e!important;font-size:12px!important;font-weight:700!important}
+.hinfan-kernel-details>summary::-webkit-details-marker{display:none!important}
+.hinfan-kernel-details>summary:before{content:"＋";display:inline-block;margin-right:7px;color:#5878d9;font-weight:800}
+.hinfan-kernel-details[open]>summary:before{content:"－"}
+.hinfan-kernel-content{margin:0 10px 10px!important;padding:10px 12px!important;border:1px solid #e0e8f3!important;border-radius:8px!important;background:#fff!important}
+@media(max-width:900px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.hinfan-grid>.hinfan-tile{min-height:140px!important}}
+@media(max-width:700px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.hinfan-grid>.hinfan-tile{min-height:132px!important;padding:10px!important}}
+@media(max-width:360px){.hinfan-grid>.hinfan-tile{min-height:124px!important;padding:8px!important}}
+html[data-darkmode="true"] .hinfan-kernel-details,html.dark .hinfan-kernel-details,body.dark .hinfan-kernel-details{background:#243247!important;border-color:#405675!important}
+html[data-darkmode="true"] .hinfan-kernel-details>summary,html.dark .hinfan-kernel-details>summary,body.dark .hinfan-kernel-details>summary{color:#b9d5ff!important}
+html[data-darkmode="true"] .hinfan-kernel-content,html.dark .hinfan-kernel-content,body.dark .hinfan-kernel-content{background:#202c3e!important;border-color:#405a7a!important}
+
 </style>
 ]] .. (m.description or "")
 
