@@ -1519,6 +1519,47 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 }
 
 
+/* 1.6.3：风扇控制方式标题与单选项统一左对齐。
+ * 将该行改为上下布局：标题占满一行，选项从标题文字的同一左边缘开始；
+ * 仅作用于第一个「控制模式」分区，不影响下方曲线/高级设置。
+ */
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]){
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr)!important;
+ align-items:start!important;
+ justify-items:stretch!important;
+ width:100%!important;
+ margin-left:0!important;
+ margin-right:0!important;
+}
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"])>.cbi-value-title{
+ display:block!important;
+ float:none!important;
+ box-sizing:border-box!important;
+ width:100%!important;
+ max-width:none!important;
+ margin:0 0 10px 0!important;
+ padding:0!important;
+ text-align:left!important;
+}
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"])>.cbi-value-field{
+ display:block!important;
+ float:none!important;
+ box-sizing:border-box!important;
+ width:100%!important;
+ max-width:none!important;
+ margin:0!important;
+ padding:0!important;
+ text-align:left!important;
+}
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"])>.cbi-value-field ul,
+.cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"])>.cbi-value-field .cbi-input-radio{
+ justify-content:flex-start!important;
+ align-items:flex-start!important;
+ margin-left:0!important;
+ padding-left:0!important;
+}
+
 /* 1.6.1：暗色主题最终覆盖层。优先使用运行时检测到的页面真实主题，
  * 避免依赖不同 iStoreOS/LuCI 版本不一致的 dark 类名。
  */
