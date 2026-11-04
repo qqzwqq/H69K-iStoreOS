@@ -1546,6 +1546,50 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 
 
 
+/* 1.6.4：风扇控制方式与一键预设统一左边缘。
+ * 两组均采用标题在上、选项在下的单列布局；
+ * 标题、单选项及选项说明从同一条左边缘开始，不改变预设保存逻辑。
+ */
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"]),
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[type="radio"]){
+ box-sizing:border-box!important;
+ width:100%!important;
+ margin-left:0!important;
+ margin-right:0!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-title,
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-field{
+ box-sizing:border-box!important;
+ display:block!important;
+ float:none!important;
+ width:100%!important;
+ max-width:none!important;
+ margin-left:0!important;
+ margin-right:0!important;
+ padding-left:0!important;
+ text-align:left!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-title{
+ margin-bottom:10px!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-field ul,
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-field .cbi-input-radio{
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ justify-content:flex-start!important;
+ width:100%!important;
+ margin:0!important;
+ padding:0!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[id*="preset"])>.cbi-value-field ul>li{
+ align-self:flex-start!important;
+ width:100%!important;
+ margin-left:0!important;
+ padding-left:0!important;
+ text-align:left!important;
+}
+
 /* 1.6.3：风扇控制方式标题与单选项统一左对齐。
  * 将该行改为上下布局：标题占满一行，选项从标题文字的同一左边缘开始；
  * 仅作用于第一个「控制模式」分区，不影响下方曲线/高级设置。
