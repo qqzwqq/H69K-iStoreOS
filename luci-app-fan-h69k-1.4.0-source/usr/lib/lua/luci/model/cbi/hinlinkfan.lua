@@ -270,7 +270,7 @@ local function status_card()
 		temp_class(temp),
 		temp and string.format("%.1f", temp) or "--",
 		zone and zone:gsub("^/sys/class/thermal/", "") or "未找到 thermal zone")
-	h[#h + 1] = '</div></div>' -- 结束 CPU 温度卡片与内部信息容器，确保四张卡片是同级网格项
+	h[#h + 1] = '</div>' -- 结束 CPU 温度卡片，确保四张卡片是同级网格项
 
 	-- 独立温度→PWM曲线区域：不再挤在 CPU 温度卡片内，手机端也能完整阅读。
 	local current_curve_html = ""
