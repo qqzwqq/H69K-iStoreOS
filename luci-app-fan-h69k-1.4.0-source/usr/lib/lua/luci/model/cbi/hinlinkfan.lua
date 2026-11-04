@@ -1276,6 +1276,52 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 .cbi-section .cbi-value:has(input[id$=".curve"]) .cbi-dynlist .item{
  margin-left:0!important;margin-right:auto!important;justify-self:start!important;
 }
+/* 暗色模式：统一采用状态卡片的灰蓝底色与彩色强调文字 */
+:is(html,body)[data-theme="dark"],:is(html,body)[data-darkmode="true"],:is(html,body)[data-darkmode="1"],:is(html,body)[data-bs-theme="dark"],:is(html,body)[data-color-scheme="dark"],:is(html,body).dark,:is(html,body).dark-mode,
+[data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode{
+ color-scheme:dark;
+}
+:is(html,body)[data-theme="dark"] .cbi-section .cbi-value,
+:is(html,body)[data-darkmode="true"] .cbi-section .cbi-value,
+:is(html,body)[data-darkmode="1"] .cbi-section .cbi-value,
+:is(html,body)[data-bs-theme="dark"] .cbi-section .cbi-value,
+:is(html,body)[data-color-scheme="dark"] .cbi-section .cbi-value,
+:is(html,body).dark .cbi-section .cbi-value,
+:is(html,body).dark-mode .cbi-section .cbi-value,
+[data-theme="dark"] .cbi-section .cbi-value,[data-darkmode="true"] .cbi-section .cbi-value,[data-darkmode="1"] .cbi-section .cbi-value,[data-bs-theme="dark"] .cbi-section .cbi-value,[data-color-scheme="dark"] .cbi-section .cbi-value,.dark .cbi-section .cbi-value,.dark-mode .cbi-section .cbi-value{
+ background:#303943!important;color:#e1e7ee!important;border-color:#46515e!important;
+}
+:is(html,body)[data-theme="dark"] .cbi-section .cbi-value-title,
+:is(html,body)[data-darkmode="true"] .cbi-section .cbi-value-title,
+:is(html,body)[data-darkmode="1"] .cbi-section .cbi-value-title,
+:is(html,body)[data-bs-theme="dark"] .cbi-section .cbi-value-title,
+:is(html,body)[data-color-scheme="dark"] .cbi-section .cbi-value-title,
+:is(html,body).dark .cbi-section .cbi-value-title,
+:is(html,body).dark-mode .cbi-section .cbi-value-title,
+[data-theme="dark"] .cbi-section .cbi-value-title,[data-darkmode="true"] .cbi-section .cbi-value-title,[data-darkmode="1"] .cbi-section .cbi-value-title,[data-bs-theme="dark"] .cbi-section .cbi-value-title,[data-color-scheme="dark"] .cbi-section .cbi-value-title,.dark .cbi-section .cbi-value-title,.dark-mode .cbi-section .cbi-value-title{
+ color:#9fc5ff!important;
+}
+:is(html,body)[data-theme="dark"] .cbi-section .cbi-value-description,
+:is(html,body)[data-darkmode="true"] .cbi-section .cbi-value-description,
+:is(html,body)[data-darkmode="1"] .cbi-section .cbi-value-description,
+:is(html,body)[data-bs-theme="dark"] .cbi-section .cbi-value-description,
+:is(html,body)[data-color-scheme="dark"] .cbi-section .cbi-value-description,
+:is(html,body).dark .cbi-section .cbi-value-description,
+:is(html,body).dark-mode .cbi-section .cbi-value-description,
+[data-theme="dark"] .cbi-section .cbi-value-description,[data-darkmode="true"] .cbi-section .cbi-value-description,[data-darkmode="1"] .cbi-section .cbi-value-description,[data-bs-theme="dark"] .cbi-section .cbi-value-description,[data-color-scheme="dark"] .cbi-section .cbi-value-description,.dark .cbi-section .cbi-value-description,.dark-mode .cbi-section .cbi-value-description{
+ color:#b9c7d8!important;
+}
+:is(html,body)[data-theme="dark"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+:is(html,body)[data-darkmode="true"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+:is(html,body)[data-darkmode="1"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+:is(html,body)[data-bs-theme="dark"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+:is(html,body)[data-color-scheme="dark"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+:is(html,body).dark .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+:is(html,body).dark-mode .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+[data-theme="dark"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),[data-darkmode="true"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),[data-darkmode="1"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),[data-bs-theme="dark"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),[data-color-scheme="dark"] .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),.dark .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),.dark-mode .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]){
+ background:#394653!important;color:#e8f0fa!important;border:1px solid #586a7c!important;
+}
+
 /* 暗色模式统一为柔和蓝灰色，避免输入框出现刺眼白底 */
 :is(html,body)[data-theme="dark"],:is(html,body)[data-darkmode="true"],:is(html,body)[data-darkmode="1"],:is(html,body)[data-bs-theme="dark"],:is(html,body).dark,:is(html,body).dark-mode{color-scheme:dark}
 :is(html,body)[data-theme="dark"] .cbi-section,:is(html,body)[data-darkmode="true"] .cbi-section,:is(html,body)[data-darkmode="1"] .cbi-section,:is(html,body)[data-bs-theme="dark"] .cbi-section,:is(html,body).dark .cbi-section,:is(html,body).dark-mode .cbi-section,
