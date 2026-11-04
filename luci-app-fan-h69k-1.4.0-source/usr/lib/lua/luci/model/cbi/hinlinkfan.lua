@@ -252,6 +252,9 @@ local function status_card()
 	local h = {}
 	h[#h + 1] = '<div class="hinfan-card">'
 
+	-- 两层温控说明置于顶部内核温控状态栏上方，先说明控制权切换规则。
+	h[#h + 1] = '<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档）；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。</div>'
+
 	-- 模式徽章
 	h[#h + 1] = string.format(
 		'<div class="hinfan-hero hinfan-%s">' ..
@@ -355,7 +358,6 @@ local function status_card()
 
 	-- 保留上方「内核档位」状态卡片，不再重复显示设备树温控档位横条。
 	h[#h + 1] = '<details class="hinfan-kernel-details"><summary>设备树与内核状态</summary><div class="hinfan-kernel-content">' .. table.concat(kernel_details) .. '</div></details>'
-	h[#h + 1] = '<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档）；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。</div>'
 
 
 	if st.note and st.note ~= "" then
