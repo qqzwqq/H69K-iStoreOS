@@ -1764,10 +1764,12 @@ html.hinfan-theme-dark .hinfan-tile-s{color:#c0cad5!important}
   detectDark();
   window.addEventListener('load',detectDark);
   window.addEventListener('DOMContentLoaded',detectDark);
-  if(window.MutationObserver){
-    var observer=new MutationObserver(function(){detectDark();});
-    observer.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme','data-darkmode','data-bs-theme','data-color-scheme'],childList:true,subtree:true});
-  }
+  /*
+   * 不监听 documentElement 的 subtree：
+   * LuCI 页面会持续更新温度、转速和状态节点，子树观察器会被大量无关 DOM
+   * 变化反复触发。主题在页面加载时检测即可，避免后台持续占用主线程。
+   * 如切换 LuCI 主题，刷新页面即可重新识别。
+   */
 })();
 </script>
 ]] .. (m.description or "")
