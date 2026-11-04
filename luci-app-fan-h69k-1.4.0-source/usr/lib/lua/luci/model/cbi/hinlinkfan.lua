@@ -1475,7 +1475,101 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 	}
 }
 
+
+/* 1.6.1：暗色主题最终覆盖层。优先使用运行时检测到的页面真实主题，
+ * 避免依赖不同 iStoreOS/LuCI 版本不一致的 dark 类名。
+ */
+html.hinfan-theme-dark .hinfan-card{color:#e7edf5!important}
+html.hinfan-theme-dark .hinfan-tile{
+ background:linear-gradient(145deg,#303d4c,#273341)!important;
+ background-color:#2b3745!important;border:1px solid #46576b!important;
+ color:#e7edf5!important;box-shadow:0 4px 14px rgba(0,0,0,.22)!important;
+}
+html.hinfan-theme-dark .hinfan-tile-k,
+html.hinfan-theme-dark .hinfan-unit,
+html.hinfan-theme-dark .hinfan-tile-s{color:#b8c7d9!important}
+html.hinfan-theme-dark .hinfan-tile-v{color:#edf4ff!important}
+html.hinfan-theme-dark .cbi-section{
+ background:#27313d!important;background-image:none!important;
+ border:1px solid #465363!important;color:#e7edf5!important;
+ box-shadow:0 4px 14px rgba(0,0,0,.2)!important;
+}
+html.hinfan-theme-dark .cbi-section>legend{
+ background:#354354!important;background-image:none!important;
+ color:#f0f5fc!important;border-color:#7da9e8!important;
+}
+html.hinfan-theme-dark .cbi-section .cbi-value,
+html.hinfan-theme-dark .cbi-section .cbi-value-field,
+html.hinfan-theme-dark .cbi-section .cbi-value-title,
+html.hinfan-theme-dark .cbi-section .cbi-value-description,
+html.hinfan-theme-dark .cbi-section .cbi-section-descr{
+ background:transparent!important;color:#e0e8f2!important;
+}
+html.hinfan-theme-dark .cbi-section .cbi-value-title{color:#dce8f7!important}
+html.hinfan-theme-dark .cbi-section .cbi-value-description,
+html.hinfan-theme-dark .cbi-section .cbi-section-descr{color:#b7c5d6!important}
+html.hinfan-theme-dark .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+html.hinfan-theme-dark .cbi-value-field select,
+html.hinfan-theme-dark .cbi-value-field textarea,
+html.hinfan-theme-dark .cbi-value-field .cbi-dynlist .item,
+html.hinfan-theme-dark .cbi-value-field .cbi-dynlist>div{
+ background:#354353!important;background-image:none!important;
+ color:#f0f5fc!important;border:1px solid #586b80!important;
+ box-shadow:none!important;
+}
+html.hinfan-theme-dark .cbi-value-field input::placeholder,
+html.hinfan-theme-dark .cbi-value-field textarea::placeholder{color:#aebed1!important;opacity:1!important}
+html.hinfan-theme-dark .cbi-value-field ul li,
+html.hinfan-theme-dark .cbi-value-field label:has(input[type=radio]),
+html.hinfan-theme-dark .cbi-value-field label:has(input[type=checkbox]){
+ background:#344252!important;background-image:none!important;
+ color:#e7edf5!important;border:1px solid #52657b!important;
+}
+html.hinfan-theme-dark .cbi-value-field ul li:has(input:checked),
+html.hinfan-theme-dark .cbi-value-field label:has(input:checked){
+ background:#405a78!important;border-color:#83b4f0!important;color:#fff!important;
+}
+html.hinfan-theme-dark .hinfan-help,
+html.hinfan-theme-dark .hinfan-note{
+ background:#303f50!important;color:#e5edf7!important;border-color:#526b88!important;
+}
+html.hinfan-theme-dark .hinfan-curve-panel,
+html.hinfan-theme-dark .hinfan-curve-current{
+ background:#303e4e!important;color:#e5edf7!important;border-color:#52657a!important;
+}
+html.hinfan-theme-dark .hinfan-curve-caption,
+html.hinfan-theme-dark .hinfan-panel-heading{color:#c6d8ed!important}
+html.hinfan-theme-dark .cbi-button,
+html.hinfan-theme-dark button{color:#edf4fc!important}
+
 </style>
+<script>
+(function(){
+  function rgbIsDark(value){
+    var m=String(value||'').match(/rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)/i);
+    if(!m) return false;
+    var r=+m[1],g=+m[2],b=+m[3];
+    return (0.2126*r+0.7152*g+0.0722*b)<125;
+  }
+  function detectDark(){
+    var root=document.documentElement, body=document.body, dark=false, nodes=[root,body];
+    for(var i=0;i<nodes.length;i++){
+      var n=nodes[i]; if(!n) continue;
+      var cs=window.getComputedStyle(n);
+      if(cs.colorScheme==='dark' || rgbIsDark(cs.backgroundColor)){ dark=true; break; }
+    }
+    if(dark) root.classList.add('hinfan-theme-dark');
+    else root.classList.remove('hinfan-theme-dark');
+  }
+  detectDark();
+  window.addEventListener('load',detectDark);
+  if(window.MutationObserver){
+    var observer=new MutationObserver(function(){detectDark();});
+    observer.observe(document.documentElement,{attributes:true,attributeFilter:['class','data-theme','data-darkmode','data-bs-theme']});
+    if(document.body) observer.observe(document.body,{attributes:true,attributeFilter:['class','data-theme','data-darkmode','data-bs-theme']});
+  }
+})();
+</script>
 ]] .. (m.description or "")
 
 
