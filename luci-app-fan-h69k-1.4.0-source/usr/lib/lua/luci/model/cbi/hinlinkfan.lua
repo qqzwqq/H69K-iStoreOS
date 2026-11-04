@@ -1067,6 +1067,82 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
   margin-right:2px!important;
 }
 
+
+/* 1.5.6：兼容 iStoreOS/LuCI 不同版本的暗色主题标记。
+ * 旧规则只识别 html 上的属性；部分主题把标记放在 body 或外层容器，
+ * 导致页面局部仍沿用浅色文字/背景。这里统一补齐并放在样式表末尾。
+ */
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-card{
+  color:#e6edf7!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-tile{
+  background:#202d40!important;
+  border-color:#40536e!important;
+  color:#e6edf7!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-tile-k,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-tile-s,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-unit{
+  color:#bdcce0!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-tile-v{
+  color:#e8f0fc!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-tile-v.hinfan-t-ok{color:#4adea8!important}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-tile-v.hinfan-t-info{color:#80baff!important}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-tile-v.hinfan-t-warn{color:#ffd166!important}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-tile-v.hinfan-t-hot,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-tile-v.hinfan-t-bad{color:#ff8585!important}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-help{
+  background:#26364b!important;color:#d0deef!important;border-color:#536b8b!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-kernel-details{
+  background:#202f43!important;border-color:#465b76!important;color:#d0deef!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-kernel-details>summary{
+  color:#9bc7ff!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-kernel-content{
+  background:#202f43!important;border-color:#465d7b!important;color:#d0deef!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-kernel-intro,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-kv,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-kv b,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-kv span{
+  color:#d0deef!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-curve-current{
+  background:#202d40!important;border-color:#40536e!important;color:#dce8f7!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .hinfan-curve-caption{
+  color:#bdcce0!important;opacity:1!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section{
+  background:#202d40!important;border-color:#40536e!important;color:#e6edf7!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section>legend{
+  background:#2b3d55!important;color:#e3edfb!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-section-descr,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-title,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-description,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field label{
+  color:#d5e1f0!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field select,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field textarea{
+  background:#293a50!important;color:#edf4ff!important;border-color:#526985!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field input::placeholder,
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field textarea::placeholder{
+  color:#aebed2!important;opacity:1!important;
+}
+:is(html,body,[data-theme="dark"],[data-darkmode="true"],[data-bs-theme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field ul li{
+  color:#d5e1f0!important;background:transparent!important;
+}
+
 </style>
 ]] .. (m.description or "")
 
