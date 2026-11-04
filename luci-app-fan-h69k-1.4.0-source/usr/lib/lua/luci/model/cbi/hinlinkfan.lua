@@ -1143,6 +1143,63 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
   color:#d5e1f0!important;background:transparent!important;
 }
 
+
+/* 1.5.7：控制模式、曲线预设与下方高级参数统一为同一内容列 */
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id$=".curve"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id$=".tick"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id$=".hysteresis"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id$=".ramp"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field,
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-field,
+.cbi-section .cbi-value:has(input[id$=".curve"]) .cbi-value-field,
+.cbi-section .cbi-value:has(input[id$=".tick"]) .cbi-value-field,
+.cbi-section .cbi-value:has(input[id$=".hysteresis"]) .cbi-value-field,
+.cbi-section .cbi-value:has(input[id$=".ramp"]) .cbi-value-field,
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-description,
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-description,
+.cbi-section .cbi-value:has(input[id$=".curve"]) .cbi-value-description,
+.cbi-section .cbi-value:has(input[id$=".tick"]) .cbi-value-description,
+.cbi-section .cbi-value:has(input[id$=".hysteresis"]) .cbi-value-description,
+.cbi-section .cbi-value:has(input[id$=".ramp"]) .cbi-value-description{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:560px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul,
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-field ul{
+  width:100%!important;
+  max-width:560px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  justify-items:stretch!important;
+}
+.cbi-section .cbi-value:has(input[id$=".curve"]) .cbi-dynlist,
+.cbi-section .cbi-value:has(input[id$=".curve"]) .cbi-dynlist .item{
+  width:100%!important;
+  max-width:560px!important;
+  box-sizing:border-box!important;
+}
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id$=".curve"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id$=".tick"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id$=".hysteresis"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[id$=".ramp"]) .cbi-value-title{
+  text-align:left!important;
+}
+@media(max-width:600px){
+  .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul,
+  .cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-field ul{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    max-width:100%!important;
+  }
+}
+
 </style>
 ]] .. (m.description or "")
 
