@@ -364,14 +364,57 @@ local function status_card()
 	h[#h + 1] = [[
 <script>
 (function () {
-	function removeDuplicateKernelStrip() {
-		var strips = document.querySelectorAll('.hinfan-kernel-strip');
-		for (var i = 1; i < strips.length; i++) {
-			strips[i].parentNode && strips[i].parentNode.removeChild(strips[i]);
+	/*
+	 * 1.5.3：不同 LuCI 主题会把 Map 描述和 CBI section 分批插入页面。
+	 * 不能只在 window.load 时检查 .hinfan-kernel-strip；
+	 * 同时按标题文字全局去重，并持续监听后续 DOM 插入。
+	 */
+	var titlePattern = /^内核设备树温控\\s*[（(]档位\\s*\\d+\\s*\\/\\s*\\d+[）)]$/;
+
+	function normalizedText(node) {
+		return String(node && node.textContent || '').replace(/\\s+/g, ' ').trim();
+	}
+
+	function isKernelTitle(node) {
+		return node && node.nodeType === 1 && titlePattern.test(normalizedText(node));
+	}
+
+	function removeDuplicateKernelTitles() {
+		var all = document.querySelectorAll('body *');
+		var found = [];
+
+		for (var i = 0; i < all.length; i++) {
+			if (!isKernelTitle(all[i])) continue;
+
+			/* 若外层容器也只有同一标题文字，优先移除外层，避免留下空白标题框。 */
+			var target = all[i];
+			while (target.parentElement &&
+				target.parentElement !== document.body &&
+				normalizedText(target.parentElement) === normalizedText(target)) {
+				target = target.parentElement;
+			}
+			if (found.indexOf(target) === -1) found.push(target);
+		}
+
+		/* 只保留页面中出现的第一条，后续不论来自哪个 LuCI 容器都删除。 */
+		for (var j = 1; j < found.length; j++) {
+			if (found[j].parentNode) found[j].parentNode.removeChild(found[j]);
 		}
 	}
-	if (document.readyState === 'complete') removeDuplicateKernelStrip();
-	else window.addEventListener('load', removeDuplicateKernelStrip, { once: true });
+
+	removeDuplicateKernelTitles();
+	window.addEventListener('load', removeDuplicateKernelTitles);
+
+	if (window.MutationObserver && document.body) {
+		var observer = new MutationObserver(function () {
+			removeDuplicateKernelTitles();
+		});
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true,
+			characterData: true
+		});
+	}
 })();
 </script>
 ]]
