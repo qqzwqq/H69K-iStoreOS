@@ -1043,6 +1043,31 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
   margin-right:2px!important;
 }
 
+
+/* 1.5.5：一键预设单选组紧凑排版，包含每个预设的说明文字 */
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-field ul{
+  gap:1px!important;
+}
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-field ul>li{
+  padding:1px 2px!important;
+  margin:0!important;
+  line-height:1.35!important;
+}
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-field ul>li label{
+  gap:6px!important;
+  padding:1px 0!important;
+  line-height:1.35!important;
+}
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-field ul>li .cbi-value-description,
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-field ul>li .description{
+  margin:1px 0 2px 23px!important;
+  padding:0!important;
+  line-height:1.35!important;
+}
+.cbi-section .cbi-value:has(input[id*="preset"]) .cbi-value-field ul>li input[type="radio"]{
+  margin-right:2px!important;
+}
+
 </style>
 ]] .. (m.description or "")
 
