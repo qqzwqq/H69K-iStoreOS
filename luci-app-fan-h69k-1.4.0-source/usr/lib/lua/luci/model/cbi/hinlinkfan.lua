@@ -354,8 +354,8 @@ local function status_card()
 
 	-- 经典布局：内核设备树温控说明作为独立栏位，设备树与内核状态另设折叠栏。
 	h[#h + 1] = string.format('<div class="hinfan-kernel-strip">内核设备树温控（档位 %s/%s）</div>', cur or "--", maxs or "--")
-	h[#h + 1] = '<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档）；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。</div>'
 	h[#h + 1] = '<details class="hinfan-kernel-details"><summary>展开设备树与内核状态</summary><div class="hinfan-kernel-content">' .. table.concat(kernel_details) .. '</div></details>'
+	h[#h + 1] = '<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档）；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。</div>'
 
 
 	if st.note and st.note ~= "" then
