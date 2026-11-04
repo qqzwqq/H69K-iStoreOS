@@ -1385,6 +1385,38 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
  background:#26364a!important;border-color:#435a76!important;color:#dce7f5!important;
 }
 
+
+/* 暗色模式补强：覆盖 LuCI 表单内部的选项标签、说明和动态列表，避免残留白底 */
+:is(html,body):is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field,
+:is(html,body):is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-title,
+:is(html,body):is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-description,
+:is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field,
+:is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-title,
+:is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-description{
+ background:transparent!important;
+ color:#e1e7ee!important;
+}
+:is(html,body):is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field label,
+:is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field label,
+:is(html,body):is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field ul,
+:is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field ul,
+:is(html,body):is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-dynlist .item,
+:is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-dynlist .item{
+ background-color:#303943!important;
+ color:#e1e7ee!important;
+ border-color:#46515e!important;
+}
+:is(html,body):is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field input[type="radio"],
+:is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field input[type="radio"],
+:is(html,body):is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field input[type="checkbox"],
+:is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-value-field input[type="checkbox"]{
+ accent-color:#6da8ff;
+}
+:is(html,body):is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-section-descr,
+:is([data-theme="dark"],[data-darkmode="true"],[data-darkmode="1"],[data-bs-theme="dark"],[data-color-scheme="dark"],.dark,.dark-mode) .cbi-section .cbi-section-descr{
+ color:#b9c7d8!important;
+}
+
 </style>
 ]] .. (m.description or "")
 
