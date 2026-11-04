@@ -983,6 +983,17 @@ html[data-darkmode="true"] .hinfan-kernel-details,html.dark .hinfan-kernel-detai
 html[data-darkmode="true"] .hinfan-kernel-details>summary,html.dark .hinfan-kernel-details>summary,body.dark .hinfan-kernel-details>summary{color:#b9d5ff!important}
 html[data-darkmode="true"] .hinfan-kernel-content,html.dark .hinfan-kernel-content,body.dark .hinfan-kernel-content{background:#202c3e!important;border-color:#405a7a!important}
 
+
+/* 页面横向铺满：取消旧版 1180px 限宽，让状态区和设置卡片延伸到内容区两侧 */
+.cbi-map,.cbi-map>form,.cbi-map>.cbi-section,.cbi-map .cbi-section,
+.hinfan-card,.hinfan-hero,.hinfan-grid,.hinfan-kernel-strip,.hinfan-kernel-details,.hinfan-help{
+ box-sizing:border-box!important;width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important
+}
+.cbi-map{padding-left:0!important;padding-right:0!important}
+.hinfan-card{padding-left:0!important;padding-right:0!important}
+.hinfan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+@media(max-width:900px){.hinfan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+
 </style>
 ]] .. (m.description or "")
 
