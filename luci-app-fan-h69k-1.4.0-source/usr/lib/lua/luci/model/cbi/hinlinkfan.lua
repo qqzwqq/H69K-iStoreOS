@@ -981,6 +981,47 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
   margin-right:0!important;
   box-sizing:border-box!important;
 }
+
+/* 1.5.3：暗色主题高对比度修正；只覆盖颜色，不改变布局与控件行为 */
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-card{color:#e6edf7!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-tile{background:#202d40!important;border-color:#40536e!important;color:#e6edf7!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-tile-k{color:#c3d2e5!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-tile-s,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-unit{color:#b8c8dc!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-tile-v{color:#e8f0fc!important}
+/* 温度与运行状态保留语义色，不能被上面的通用数值颜色覆盖 */
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-tile-v.hinfan-t-ok{color:#4adea8!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-tile-v.hinfan-t-info{color:#80baff!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-tile-v.hinfan-t-warn{color:#ffd166!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-tile-v.hinfan-t-hot,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-tile-v.hinfan-t-bad{color:#ff8585!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-kernel-tile .hinfan-tile-v{color:#e8f0fc!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-kernel-strip{background:#293950!important;color:#d8e6f8!important;border-left-color:#91a0ff!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-help{background:#26364b!important;color:#d0deef!important;border-color:#536b8b!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-kernel-details{border-color:#465b76!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-kernel-details>summary{color:#9bc7ff!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-kernel-content{background:#202f43!important;border-color:#465d7b!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-kernel-intro,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-kv,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-kv b,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-kv span{color:#d0deef!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-curve-current{background:#202d40!important;border-color:#40536e!important;color:#dce8f7!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .hinfan-curve-caption{color:#b8c8dc!important;opacity:1!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section{background:#202d40!important;border-color:#40536e!important;color:#e6edf7!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section>legend{background:#2b3d55!important;color:#e3edfb!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-section-descr{color:#b8c8dc!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value{border-color:#3b506a!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-title,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-description,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field label{color:#d5e1f0!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field input:not([type=radio]):not([type=checkbox]),
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field select,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field textarea{background:#293a50!important;color:#edf4ff!important;border-color:#526985!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field input::placeholder,
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field textarea::placeholder{color:#aebed2!important;opacity:1!important}
+:is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field ul li{color:#d5e1f0!important;background:transparent!important}
+
 </style>
 ]] .. (m.description or "")
 
