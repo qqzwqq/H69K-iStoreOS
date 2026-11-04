@@ -264,7 +264,7 @@ local function status_card()
 	h[#h + 1] = '<div class="hinfan-grid">'
 
 	h[#h + 1] = string.format(
-		'<div class="hinfan-tile hinfan-temp-tile"><div class="hinfan-temp-info"><div class="hinfan-tile-k">CPU 温度</div>' ..
+		'<div class="hinfan-tile hinfan-temp-tile hinfan-theme-text-tile"><div class="hinfan-temp-info"><div class="hinfan-tile-k">CPU 温度</div>' ..
 		'<div class="hinfan-tile-v hinfan-t-%s">%s<span class="hinfan-unit">°C</span></div>' ..
 		'<div class="hinfan-tile-s">%s</div></div>',
 		temp_class(temp),
@@ -345,7 +345,7 @@ local function status_card()
 
 
 	h[#h + 1] = string.format(
-		'<div class="hinfan-tile"><div class="hinfan-tile-k">守护进程</div>' ..
+		'<div class="hinfan-tile hinfan-theme-text-tile"><div class="hinfan-tile-k">守护进程</div>' ..
 		'<div class="hinfan-tile-v hinfan-t-%s">%s</div>' ..
 		'<div class="hinfan-tile-s">%s</div></div>',
 		run and "ok" or "bad", run and "运行中" or "未运行",
@@ -1760,6 +1760,27 @@ html.hinfan-theme-dark .hinfan-tile{
 html.hinfan-theme-dark .hinfan-tile-k,
 html.hinfan-theme-dark .hinfan-unit,
 html.hinfan-theme-dark .hinfan-tile-s{color:#c0cad5!important}
+
+
+/* 1.6.6：CPU 温度与守护进程卡片文字跟随当前主题，亮色/暗色自动切换。
+ * 仅覆盖这两张卡片的主数值与说明文字，不改温度状态逻辑及其他卡片配色。
+ */
+.hinfan-theme-text-tile .hinfan-tile-v{
+ color:var(--content-color,#202938)!important;
+}
+.hinfan-theme-text-tile .hinfan-tile-s{
+ color:var(--secondary-text-color,#4b5563)!important;
+}
+html[data-darkmode="true"] .hinfan-theme-text-tile .hinfan-tile-v,
+html.dark .hinfan-theme-text-tile .hinfan-tile-v,
+body.dark .hinfan-theme-text-tile .hinfan-tile-v{
+ color:#e5e7eb!important;
+}
+html[data-darkmode="true"] .hinfan-theme-text-tile .hinfan-tile-s,
+html.dark .hinfan-theme-text-tile .hinfan-tile-s,
+body.dark .hinfan-theme-text-tile .hinfan-tile-s{
+ color:#b8c0cc!important;
+}
 
 </style>
 <script>
