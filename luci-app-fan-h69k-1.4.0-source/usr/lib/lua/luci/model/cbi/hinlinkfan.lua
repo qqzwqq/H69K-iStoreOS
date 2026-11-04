@@ -1022,6 +1022,27 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
 :is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field textarea::placeholder{color:#aebed2!important;opacity:1!important}
 :is(html[data-darkmode="true"],html[data-theme="dark"],html[data-bs-theme="dark"]) .cbi-section .cbi-value-field ul li{color:#d5e1f0!important;background:transparent!important}
 
+
+/* 1.5.4：收紧风扇控制方式单选项间距，避免四种模式纵向分散 */
+.cbi-section .cbi-value-field ul:has(input[type="radio"]){
+  gap:1px!important;
+  margin:0!important;
+}
+.cbi-section .cbi-value-field ul:has(input[type="radio"])>li{
+  padding:1px 2px!important;
+  margin:0!important;
+  line-height:1.35!important;
+}
+.cbi-section .cbi-value-field ul:has(input[type="radio"])>li label,
+.cbi-section .cbi-value-field ul:has(input[type="radio"]) label:has(input[type="radio"]){
+  gap:6px!important;
+  padding:1px 0!important;
+  line-height:1.35!important;
+}
+.cbi-section .cbi-value-field ul:has(input[type="radio"]) input[type="radio"]{
+  margin-right:2px!important;
+}
+
 </style>
 ]] .. (m.description or "")
 
