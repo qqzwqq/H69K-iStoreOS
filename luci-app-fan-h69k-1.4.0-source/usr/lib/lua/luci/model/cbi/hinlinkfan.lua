@@ -402,18 +402,15 @@ local function status_card()
 		}
 	}
 
-	removeDuplicateKernelTitles();
-	window.addEventListener('load', removeDuplicateKernelTitles);
-
-	if (window.MutationObserver && document.body) {
-		var observer = new MutationObserver(function () {
-			removeDuplicateKernelTitles();
-		});
-		observer.observe(document.body, {
-			childList: true,
-			subtree: true,
-			characterData: true
-		});
+	/*
+	 * 标题去重只需在页面 DOM 构建完成后执行一次。
+	 * 不监听整个 body：调温大师有动态状态更新，全页面 MutationObserver
+	 * 会在每次文字/节点变化时扫描所有元素，造成主线程高负载甚至页面卡死。
+	 */
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', removeDuplicateKernelTitles, { once: true });
+	} else {
+		removeDuplicateKernelTitles();
 	}
 })();
 </script>
