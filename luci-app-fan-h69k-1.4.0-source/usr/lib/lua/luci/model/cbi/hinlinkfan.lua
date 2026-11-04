@@ -356,7 +356,6 @@ local function status_card()
 	h[#h + 1] = string.format('<div class="hinfan-kernel-strip">内核设备树温控（档位 %s/%s）</div>', cur or "--", maxs or "--")
 	h[#h + 1] = '<div class="hinfan-help"><b>两层温控，互不打架：</b>默认由<b>内核</b>按设备树里的 <code>cooling-maps</code> 调速（45/55/65/75°C 四档）；选择<b>自定义曲线</b>后由用户态守护进程接管风扇，关闭时会自动把控制权交还内核。</div>'
 	h[#h + 1] = '<details class="hinfan-kernel-details"><summary>展开设备树与内核状态</summary><div class="hinfan-kernel-content">' .. table.concat(kernel_details) .. '</div></details>'
-	h[#h + 1] = string.format('<div class="hinfan-kernel-strip">内核设备树温控（档位 %s/%s）</div>', cur or "--", maxs or "--")
 
 
 	if st.note and st.note ~= "" then
@@ -888,7 +887,7 @@ html[data-darkmode="true"] .hinfan-curve-panel,html[data-theme="dark"] .hinfan-c
 }
 
 /* 1.5.2：恢复截图中的经典布局；桌面左右分栏，手机纵向堆叠，亮/暗主题独立配色 */
-.hinfan-card{max-width:1180px!important;margin:0 auto 18px!important;color:var(--content-color,#203047)!important}
+.hinfan-card{width:100%!important;max-width:none!important;margin:0 0 18px!important;color:var(--content-color,#203047)!important}
 .hinfan-hero{background:linear-gradient(115deg,#20b985 0%,#35c995 55%,#51d9a5 100%)!important;color:#fff!important;border:0!important;border-radius:15px!important;padding:17px 21px!important;box-shadow:0 7px 20px rgba(20,180,125,.16)!important}
 .hinfan-hero.bad{background:linear-gradient(115deg,#b83246,#e65353)!important}
 .hinfan-hero.warn{background:linear-gradient(115deg,#bb791d,#e5a43d)!important}
@@ -900,7 +899,7 @@ html[data-darkmode="true"] .hinfan-curve-panel,html[data-theme="dark"] .hinfan-c
 .hinfan-unit,.hinfan-tile-s{color:#8494aa!important}
 .hinfan-t-ok{color:#25bd88!important}.hinfan-t-info{color:#4389e8!important}.hinfan-t-warn{color:#d89a36!important}.hinfan-t-hot,.hinfan-t-bad{color:#e45c62!important}
 .hinfan-bar{background:#e7edf3!important}.hinfan-bar span{background:linear-gradient(90deg,#25c6c4,#5579ef)!important}
-.hinfan-fanwrap{color:#f27d65!important}
+.hinfan-fanwrap{color:inherit!important}
 .hinfan-kernel-tile .hinfan-tile-v{color:#203b66!important}
 .hinfan-kernel-strip{box-sizing:border-box;width:100%;margin:0 0 12px;padding:11px 15px;border-left:4px solid #6678ff;border-radius:8px;background:#edf1fb;color:#405779;font-size:13px;line-height:1.5}
 .hinfan-help{box-sizing:border-box;width:100%;max-width:none!important;margin:0 0 14px!important;padding:12px 15px!important;border:0!important;border-radius:10px!important;border-left:3px solid #6678ff!important;background:#f0f2f5!important;color:#53677f!important;font-size:12px!important;line-height:1.75!important}
@@ -908,7 +907,7 @@ html[data-darkmode="true"] .hinfan-curve-panel,html[data-theme="dark"] .hinfan-c
 .hinfan-kernel-details>summary{cursor:pointer;color:#386fc1;font-size:12px;font-weight:700;padding:5px 0}
 .hinfan-kernel-content{margin-top:8px;padding:10px 12px;border:1px solid #e0e8f3;border-radius:9px;background:#f8faff}
 .hinfan-kernel-intro,.hinfan-kv,.hinfan-kv b,.hinfan-kv span{color:#53677f}
-.cbi-map{width:100%!important;max-width:1180px!important;margin:0 auto!important;box-sizing:border-box!important}
+.cbi-map{width:100%!important;max-width:none!important;margin:0!important;box-sizing:border-box!important}
 .cbi-section{display:block!important;box-sizing:border-box!important;margin:0 0 18px!important;padding:14px 18px 18px!important;border:1px solid #e3eaf3!important;border-radius:14px!important;background:#fff!important;color:#26364d!important;box-shadow:0 4px 14px rgba(25,45,75,.06)!important;overflow:visible!important}
 .cbi-section>legend{display:block!important;box-sizing:border-box!important;width:auto!important;margin:0 0 10px!important;padding:11px 14px!important;border:0!important;border-left:4px solid #6678ff!important;border-radius:8px!important;background:#f5f7fc!important;color:#344f78!important;font-size:16px!important;font-weight:750!important}
 .cbi-section .cbi-section-descr{max-width:none!important;margin:4px 0 12px!important;padding:0 2px!important;text-align:left!important;color:#7b8da5!important;font-size:12px!important;line-height:1.7!important}
