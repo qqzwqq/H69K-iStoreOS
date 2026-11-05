@@ -670,7 +670,7 @@ html[data-darkmode="true"] .cbi-value-field input:not([type=radio]):not([type=ch
 .hinfan-unit,.hinfan-tile-s{color:#6882a6!important}
 .hinfan-t-ok{color:#16845b!important}.hinfan-t-info{color:#2563eb!important}.hinfan-t-warn{color:#c27a12!important}.hinfan-t-hot,.hinfan-t-bad{color:#dc2626!important}
 .hinfan-bar{background:#e5eefc!important}.hinfan-bar span{background:linear-gradient(90deg,#2563eb,#60a5fa)!important}
-.hinfan-fanwrap{color:#2563eb!important}.hinfan-fan-slow,.hinfan-fan-mid{color:#2563eb!important}
+/* 风扇图标颜色由 PWM 档位类控制，避免固定蓝色覆盖动态颜色。 */
 .hinfan-curve-panel{border:1px solid #dbeafe!important;border-radius:14px!important;background:linear-gradient(180deg,#fff,#f7faff)!important;box-shadow:0 4px 14px rgba(30,64,175,.055)}
 .hinfan-curve-current{border:0!important;background:transparent!important}
 .hinfan-curve-caption{color:#6882a6!important;opacity:1!important}
@@ -958,7 +958,7 @@ html[data-darkmode="true"] .hinfan-curve-panel,html[data-theme="dark"] .hinfan-c
 .hinfan-unit,.hinfan-tile-s{color:#8494aa!important}
 .hinfan-t-ok{color:#25bd88!important}.hinfan-t-info{color:#4389e8!important}.hinfan-t-warn{color:#d89a36!important}.hinfan-t-hot,.hinfan-t-bad{color:#e45c62!important}
 .hinfan-bar{background:#e7edf3!important}.hinfan-bar span{background:linear-gradient(90deg,#25c6c4,#5579ef)!important}
-.hinfan-fanwrap{color:inherit!important}
+/* 不在此处重置风扇图标颜色，保留 fan-stop/slow/mid/fast/max 的档位颜色。 */
 .hinfan-kernel-tile .hinfan-tile-v{color:#203b66!important}
 .hinfan-kernel-strip{box-sizing:border-box;width:100%;margin:0 0 12px;padding:11px 15px;border-left:4px solid #6678ff;border-radius:8px;background:#edf1fb;color:#405779;font-size:13px;line-height:1.5}
 /* 重复标题由页面初始化脚本直接从 DOM 中删除，不用 CSS 隐藏。 */
@@ -1781,6 +1781,28 @@ html.dark .hinfan-theme-text-tile .hinfan-tile-s,
 body.dark .hinfan-theme-text-tile .hinfan-tile-s{
  color:#b8c0cc!important;
 }
+
+/* 1.6.8：顶栏恢复参考图的语义色，并让风扇图标随 PWM 档位变色。
+ * CPU 温度按温度等级显示蓝/黄/红；守护进程运行正常显示绿色。
+ * 风扇停转灰、低速青绿、中速绿色、高速琥珀色、全速红色。
+ * 这些规则只影响顶部状态卡片的数值和风扇图标，不改状态读取或控制逻辑。
+ */
+.hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-info{color:#4389e8!important}
+.hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-ok{color:#25bd88!important}
+.hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-warn{color:#d89a36!important}
+.hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-hot,
+.hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color:#e45c62!important}
+.hinfan-tile-v .hinfan-fanwrap.hinfan-fan-stop{color:#9299a3!important}
+.hinfan-tile-v .hinfan-fanwrap.hinfan-fan-slow{color:#60cfa5!important}
+.hinfan-tile-v .hinfan-fanwrap.hinfan-fan-mid{color:#35c995!important}
+.hinfan-tile-v .hinfan-fanwrap.hinfan-fan-fast{color:#f1b64f!important}
+.hinfan-tile-v .hinfan-fanwrap.hinfan-fan-max{color:#f06464!important}
+html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-info{color:#80baff!important}
+html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-ok{color:#4adea8!important}
+html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-warn{color:#ffd166!important}
+html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-hot,
+html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color:#ff8585!important}
+
 
 
 /* 1.6.7：仅把「风扇控制方式」单选组移到与下方「一键预设」字段列相同的左边缘。
