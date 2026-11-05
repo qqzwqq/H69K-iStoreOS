@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'luci-app-fan-h69k-1.4.0-source/**'
+      - 'luci-app-fan-h69k-source/**'
       - 'package/luci-app-fan-h69k/Makefile'
       - '.github/workflows/build-fan-h69k-package.yml'
   workflow_dispatch:
@@ -68,7 +68,7 @@ jobs:
       - name: Prepare package from uploaded installation tree
         run: |
           set -eux
-          src="$GITHUB_WORKSPACE/luci-app-fan-h69k-1.4.0-source"
+          src="$GITHUB_WORKSPACE/luci-app-fan-h69k-source"
           test -s "$src/control"
           test -s "$src/usr/sbin/hinlinkfan-daemon"
           test -s "$src/usr/lib/lua/luci/model/cbi/hinlinkfan.lua"
