@@ -1782,6 +1782,50 @@ body.dark .hinfan-theme-text-tile .hinfan-tile-s{
  color:#b8c0cc!important;
 }
 
+
+/* 1.6.7：仅把「风扇控制方式」单选组移到与下方「一键预设」字段列相同的左边缘。
+ * 不依赖 section:first-of-type，直接按 mode 输入框定位，避免不同 LuCI DOM 层级导致规则失效。
+ * 保留标题原来的左侧标签列；一键预设及其他选项完全不受影响。
+ */
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field{
+ display:block!important;
+ box-sizing:border-box!important;
+ width:100%!important;
+ max-width:none!important;
+ min-width:0!important;
+ margin:0!important;
+ padding:0!important;
+ justify-self:start!important;
+ text-align:left!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field ul,
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field .cbi-input-radio{
+ display:flex!important;
+ flex-direction:row!important;
+ flex-wrap:wrap!important;
+ justify-content:flex-start!important;
+ align-items:center!important;
+ width:100%!important;
+ max-width:none!important;
+ margin:0!important;
+ padding:0!important;
+ text-align:left!important;
+ gap:8px 12px!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field ul>li{
+ flex:0 0 auto!important;
+ width:auto!important;
+ min-width:0!important;
+ margin:0!important;
+ padding:0!important;
+ text-align:left!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field ul>li>label,
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field label:has(input[type="radio"]){
+ margin-left:0!important;
+ padding-left:0!important;
+ text-align:left!important;
+}
 </style>
 <script>
 (function(){
