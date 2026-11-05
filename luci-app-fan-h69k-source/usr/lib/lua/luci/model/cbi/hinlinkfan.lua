@@ -2089,6 +2089,36 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
  }
 }
 
+
+/* 1.5.6：修正 radio 标签被全局样式撑满整行、导致圆点跑到最右侧的问题。
+ * 仅作用于 mode 字段：li/label 按内容收缩，圆点紧贴文字；
+ * 保留已确认正确的字段列起点，与一键预设首个选项对齐。
+ */
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]),
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field .cbi-input-radio{
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ justify-content:flex-start!important;align-items:center!important;width:100%!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"])>li,
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field .cbi-input-radio>li{
+ display:inline-flex!important;flex:0 0 auto!important;
+ width:max-content!important;max-width:max-content!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"])>li>label,
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field label:has(input[type="radio"]){
+ display:inline-flex!important;flex:0 0 auto!important;flex-direction:row!important;
+ justify-content:flex-start!important;align-items:center!important;
+ width:max-content!important;max-width:max-content!important;min-width:0!important;
+ margin:0!important;padding:0!important;white-space:nowrap!important;text-align:left!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field input[type="radio"]{
+ position:static!important;inset:auto!important;float:none!important;
+ flex:0 0 auto!important;order:0!important;margin:0 6px 0 0!important;
+}
+@media(max-width:767px){
+ .cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]),
+ .cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field .cbi-input-radio{flex-wrap:wrap!important}
+}
 </style>
 <script>
 (function(){
