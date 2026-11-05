@@ -1683,320 +1683,9 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
 
 
 
-/* 1.6.7：仅把「风扇控制方式」单选组移到与下方「一键预设」字段列相同的左边缘。
- * 不依赖 section:first-of-type，直接按 mode 输入框定位，避免不同 LuCI DOM 层级导致规则失效。
- * 保留标题原来的左侧标签列；一键预设及其他选项完全不受影响。
+/* 控制模式布局由下方初始化脚本按实际 LuCI DOM 定位；
+ * 不再保留多套互相覆盖的历史 .mode CSS 规则。
  */
-.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field{
- display:block!important;
- box-sizing:border-box!important;
- width:100%!important;
- max-width:none!important;
- min-width:0!important;
- margin:0!important;
- padding:0!important;
- justify-self:start!important;
- text-align:left!important;
-}
-.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field ul,
-.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field .cbi-input-radio{
- display:flex!important;
- flex-direction:row!important;
- flex-wrap:wrap!important;
- justify-content:flex-start!important;
- align-items:center!important;
- width:100%!important;
- max-width:none!important;
- margin:0!important;
- padding:0!important;
- text-align:left!important;
- gap:8px 12px!important;
-}
-.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field ul>li{
- flex:0 0 auto!important;
- width:auto!important;
- min-width:0!important;
- margin:0!important;
- padding:0!important;
- text-align:left!important;
-}
-.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field ul>li>label,
-.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"])>.cbi-value-field label:has(input[type="radio"]){
- margin-left:0!important;
- padding-left:0!important;
- text-align:left!important;
-}
-
-
-/* 1.6.6：仅对齐风扇控制方式，不影响一键预设。 */
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"]){
- display:grid!important;
- grid-template-columns:minmax(0,1fr)!important;
- justify-items:stretch!important;
- align-items:start!important;
- width:100%!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title,
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
- box-sizing:border-box!important;
- display:block!important;
- float:none!important;
- width:100%!important;
- max-width:460px!important;
- margin-left:auto!important;
- margin-right:auto!important;
- padding-left:0!important;
- padding-right:0!important;
- text-align:left!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title{
- margin-top:0!important;
- margin-bottom:8px!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul,
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field .cbi-input-radio{
- display:flex!important;
- flex-direction:row!important;
- flex-wrap:wrap!important;
- justify-content:flex-start!important;
- align-items:center!important;
- width:100%!important;
- max-width:100%!important;
- margin:0!important;
- padding:0!important;
- gap:8px 12px!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul>li{
- flex:0 0 auto!important;
- width:auto!important;
- margin:0!important;
- padding:3px 2px!important;
- text-align:left!important;
-}
-@media(max-width:767px){
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title,
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
-  width:100%!important;
-  max-width:100%!important;
- }
-}
-
-/* 1.5.3：风扇控制方式改为标题在左、四个选项在右侧同一行排列。
- * 桌面端横向展示；窄屏自动换行，避免挤压和横向溢出。
- * 仅作用于 mode 字段，不改变一键预设及温控逻辑。
- */
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"]){
- display:flex!important;
- flex-direction:row!important;
- align-items:center!important;
- justify-content:flex-start!important;
- gap:16px!important;
- width:100%!important;
- max-width:none!important;
- margin:0!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title{
- flex:0 0 25%!important;
- width:25%!important;
- max-width:25%!important;
- margin:0!important;
- padding:0!important;
- text-align:left!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
- flex:1 1 0!important;
- width:auto!important;
- max-width:none!important;
- min-width:0!important;
- margin:0!important;
- padding:0!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul,
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field .cbi-input-radio{
- display:flex!important;
- flex-direction:row!important;
- flex-wrap:wrap!important;
- justify-content:flex-start!important;
- align-items:center!important;
- width:100%!important;
- max-width:none!important;
- margin:0!important;
- padding:0!important;
- gap:8px 18px!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul>li{
- flex:0 0 auto!important;
- width:auto!important;
- margin:0!important;
- padding:3px 0!important;
-}
-@media(max-width:767px){
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"]){
-  display:block!important;
- }
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title,
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
-  display:block!important;
-  width:100%!important;
-  max-width:100%!important;
- }
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title{
-  margin-bottom:8px!important;
- }
-}
-
-
-/* 1.5.4：最终按「一键预设」字段列定位风扇控制方式。
- * LuCI 标准字段列在本页面约从内容区 26% 处开始；
- * 标题列占 26%，单选项字段从同一列起点开始，禁止居中或靠右。
- * 一键预设本身不添加任何样式，不改变其布局。
- */
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"]){
- display:grid!important;
- grid-template-columns:minmax(0,26%) minmax(0,1fr)!important;
- column-gap:0!important;
- align-items:start!important;
- justify-items:stretch!important;
- width:100%!important;
- max-width:none!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title{
- grid-column:1!important;
- width:100%!important;
- max-width:none!important;
- margin:0!important;
- padding:0!important;
- text-align:left!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
- grid-column:2!important;
- width:100%!important;
- max-width:none!important;
- min-width:0!important;
- margin:0!important;
- padding:0!important;
- justify-self:stretch!important;
- text-align:left!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul,
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field .cbi-input-radio{
- display:flex!important;
- flex-direction:row!important;
- flex-wrap:wrap!important;
- justify-content:flex-start!important;
- align-items:center!important;
- width:100%!important;
- max-width:none!important;
- margin:0!important;
- padding:0!important;
- gap:8px 18px!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul>li{
- flex:0 0 auto!important;
- width:auto!important;
- margin:0!important;
- padding:3px 0!important;
-}
-@media(max-width:767px){
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"]){
-  display:block!important;
- }
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title,
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
-  display:block!important;
-  width:100%!important;
-  max-width:100%!important;
- }
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title{
-  margin-bottom:8px!important;
- }
-}
-
-
-/* 1.5.5：强制风扇控制方式的四个 radio 选项横向排列。
- * 保留已确认正确的字段列起点，与下方一键预设首个选项左边缘对齐。
- * 覆盖旧版全局 ul/li 的纵向、100% 宽度规则；仅命中 mode 字段。
- */
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]){
- display:flex!important;
- flex-direction:row!important;
- flex-wrap:nowrap!important;
- justify-content:flex-start!important;
- align-items:center!important;
- gap:8px 18px!important;
- width:100%!important;
- max-width:none!important;
- margin:0!important;
- padding:0!important;
- list-style:none!important;
-}
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"])>li{
- display:inline-flex!important;
- flex:0 0 auto!important;
- flex-direction:row!important;
- align-items:center!important;
- width:auto!important;
- max-width:none!important;
- min-width:0!important;
- margin:0!important;
- padding:3px 0!important;
- white-space:nowrap!important;
-}
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"])>li>label,
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]) label:has(input[type="radio"]){
- display:inline-flex!important;
- flex-direction:row!important;
- flex:0 0 auto!important;
- align-items:center!important;
- justify-content:flex-start!important;
- width:auto!important;
- margin:0!important;
- padding:0!important;
- white-space:nowrap!important;
-}
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]) input[type="radio"]{
- display:inline-block!important;
- position:static!important;
- float:none!important;
- flex:0 0 auto!important;
- margin:0 6px 0 0!important;
-}
-@media(max-width:767px){
- .cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]){
-  flex-wrap:wrap!important;
- }
-}
-
-
-/* 1.5.6：修正 radio 标签被全局样式撑满整行、导致圆点跑到最右侧的问题。
- * 仅作用于 mode 字段：li/label 按内容收缩，圆点紧贴文字；
- * 保留已确认正确的字段列起点，与一键预设首个选项对齐。
- */
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]),
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field .cbi-input-radio{
- display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
- justify-content:flex-start!important;align-items:center!important;width:100%!important;
-}
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"])>li,
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field .cbi-input-radio>li{
- display:inline-flex!important;flex:0 0 auto!important;
- width:max-content!important;max-width:max-content!important;
-}
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"])>li>label,
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field label:has(input[type="radio"]){
- display:inline-flex!important;flex:0 0 auto!important;flex-direction:row!important;
- justify-content:flex-start!important;align-items:center!important;
- width:max-content!important;max-width:max-content!important;min-width:0!important;
- margin:0!important;padding:0!important;white-space:nowrap!important;text-align:left!important;
-}
-.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field input[type="radio"]{
- position:static!important;inset:auto!important;float:none!important;
- flex:0 0 auto!important;order:0!important;margin:0 6px 0 0!important;
-}
-@media(max-width:767px){
- .cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]),
- .cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field .cbi-input-radio{flex-wrap:wrap!important}
-}
 </style>
 <script>
 (function(){
@@ -2025,7 +1714,126 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
   }
   detectDark();
   window.addEventListener('load',detectDark);
+
   window.addEventListener('DOMContentLoaded',detectDark);
+
+  /*
+   * 控制模式四个单选项：
+   * 直接按 LuCI 实际生成的 radio DOM 定位，不依赖脆弱的 :has()/属性后缀 CSS。
+   * 选项组起点读取「一键预设」第一个 radio 的真实坐标，保证两组左边缘一致。
+   * 只改 mode 字段；不改 preset、温控参数或保存逻辑。
+   */
+  function applyFanModeLayout(){
+    var radios=Array.prototype.slice.call(document.querySelectorAll('input[type="radio"]'));
+    function findRadio(suffix){
+      return radios.find(function(el){
+        return (el.name && el.name.slice(-suffix.length)===suffix) ||
+               (el.id && el.id.slice(-suffix.length)===suffix);
+      });
+    }
+    var modeInput=findRadio('.mode');
+    var presetInput=findRadio('.preset');
+    if(!modeInput) return;
+    var row=modeInput.closest('.cbi-value');
+    var field=modeInput.closest('.cbi-value-field');
+    if(!row || !field) return;
+
+    var title=Array.prototype.find.call(row.children,function(el){
+      return el.classList && el.classList.contains('cbi-value-title');
+    });
+    var important=function(el,prop,value){
+      if(el) el.style.setProperty(prop,value,'important');
+    };
+
+    important(row,'display','grid');
+    important(row,'grid-template-columns','minmax(0,26%) minmax(0,1fr)');
+    important(row,'align-items','start');
+    important(row,'justify-items','stretch');
+    important(row,'column-gap','0');
+    important(row,'width','100%');
+
+    important(title,'grid-column','1');
+    important(title,'width','100%');
+    important(title,'max-width','none');
+    important(title,'margin','0');
+    important(title,'text-align','left');
+
+    important(field,'grid-column','2');
+    important(field,'display','block');
+    important(field,'width','100%');
+    important(field,'max-width','none');
+    important(field,'min-width','0');
+    important(field,'margin','0');
+    important(field,'padding','0');
+    important(field,'text-align','left');
+
+    var list=field.querySelector('ul') || field.querySelector('.cbi-input-radio');
+    if(!list) return;
+    important(list,'display','flex');
+    important(list,'flex-direction','row');
+    important(list,'flex-wrap',window.matchMedia && window.matchMedia('(max-width: 767px)').matches ? 'wrap' : 'nowrap');
+    important(list,'justify-content','flex-start');
+    important(list,'align-items','center');
+    important(list,'width','100%');
+    important(list,'max-width','none');
+    important(list,'margin','0');
+    important(list,'padding','0');
+    important(list,'gap','8px 18px');
+
+    Array.prototype.forEach.call(list.children,function(item){
+      if(item.tagName!=='LI') return;
+      important(item,'display','inline-flex');
+      important(item,'flex','0 0 auto');
+      important(item,'width','auto');
+      important(item,'max-width','max-content');
+      important(item,'min-width','0');
+      important(item,'margin','0');
+      important(item,'padding','3px 0');
+      important(item,'border','0');
+      important(item,'background','transparent');
+      var label=item.querySelector('label') || (item.matches('label') ? item : null);
+      if(label){
+        important(label,'display','inline-flex');
+        important(label,'flex','0 0 auto');
+        important(label,'flex-direction','row');
+        important(label,'align-items','center');
+        important(label,'justify-content','flex-start');
+        important(label,'width','max-content');
+        important(label,'max-width','max-content');
+        important(label,'min-width','0');
+        important(label,'margin','0');
+        important(label,'padding','0');
+        important(label,'white-space','nowrap');
+        important(label,'text-align','left');
+      }
+    });
+
+    Array.prototype.forEach.call(list.querySelectorAll('input[type="radio"]'),function(input){
+      important(input,'display','inline-block');
+      important(input,'position','static');
+      important(input,'inset','auto');
+      important(input,'float','none');
+      important(input,'flex','0 0 auto');
+      important(input,'order','0');
+      important(input,'margin','0 6px 0 0');
+    });
+
+    /* 以预设首个圆点的实际横坐标校准 mode 单选组，而不是猜固定百分比。 */
+    if(presetInput && presetInput!==modeInput){
+      var target= presetInput.getBoundingClientRect().left;
+      var listLeft=list.getBoundingClientRect().left;
+      important(list,'padding-left',Math.max(0,Math.round(target-listLeft))+'px');
+    }
+  }
+  function scheduleFanModeLayout(){
+    if(document.readyState==='loading')
+      document.addEventListener('DOMContentLoaded',applyFanModeLayout,{once:true});
+    else
+      applyFanModeLayout();
+  }
+  scheduleFanModeLayout();
+  window.addEventListener('load',applyFanModeLayout,{once:true});
+  window.addEventListener('resize',applyFanModeLayout);
   /*
    * 不监听 documentElement 的 subtree：
    * LuCI 页面会持续更新温度、转速和状态节点，子树观察器会被大量无关 DOM
