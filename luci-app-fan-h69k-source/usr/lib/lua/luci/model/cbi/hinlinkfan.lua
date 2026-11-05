@@ -1724,15 +1724,16 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
    * 只改 mode 字段；不改 preset、温控参数或保存逻辑。
    */
   function applyFanModeLayout(){
-    function norm(s){ return String(s||'').replace(/\\s+/g,' ').trim(); }
     function findRow(titleText){
       var rows=document.querySelectorAll('.cbi-value');
       for(var i=0;i<rows.length;i++){
         var title=rows[i].querySelector('.cbi-value-title');
-        if(title && norm(title.textContent).indexOf(titleText)!==-1) return rows[i];
+        if(title && String(title.textContent || '').indexOf(titleText)!==-1)
+          return rows[i];
       }
       return null;
     }
+
     var modeRow=findRow('风扇控制方式');
     var presetRow=findRow('一键预设');
     if(!modeRow || !presetRow) return;
@@ -1745,61 +1746,59 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
     var presetRadio=presetField.querySelector('input[type="radio"]');
     if(!modeRadio || !presetRadio) return;
 
-    /* 先恢复原位再测量，避免 resize 时把上一次偏移量重复累加。 */
-    var modeList=modeRadio.closest('ul') || modeField;
-    var presetList=presetRadio.closest('ul') || presetField;
-    modeList.style.setProperty('left','0px','important');
-    modeList.style.setProperty('transform','none','important');
-
     var important=function(el,prop,value){
       if(el) el.style.setProperty(prop,value,'important');
     };
-    important(modeRow,'overflow','visible');
-    important(modeField,'overflow','visible');
-    important(modeList,'position','relative');
-    important(modeList,'display','flex');
-    important(modeList,'flex-direction','row');
-    important(modeList,'flex-wrap',window.matchMedia && window.matchMedia('(max-width: 767px)').matches ? 'wrap' : 'nowrap');
-    important(modeList,'justify-content','flex-start');
-    important(modeList,'align-items','center');
-    important(modeList,'width','max-content');
-    important(modeList,'max-width','none');
-    important(modeList,'min-width','0');
-    important(modeList,'margin','0');
-    important(modeList,'padding','0');
-    important(modeList,'gap','3px 12px');
 
-    Array.prototype.forEach.call(modeList.children,function(item){
-      if(item.tagName==='LI'){
-        important(item,'display','inline-flex');
-        important(item,'flex','0 0 auto');
-        important(item,'width','auto');
-        important(item,'max-width','max-content');
-        important(item,'margin','0');
-        important(item,'padding','3px 0');
-      }
-      var label=item.querySelector ? (item.querySelector('label') || (item.matches('label') ? item : null)) : null;
-      if(label){
-        important(label,'display','inline-flex');
-        important(label,'align-items','center');
-        important(label,'width','max-content');
-        important(label,'max-width','max-content');
-        important(label,'margin','0');
-        important(label,'padding','0');
-        important(label,'white-space','nowrap');
-      }
-    });
+    /* 先清除上次偏移，再以两个字段容器的真实左边缘计算位移。
+       关键：移动整个 modeField，而不是只移动内部 ul；这样外层选项底框
+       和圆点/文字一起移动，才能与「一键预设」真正对齐。 */
+    important(modeField,'position','relative');
+    important(modeField,'left','0px');
+    important(modeField,'transform','none');
 
-    /* 关键修正：直接测量两个实际 radio 圆点的屏幕坐标，允许负向位移。
-       1.5.9 只计算正向补偿，控制模式在预设右侧时差值被截成 0，因而完全没移动。 */
-    if(!(window.matchMedia && window.matchMedia('(max-width: 767px)').matches)){
-      var targetX=presetRadio.getBoundingClientRect().left;
-      var currentX=modeRadio.getBoundingClientRect().left;
+    var mobile=window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+    if(!mobile){
+      var targetX=presetField.getBoundingClientRect().left;
+      var currentX=modeField.getBoundingClientRect().left;
       var delta=Math.round(targetX-currentX);
-      important(modeList,'left',delta+'px');
-    } else {
-      important(modeList,'left','0px');
-      important(modeList,'flex-wrap','wrap');
+      important(modeField,'left',delta+'px');
+    }
+
+    /* 只把控制模式的四个选项横向排列；预设区域完全不修改。 */
+    var modeList=modeField.querySelector('ul');
+    if(modeList){
+      important(modeList,'display','flex');
+      important(modeList,'flex-direction','row');
+      important(modeList,'flex-wrap',mobile?'wrap':'nowrap');
+      important(modeList,'justify-content','flex-start');
+      important(modeList,'align-items','center');
+      important(modeList,'width','max-content');
+      important(modeList,'max-width','100%');
+      important(modeList,'margin','0');
+      important(modeList,'padding','0');
+      important(modeList,'gap','3px 12px');
+
+      Array.prototype.forEach.call(modeList.children,function(item){
+        if(item.tagName==='LI'){
+          important(item,'display','inline-flex');
+          important(item,'flex','0 0 auto');
+          important(item,'width','auto');
+          important(item,'max-width','none');
+          important(item,'margin','0');
+          important(item,'padding','3px 2px');
+        }
+        var label=item.querySelector ? item.querySelector('label') : null;
+        if(label){
+          important(label,'display','inline-flex');
+          important(label,'align-items','center');
+          important(label,'width','max-content');
+          important(label,'max-width','none');
+          important(label,'margin','0');
+          important(label,'padding','0');
+          important(label,'white-space','nowrap');
+        }
+      });
     }
   }
   function scheduleFanModeLayout(){
@@ -1809,7 +1808,11 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
       applyFanModeLayout();
   }
   scheduleFanModeLayout();
-  window.addEventListener('load',applyFanModeLayout,{once:true});
+  window.addEventListener('load',function(){
+    window.requestAnimationFrame(function(){
+      window.requestAnimationFrame(applyFanModeLayout);
+    });
+  },{once:true});
   window.addEventListener('resize',applyFanModeLayout);
   /*
    * 不监听 documentElement 的 subtree：
