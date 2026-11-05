@@ -1967,6 +1967,73 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
  }
 }
 
+
+/* 1.5.4：最终按「一键预设」字段列定位风扇控制方式。
+ * LuCI 标准字段列在本页面约从内容区 26% 处开始；
+ * 标题列占 26%，单选项字段从同一列起点开始，禁止居中或靠右。
+ * 一键预设本身不添加任何样式，不改变其布局。
+ */
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"]){
+ display:grid!important;
+ grid-template-columns:minmax(0,26%) minmax(0,1fr)!important;
+ column-gap:0!important;
+ align-items:start!important;
+ justify-items:stretch!important;
+ width:100%!important;
+ max-width:none!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title{
+ grid-column:1!important;
+ width:100%!important;
+ max-width:none!important;
+ margin:0!important;
+ padding:0!important;
+ text-align:left!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
+ grid-column:2!important;
+ width:100%!important;
+ max-width:none!important;
+ min-width:0!important;
+ margin:0!important;
+ padding:0!important;
+ justify-self:stretch!important;
+ text-align:left!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul,
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field .cbi-input-radio{
+ display:flex!important;
+ flex-direction:row!important;
+ flex-wrap:wrap!important;
+ justify-content:flex-start!important;
+ align-items:center!important;
+ width:100%!important;
+ max-width:none!important;
+ margin:0!important;
+ padding:0!important;
+ gap:8px 18px!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul>li{
+ flex:0 0 auto!important;
+ width:auto!important;
+ margin:0!important;
+ padding:3px 0!important;
+}
+@media(max-width:767px){
+ .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"]){
+  display:block!important;
+ }
+ .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title,
+ .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+ }
+ .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title{
+  margin-bottom:8px!important;
+ }
+}
+
 </style>
 <script>
 (function(){
