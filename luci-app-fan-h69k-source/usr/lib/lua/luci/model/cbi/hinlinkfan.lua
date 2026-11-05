@@ -1759,8 +1759,9 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
 
     var mobile=window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
     if(!mobile){
-      var targetX=presetField.getBoundingClientRect().left;
-      var currentX=modeField.getBoundingClientRect().left;
+      /* 字段容器内边距可能不同，按第一个 radio 圆点本身对齐，避免留下几像素误差。 */
+      var targetX=presetRadio.getBoundingClientRect().left;
+      var currentX=modeRadio.getBoundingClientRect().left;
       var delta=Math.round(targetX-currentX);
       important(modeField,'left',delta+'px');
     }
