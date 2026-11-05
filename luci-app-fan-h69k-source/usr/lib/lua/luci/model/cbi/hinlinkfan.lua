@@ -1732,7 +1732,6 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
       });
     }
     var modeInput=findRadio('.mode');
-    var presetInput=findRadio('.preset');
     if(!modeInput) return;
     var row=modeInput.closest('.cbi-value');
     var field=modeInput.closest('.cbi-value-field');
@@ -1745,27 +1744,37 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
       if(el) el.style.setProperty(prop,value,'important');
     };
 
-    important(row,'display','grid');
-    important(row,'grid-template-columns','minmax(0,26%) minmax(0,1fr)');
-    important(row,'align-items','start');
-    important(row,'justify-items','stretch');
-    important(row,'column-gap','0');
+    /*
+     * 与下方「一键预设」采用相同的字段起点：
+     * 标题占左侧 26%，单选组从右侧字段列起始处开始。
+     * 不再用 grid + radio 坐标补偿，避免字段被居中后产生二次偏移。
+     */
+    important(row,'display','flex');
+    important(row,'flex-direction','row');
+    important(row,'flex-wrap','wrap');
+    important(row,'align-items','center');
+    important(row,'justify-content','flex-start');
     important(row,'width','100%');
+    important(row,'gap','0');
 
-    important(title,'grid-column','1');
-    important(title,'width','100%');
+    important(title,'display','block');
+    important(title,'flex','0 0 26%');
+    important(title,'width','26%');
     important(title,'max-width','none');
     important(title,'margin','0');
+    important(title,'padding','0');
     important(title,'text-align','left');
+    important(title,'box-sizing','border-box');
 
-    important(field,'grid-column','2');
     important(field,'display','block');
-    important(field,'width','100%');
+    important(field,'flex','1 1 74%');
+    important(field,'width','74%');
     important(field,'max-width','none');
     important(field,'min-width','0');
     important(field,'margin','0');
     important(field,'padding','0');
     important(field,'text-align','left');
+    important(field,'box-sizing','border-box');
 
     var list=field.querySelector('ul') || field.querySelector('.cbi-input-radio');
     if(!list) return;
@@ -1778,7 +1787,7 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
     important(list,'max-width','none');
     important(list,'margin','0');
     important(list,'padding','0');
-    important(list,'gap','8px 18px');
+    important(list,'gap','3px 12px');
 
     Array.prototype.forEach.call(list.children,function(item){
       if(item.tagName!=='LI') return;
@@ -1815,15 +1824,8 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
       important(input,'float','none');
       important(input,'flex','0 0 auto');
       important(input,'order','0');
-      important(input,'margin','0 6px 0 0');
+      important(input,'margin','0 4px 0 0');
     });
-
-    /* 以预设首个圆点的实际横坐标校准 mode 单选组，而不是猜固定百分比。 */
-    if(presetInput && presetInput!==modeInput){
-      var target= presetInput.getBoundingClientRect().left;
-      var listLeft=list.getBoundingClientRect().left;
-      important(list,'padding-left',Math.max(0,Math.round(target-listLeft))+'px');
-    }
   }
   function scheduleFanModeLayout(){
     if(document.readyState==='loading')
