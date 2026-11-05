@@ -1750,24 +1750,18 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
       if(el) el.style.setProperty(prop,value,'important');
     };
 
-    /* 先清除上次偏移，再以两个字段容器的真实左边缘计算位移。
-       关键：移动整个 modeField，而不是只移动内部 ul；这样外层选项底框
-       和圆点/文字一起移动，才能与「一键预设」真正对齐。 */
-    important(modeField,'position','relative');
-    important(modeField,'left','0px');
-    important(modeField,'transform','none');
+    /* 不移动整个字段容器：两个灰色选项框本身已经对齐。
+       偏差来自 LuCI 两组 radio 列表的默认缩进不同；直接复制预设列表
+       的实际左内边距，让第一颗圆点对齐，避免坐标偏移被父级布局抵消。 */
+    important(modeField,'position','');
+    important(modeField,'left','');
+    important(modeField,'transform','');
 
     var mobile=window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
-    if(!mobile){
-      /* 字段容器内边距可能不同，按第一个 radio 圆点本身对齐，避免留下几像素误差。 */
-      var targetX=presetRadio.getBoundingClientRect().left;
-      var currentX=modeRadio.getBoundingClientRect().left;
-      var delta=Math.round(targetX-currentX);
-      important(modeField,'left',delta+'px');
-    }
 
     /* 只把控制模式的四个选项横向排列；预设区域完全不修改。 */
     var modeList=modeField.querySelector('ul');
+    var presetList=presetField.querySelector('ul');
     if(modeList){
       important(modeList,'display','flex');
       important(modeList,'flex-direction','row');
@@ -1778,6 +1772,9 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
       important(modeList,'max-width','100%');
       important(modeList,'margin','0');
       important(modeList,'padding','0');
+      /* 恢复与「一键预设」相同的列表缩进，圆点才会落在同一条垂直线上。 */
+      var presetPaddingLeft=presetList ? window.getComputedStyle(presetList).paddingLeft : '12px';
+      important(modeList,'padding-left',presetPaddingLeft);
       important(modeList,'gap','3px 12px');
 
       Array.prototype.forEach.call(modeList.children,function(item){
