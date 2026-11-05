@@ -1720,7 +1720,7 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
   /*
    * 控制模式四个单选项：
    * 直接按 LuCI 实际生成的 radio DOM 定位，不依赖脆弱的 :has()/属性后缀 CSS。
-   * 选项组起点读取「一键预设」第一个 radio 的真实坐标，保证两组左边缘一致。
+   * 布局完成后读取两组第一个 radio 的真实坐标，按实际差值校准起点。
    * 只改 mode 字段；不改 preset、温控参数或保存逻辑。
    */
   function applyFanModeLayout(){
@@ -1750,53 +1750,60 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
       if(el) el.style.setProperty(prop,value,'important');
     };
 
-    /* 不移动整个字段容器：两个灰色选项框本身已经对齐。
-       偏差来自 LuCI 两组 radio 列表的默认缩进不同；直接复制预设列表
-       的实际左内边距，让第一颗圆点对齐，避免坐标偏移被父级布局抵消。 */
-    important(modeField,'position','');
-    important(modeField,'left','');
-    important(modeField,'transform','');
-
     var mobile=window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
 
-    /* 只把控制模式的四个选项横向排列；预设区域完全不修改。 */
+    /* 只调整控制模式的单选列表；不移动字段容器，也不触碰一键预设。 */
     var modeList=modeField.querySelector('ul');
-    var presetList=presetField.querySelector('ul');
-    if(modeList){
-      important(modeList,'display','flex');
-      important(modeList,'flex-direction','row');
-      important(modeList,'flex-wrap',mobile?'wrap':'nowrap');
-      important(modeList,'justify-content','flex-start');
-      important(modeList,'align-items','center');
-      important(modeList,'width','max-content');
-      important(modeList,'max-width','100%');
-      important(modeList,'margin','0');
-      important(modeList,'padding','0');
-      /* 恢复与「一键预设」相同的列表缩进，圆点才会落在同一条垂直线上。 */
-      var presetPaddingLeft=presetList ? window.getComputedStyle(presetList).paddingLeft : '12px';
-      important(modeList,'padding-left',presetPaddingLeft);
-      important(modeList,'gap','3px 12px');
+    if(!modeList) return;
 
-      Array.prototype.forEach.call(modeList.children,function(item){
-        if(item.tagName==='LI'){
-          important(item,'display','inline-flex');
-          important(item,'flex','0 0 auto');
-          important(item,'width','auto');
-          important(item,'max-width','none');
-          important(item,'margin','0');
-          important(item,'padding','3px 2px');
-        }
-        var label=item.querySelector ? item.querySelector('label') : null;
-        if(label){
-          important(label,'display','inline-flex');
-          important(label,'align-items','center');
-          important(label,'width','max-content');
-          important(label,'max-width','none');
-          important(label,'margin','0');
-          important(label,'padding','0');
-          important(label,'white-space','nowrap');
-        }
-      });
+    important(modeList,'display','flex');
+    important(modeList,'flex-direction','row');
+    important(modeList,'flex-wrap',mobile?'wrap':'nowrap');
+    important(modeList,'justify-content','flex-start');
+    important(modeList,'align-items','center');
+    important(modeList,'width','max-content');
+    important(modeList,'max-width','100%');
+    important(modeList,'margin','0');
+    important(modeList,'padding','0');
+    important(modeList,'gap','3px 12px');
+
+    Array.prototype.forEach.call(modeList.children,function(item){
+      if(item.tagName==='LI'){
+        important(item,'display','inline-flex');
+        important(item,'flex','0 0 auto');
+        important(item,'width','auto');
+        important(item,'max-width','none');
+        important(item,'margin','0');
+        important(item,'padding','3px 2px');
+      }
+      var label=item.querySelector ? item.querySelector('label') : null;
+      if(label){
+        important(label,'display','inline-flex');
+        important(label,'align-items','center');
+        important(label,'width','max-content');
+        important(label,'max-width','none');
+        important(label,'margin','0');
+        important(label,'padding','0');
+        important(label,'white-space','nowrap');
+      }
+    });
+
+    /*
+     * 关键修复：不同主题/浏览器的 CBI 字段列和 radio 默认缩进并不一致，
+     * 不能用固定 padding 猜位置。先清除上次偏移，再读取实际 radio 坐标，
+     * 仅将 modeList 平移到 presetRadio 的左边缘。
+     * 用 left 而不是 transform，重复执行/窗口缩放时不会累计偏移。
+     */
+    important(modeList,'position','relative');
+    important(modeList,'left','0px');
+    var modeRadioNow=modeList.querySelector('input[type="radio"]');
+    var presetRadioNow=presetField.querySelector('input[type="radio"]');
+    if(modeRadioNow && presetRadioNow){
+      var modeLeft=modeRadioNow.getBoundingClientRect().left;
+      var presetLeft=presetRadioNow.getBoundingClientRect().left;
+      var offset=Math.round((presetLeft-modeLeft)*100)/100;
+      if(isFinite(offset) && Math.abs(offset)>0.5)
+        important(modeList,'left',offset+'px');
     }
   }
   function scheduleFanModeLayout(){
