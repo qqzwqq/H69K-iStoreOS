@@ -1848,6 +1848,60 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
  padding-left:0!important;
  text-align:left!important;
 }
+
+
+/* 1.6.6：仅对齐风扇控制方式，不影响一键预设。 */
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"]){
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr)!important;
+ justify-items:stretch!important;
+ align-items:start!important;
+ width:100%!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title,
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
+ box-sizing:border-box!important;
+ display:block!important;
+ float:none!important;
+ width:100%!important;
+ max-width:460px!important;
+ margin-left:auto!important;
+ margin-right:auto!important;
+ padding-left:0!important;
+ padding-right:0!important;
+ text-align:left!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title{
+ margin-top:0!important;
+ margin-bottom:8px!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul,
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field .cbi-input-radio{
+ display:flex!important;
+ flex-direction:row!important;
+ flex-wrap:wrap!important;
+ justify-content:flex-start!important;
+ align-items:center!important;
+ width:100%!important;
+ max-width:100%!important;
+ margin:0!important;
+ padding:0!important;
+ gap:8px 12px!important;
+}
+.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul>li{
+ flex:0 0 auto!important;
+ width:auto!important;
+ margin:0!important;
+ padding:3px 2px!important;
+ text-align:left!important;
+}
+@media(max-width:767px){
+ .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title,
+ .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
+  width:100%!important;
+  max-width:100%!important;
+ }
+}
 </style>
 <script>
 (function(){
@@ -2068,61 +2122,3 @@ m.on_commit = function()
 end
 
 return m
-
-/* 1.6.6：将「风扇控制方式」标题和四个单选项作为一个整体，
- * 对齐到下方「一键预设」选项卡片的左边缘。
- * 通过 CBI 字段名精确定位 mode，不依赖 section:first-of-type，
- * 不触碰 preset 区域，也不改变任何温控/保存逻辑。
- */
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"]){
- display:grid!important;
- grid-template-columns:minmax(0,1fr)!important;
- justify-items:stretch!important;
- align-items:start!important;
- width:100%!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title,
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
- box-sizing:border-box!important;
- display:block!important;
- float:none!important;
- width:100%!important;
- max-width:460px!important;
- margin-left:auto!important;
- margin-right:auto!important;
- padding-left:0!important;
- padding-right:0!important;
- text-align:left!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title{
- margin-top:0!important;
- margin-bottom:8px!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul,
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field .cbi-input-radio{
- display:flex!important;
- flex-direction:row!important;
- flex-wrap:wrap!important;
- justify-content:flex-start!important;
- align-items:center!important;
- width:100%!important;
- max-width:100%!important;
- margin:0!important;
- padding:0!important;
- gap:8px 12px!important;
-}
-.cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field ul>li{
- flex:0 0 auto!important;
- width:auto!important;
- margin:0!important;
- padding:3px 2px!important;
- text-align:left!important;
-}
-@media(max-width:767px){
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-title,
- .cbi-map .cbi-section .cbi-value:has(.cbi-value-field input[name$=".mode"])>.cbi-value-field{
-  width:100%!important;
-  max-width:100%!important;
- }
-}
-
