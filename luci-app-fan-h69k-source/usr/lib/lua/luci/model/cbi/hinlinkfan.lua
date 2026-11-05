@@ -1789,13 +1789,15 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
     });
 
     /*
-     * 关键修复：不同主题/浏览器的 CBI 字段列和 radio 默认缩进并不一致，
-     * 不能用固定 padding 猜位置。先清除上次偏移，再读取实际 radio 坐标，
-     * 仅将 modeList 平移到 presetRadio 的左边缘。
-     * 用 left 而不是 transform，重复执行/窗口缩放时不会累计偏移。
+     * 对齐关键点：移动整个 modeField，而不是只移动内部 ul。
+     * LuCI/主题可能在 ul 外层字段容器上施加缩进、布局或裁剪规则；
+     * 只移动 ul 会受父容器限制，导致计算了偏移却看不出变化。
+     * 每次先将字段容器归零，再按两个 radio 的真实视口坐标计算偏移，
+     * 将控制模式字段列整体移动到“一键预设”第一个 radio 的起点。
      */
-    important(modeList,'position','relative');
-    important(modeList,'left','0px');
+    important(modeField,'position','relative');
+    important(modeField,'left','0px');
+    important(modeField,'right','auto');
     var modeRadioNow=modeList.querySelector('input[type="radio"]');
     var presetRadioNow=presetField.querySelector('input[type="radio"]');
     if(modeRadioNow && presetRadioNow){
@@ -1803,7 +1805,7 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
       var presetLeft=presetRadioNow.getBoundingClientRect().left;
       var offset=Math.round((presetLeft-modeLeft)*100)/100;
       if(isFinite(offset) && Math.abs(offset)>0.5)
-        important(modeList,'left',offset+'px');
+        important(modeField,'left',offset+'px');
     }
   }
   function scheduleFanModeLayout(){
