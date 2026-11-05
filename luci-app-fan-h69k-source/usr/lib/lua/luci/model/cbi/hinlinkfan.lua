@@ -1724,108 +1724,83 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
    * 只改 mode 字段；不改 preset、温控参数或保存逻辑。
    */
   function applyFanModeLayout(){
-    var radios=Array.prototype.slice.call(document.querySelectorAll('input[type="radio"]'));
-    function findRadio(suffix){
-      return radios.find(function(el){
-        return (el.name && el.name.slice(-suffix.length)===suffix) ||
-               (el.id && el.id.slice(-suffix.length)===suffix);
-      });
+    function norm(s){ return String(s||'').replace(/\\s+/g,' ').trim(); }
+    function findRow(titleText){
+      var rows=document.querySelectorAll('.cbi-value');
+      for(var i=0;i<rows.length;i++){
+        var title=rows[i].querySelector('.cbi-value-title');
+        if(title && norm(title.textContent).indexOf(titleText)!==-1) return rows[i];
+      }
+      return null;
     }
-    var modeInput=findRadio('.mode');
-    if(!modeInput) return;
-    var row=modeInput.closest('.cbi-value');
-    var field=modeInput.closest('.cbi-value-field');
-    if(!row || !field) return;
+    var modeRow=findRow('风扇控制方式');
+    var presetRow=findRow('一键预设');
+    if(!modeRow || !presetRow) return;
 
-    var title=Array.prototype.find.call(row.children,function(el){
-      return el.classList && el.classList.contains('cbi-value-title');
-    });
+    var modeField=modeRow.querySelector('.cbi-value-field');
+    var presetField=presetRow.querySelector('.cbi-value-field');
+    if(!modeField || !presetField) return;
+
+    var modeRadio=modeField.querySelector('input[type="radio"]');
+    var presetRadio=presetField.querySelector('input[type="radio"]');
+    if(!modeRadio || !presetRadio) return;
+
+    /* 先恢复原位再测量，避免 resize 时把上一次偏移量重复累加。 */
+    var modeList=modeRadio.closest('ul') || modeField;
+    var presetList=presetRadio.closest('ul') || presetField;
+    modeList.style.setProperty('left','0px','important');
+    modeList.style.setProperty('transform','none','important');
+
     var important=function(el,prop,value){
       if(el) el.style.setProperty(prop,value,'important');
     };
+    important(modeRow,'overflow','visible');
+    important(modeField,'overflow','visible');
+    important(modeList,'position','relative');
+    important(modeList,'display','flex');
+    important(modeList,'flex-direction','row');
+    important(modeList,'flex-wrap',window.matchMedia && window.matchMedia('(max-width: 767px)').matches ? 'wrap' : 'nowrap');
+    important(modeList,'justify-content','flex-start');
+    important(modeList,'align-items','center');
+    important(modeList,'width','max-content');
+    important(modeList,'max-width','none');
+    important(modeList,'min-width','0');
+    important(modeList,'margin','0');
+    important(modeList,'padding','0');
+    important(modeList,'gap','3px 12px');
 
-    /*
-     * 与下方「一键预设」采用相同的字段起点：
-     * 标题占左侧 26%，单选组从右侧字段列起始处开始。
-     * 不再用 grid + radio 坐标补偿，避免字段被居中后产生二次偏移。
-     */
-    important(row,'display','flex');
-    important(row,'flex-direction','row');
-    important(row,'flex-wrap','wrap');
-    important(row,'align-items','center');
-    important(row,'justify-content','flex-start');
-    important(row,'width','100%');
-    important(row,'gap','0');
-
-    important(title,'display','block');
-    important(title,'flex','0 0 26%');
-    important(title,'width','26%');
-    important(title,'max-width','none');
-    important(title,'margin','0');
-    important(title,'padding','0');
-    important(title,'text-align','left');
-    important(title,'box-sizing','border-box');
-
-    important(field,'display','block');
-    important(field,'flex','1 1 74%');
-    important(field,'width','74%');
-    important(field,'max-width','none');
-    important(field,'min-width','0');
-    important(field,'margin','0');
-    important(field,'padding','0');
-    important(field,'text-align','left');
-    important(field,'box-sizing','border-box');
-
-    var list=field.querySelector('ul') || field.querySelector('.cbi-input-radio');
-    if(!list) return;
-    important(list,'display','flex');
-    important(list,'flex-direction','row');
-    important(list,'flex-wrap',window.matchMedia && window.matchMedia('(max-width: 767px)').matches ? 'wrap' : 'nowrap');
-    important(list,'justify-content','flex-start');
-    important(list,'align-items','center');
-    important(list,'width','100%');
-    important(list,'max-width','none');
-    important(list,'margin','0');
-    important(list,'padding','0');
-    important(list,'gap','3px 12px');
-
-    Array.prototype.forEach.call(list.children,function(item){
-      if(item.tagName!=='LI') return;
-      important(item,'display','inline-flex');
-      important(item,'flex','0 0 auto');
-      important(item,'width','auto');
-      important(item,'max-width','max-content');
-      important(item,'min-width','0');
-      important(item,'margin','0');
-      important(item,'padding','3px 0');
-      important(item,'border','0');
-      important(item,'background','transparent');
-      var label=item.querySelector('label') || (item.matches('label') ? item : null);
+    Array.prototype.forEach.call(modeList.children,function(item){
+      if(item.tagName==='LI'){
+        important(item,'display','inline-flex');
+        important(item,'flex','0 0 auto');
+        important(item,'width','auto');
+        important(item,'max-width','max-content');
+        important(item,'margin','0');
+        important(item,'padding','3px 0');
+      }
+      var label=item.querySelector ? (item.querySelector('label') || (item.matches('label') ? item : null)) : null;
       if(label){
         important(label,'display','inline-flex');
-        important(label,'flex','0 0 auto');
-        important(label,'flex-direction','row');
         important(label,'align-items','center');
-        important(label,'justify-content','flex-start');
         important(label,'width','max-content');
         important(label,'max-width','max-content');
-        important(label,'min-width','0');
         important(label,'margin','0');
         important(label,'padding','0');
         important(label,'white-space','nowrap');
-        important(label,'text-align','left');
       }
     });
 
-    Array.prototype.forEach.call(list.querySelectorAll('input[type="radio"]'),function(input){
-      important(input,'display','inline-block');
-      important(input,'position','static');
-      important(input,'inset','auto');
-      important(input,'float','none');
-      important(input,'flex','0 0 auto');
-      important(input,'order','0');
-      important(input,'margin','0 4px 0 0');
-    });
+    /* 关键修正：直接测量两个实际 radio 圆点的屏幕坐标，允许负向位移。
+       1.5.9 只计算正向补偿，控制模式在预设右侧时差值被截成 0，因而完全没移动。 */
+    if(!(window.matchMedia && window.matchMedia('(max-width: 767px)').matches)){
+      var targetX=presetRadio.getBoundingClientRect().left;
+      var currentX=modeRadio.getBoundingClientRect().left;
+      var delta=Math.round(targetX-currentX);
+      important(modeList,'left',delta+'px');
+    } else {
+      important(modeList,'left','0px');
+      important(modeList,'flex-wrap','wrap');
+    }
   }
   function scheduleFanModeLayout(){
     if(document.readyState==='loading')
