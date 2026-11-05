@@ -2034,6 +2034,61 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
  }
 }
 
+
+/* 1.5.5：强制风扇控制方式的四个 radio 选项横向排列。
+ * 保留已确认正确的字段列起点，与下方一键预设首个选项左边缘对齐。
+ * 覆盖旧版全局 ul/li 的纵向、100% 宽度规则；仅命中 mode 字段。
+ */
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]){
+ display:flex!important;
+ flex-direction:row!important;
+ flex-wrap:nowrap!important;
+ justify-content:flex-start!important;
+ align-items:center!important;
+ gap:8px 18px!important;
+ width:100%!important;
+ max-width:none!important;
+ margin:0!important;
+ padding:0!important;
+ list-style:none!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"])>li{
+ display:inline-flex!important;
+ flex:0 0 auto!important;
+ flex-direction:row!important;
+ align-items:center!important;
+ width:auto!important;
+ max-width:none!important;
+ min-width:0!important;
+ margin:0!important;
+ padding:3px 0!important;
+ white-space:nowrap!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"])>li>label,
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]) label:has(input[type="radio"]){
+ display:inline-flex!important;
+ flex-direction:row!important;
+ flex:0 0 auto!important;
+ align-items:center!important;
+ justify-content:flex-start!important;
+ width:auto!important;
+ margin:0!important;
+ padding:0!important;
+ white-space:nowrap!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]) input[type="radio"]{
+ display:inline-block!important;
+ position:static!important;
+ float:none!important;
+ flex:0 0 auto!important;
+ margin:0 6px 0 0!important;
+}
+@media(max-width:767px){
+ .cbi-map .cbi-section .cbi-value:has(input[name$=".mode"])>.cbi-value-field ul:has(input[type="radio"]){
+  flex-wrap:wrap!important;
+ }
+}
+
 </style>
 <script>
 (function(){

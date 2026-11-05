@@ -1,4 +1,4 @@
-name: Build 调温大师 1.5.4 package
+name: Build 调温大师 1.5.5 package
 
 on:
   push:
@@ -76,7 +76,7 @@ jobs:
           cp -a "$src/." openwrt/package/luci-app-fan-h69k/
           cp "$GITHUB_WORKSPACE/package/luci-app-fan-h69k/Makefile" \
             openwrt/package/luci-app-fan-h69k/Makefile
-          grep -q 'PKG_VERSION:=1.5.4' \
+          grep -q 'PKG_VERSION:=1.5.5' \
             openwrt/package/luci-app-fan-h69k/Makefile
 
       - name: Update feeds and install LuCI dependencies
@@ -138,7 +138,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-fan-h69k-1.5.4-${{ matrix.version }}
+          name: luci-app-fan-h69k-1.5.5-${{ matrix.version }}
           path: artifacts/${{ matrix.version }}/*
           if-no-files-found: error
 
@@ -146,7 +146,7 @@ jobs:
         if: inputs.release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: fan-h69k-v1.5.4
-          name: 调温大师 1.5.4
+          tag_name: fan-h69k-v1.5.5
+          name: 调温大师 1.5.5
           make_latest: false
           files: artifacts/${{ matrix.version }}/*
