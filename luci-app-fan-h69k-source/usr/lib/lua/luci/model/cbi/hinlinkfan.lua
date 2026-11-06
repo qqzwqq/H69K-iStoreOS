@@ -1712,7 +1712,7 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
   border:0!important;border-radius:0!important;box-shadow:none!important;
   padding:0!important;overflow:visible!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio{
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field .cbi-radio{
   display:inline-flex!important;align-items:center!important;
   box-sizing:border-box!important;flex:0 0 auto!important;
   width:auto!important;min-width:0!important;
@@ -1722,20 +1722,20 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
   background:rgba(128,128,128,.075)!important;
   color:inherit!important;white-space:nowrap!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio:has(input:checked){
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field .cbi-radio:has(input:checked){
   background:rgba(102,120,255,.13)!important;
   border-color:rgba(102,120,255,.48)!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio label{
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field .cbi-radio label{
   display:inline!important;margin:0!important;padding:0!important;
   border:0!important;border-radius:0!important;
   background:transparent!important;color:inherit!important;
   white-space:nowrap!important;
 }
-html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio{
+html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field .cbi-radio{
   background:#3a4149!important;border-color:#59636e!important;color:#e1e5ea!important;
 }
-html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio:has(input:checked){
+html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field .cbi-radio:has(input:checked){
   background:#505e6d!important;border-color:#91a6bb!important;color:#fff!important;
 }
 
