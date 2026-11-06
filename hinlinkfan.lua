@@ -762,6 +762,39 @@ m.description = m.description .. [[
 </script>
 ]]
 
+
+-- 1.6.6：仅移除「风扇控制方式」四个单选项各自的灰色底框；
+-- 不改变选项排列、间距、文字、单选圆点，也不影响「一键预设」及其他区域。
+m.description = m.description .. [[
+<style>
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field .cbi-radio,
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field .cbi-radio,
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field label:has(input[type="radio"]),
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field label:has(input[type="radio"]),
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field li:has(input[type="radio"]),
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field li:has(input[type="radio"]) {
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field .cbi-radio:hover,
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field .cbi-radio:hover,
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field label:has(input[type="radio"]):hover,
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field label:has(input[type="radio"]):hover,
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field li:has(input[type="radio"]):hover,
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field li:has(input[type="radio"]):hover,
+.cbi-map .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field .cbi-radio:has(input:checked),
+.cbi-map .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field .cbi-radio:has(input:checked) {
+  background:transparent!important;
+  background-color:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+</style>
+]]
+
 -- ---------------- 1. 控制模式 ----------------
 
 local s = m:section(TypedSection, "global", "控制模式",
