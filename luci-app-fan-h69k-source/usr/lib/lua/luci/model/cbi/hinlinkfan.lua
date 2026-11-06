@@ -1742,6 +1742,51 @@ html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-valu
 /* 控制模式布局由下方初始化脚本按实际 LuCI DOM 定位；
  * 不再保留多套互相覆盖的历史 .mode CSS 规则。
  */
+
+/* 1.6.4：只修复「风扇控制方式」字段容器，不影响下方预设和曲线 */
+.cbi-section .cbi-value:has(input[name$=".mode"]),
+.cbi-section .cbi-value:has(input[name$=".mode"])::before,
+.cbi-section .cbi-value:has(input[name$=".mode"])::after {
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) {
+  border:0!important;
+  outline:0!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field,
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-description {
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  border-color:transparent!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field {
+  width:auto!important;
+  min-width:0!important;
+  flex:1 1 auto!important;
+  overflow:visible!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field > div,
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field > ul {
+  width:max-content!important;
+  max-width:100%!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  border:0!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-radio {
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+
 </style>
 <script>
 (function(){
