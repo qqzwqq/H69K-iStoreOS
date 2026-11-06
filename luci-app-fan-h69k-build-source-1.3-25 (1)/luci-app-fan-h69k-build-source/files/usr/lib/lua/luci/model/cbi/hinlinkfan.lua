@@ -527,6 +527,48 @@ html[data-darkmode="true"] .cbi-value-field input:not([type=radio]):not([type=ch
 }
 .cbi-section .cbi-value-field { text-align: left !important; }
 .cbi-section .cbi-value-title { text-align: center !important; }
+
+/* 控制模式专用修正：只调整这一行的选项容器，保持四项横向排列与文字位置 */
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field{
+  width:100%!important;max-width:460px!important;box-sizing:border-box!important;
+  margin-left:auto!important;margin-right:auto!important;
+}
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul{
+  display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
+  align-items:center!important;justify-content:flex-start!important;
+  width:100%!important;max-width:100%!important;gap:6px!important;
+  margin:0!important;padding:0!important;box-sizing:border-box!important;
+}
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li{
+  display:flex!important;flex:0 0 auto!important;align-items:center!important;
+  width:auto!important;max-width:100%!important;min-width:0!important;
+  box-sizing:border-box!important;margin:0!important;padding:5px 9px!important;
+  border:1px solid rgba(128,128,128,.24)!important;border-radius:8px!important;
+  background:rgba(128,128,128,.10)!important;
+}
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li label{
+  display:inline-flex!important;align-items:center!important;
+  width:auto!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  white-space:nowrap!important;line-height:1.45!important;
+}
+html[data-darkmode="true"] .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li,
+html.dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li,
+body.dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li{
+  background:#303236!important;border-color:#50545b!important;
+}
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li:hover{
+  background:rgba(102,120,255,.12)!important;border-color:rgba(102,120,255,.55)!important;
+}
+@media(max-width:767px){
+  .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul{
+    flex-direction:row!important;justify-content:flex-start!important;
+  }
+  .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li{
+    width:auto!important;flex:0 0 auto!important;
+  }
+}
+
 </style>
 ]] .. (m.description or "")
 
