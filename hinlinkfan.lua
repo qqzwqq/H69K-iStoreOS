@@ -739,8 +739,9 @@ m.description = m.description .. [[
     var presetTitle = presetRow.querySelector('.cbi-value-title');
     if (!modeTitle || !presetTitle) return;
     var mobile = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
-    var delta = mobile ? 0 : presetTitle.getBoundingClientRect().left - modeTitle.getBoundingClientRect().left;
     modeTitle.style.setProperty('position', 'relative', 'important');
+    modeTitle.style.setProperty('left', '0px', 'important');
+    var delta = mobile ? 0 : presetTitle.getBoundingClientRect().left - modeTitle.getBoundingClientRect().left;
     modeTitle.style.setProperty('left', Math.round(delta) + 'px', 'important');
     modeTitle.style.setProperty('text-align', 'left', 'important');
   }
