@@ -1772,57 +1772,53 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
     var important=function(el,prop,value){
       if(el) el.style.setProperty(prop,value,'important');
     };
-
     var mobile=window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
 
-    /* 只调整控制模式的单选列表；不移动字段容器，也不触碰一键预设。 */
-    var modeList=modeField.querySelector('ul');
-    if(!modeList) return;
+    /*
+     * 当前 LuCI CBI 实际输出的是：
+     * div#cbid.hinlinkfan.global.mode > span.cbi-radio
+     * 并不是 ul > li。直接取第一个 radio 所在的 cbi-radio 外层 div，
+     * 避免旧代码因找不到 ul 而提前退出。
+     */
+    var modeGroup=modeRadio.closest('.cbi-radio');
+    var presetGroup=presetRadio.closest('.cbi-radio');
+    modeGroup=modeGroup && modeGroup.parentElement;
+    presetGroup=presetGroup && presetGroup.parentElement;
+    if(!modeGroup || !presetGroup) return;
 
-    important(modeList,'display','flex');
-    important(modeList,'flex-direction','row');
-    important(modeList,'flex-wrap',mobile?'wrap':'nowrap');
-    important(modeList,'justify-content','flex-start');
-    important(modeList,'align-items','center');
-    important(modeList,'width','max-content');
-    important(modeList,'max-width','100%');
-    important(modeList,'margin','0');
-    important(modeList,'padding','0');
-    important(modeList,'gap','3px 12px');
+    /* 四个选项横向排列；窄屏允许换行。 */
+    important(modeGroup,'display','flex');
+    important(modeGroup,'flex-direction','row');
+    important(modeGroup,'flex-wrap',mobile?'wrap':'nowrap');
+    important(modeGroup,'justify-content','flex-start');
+    important(modeGroup,'align-items','center');
+    important(modeGroup,'width','max-content');
+    important(modeGroup,'max-width','100%');
+    important(modeGroup,'gap','3px 12px');
+    important(modeGroup,'margin','0');
+    important(modeGroup,'padding','0');
+    important(modeGroup,'float','none');
+    important(modeGroup,'clear','none');
+    important(modeGroup,'text-align','left');
 
-    Array.prototype.forEach.call(modeList.children,function(item){
-      if(item.tagName==='LI'){
-        important(item,'display','inline-flex');
-        important(item,'flex','0 0 auto');
-        important(item,'width','auto');
-        important(item,'max-width','none');
-        important(item,'margin','0');
-        important(item,'padding','3px 2px');
-      }
-      var label=item.querySelector ? item.querySelector('label') : null;
-      if(label){
-        important(label,'display','inline-flex');
-        important(label,'align-items','center');
-        important(label,'width','max-content');
-        important(label,'max-width','none');
-        important(label,'margin','0');
-        important(label,'padding','0');
-        important(label,'white-space','nowrap');
-      }
+    Array.prototype.forEach.call(modeGroup.querySelectorAll(':scope > .cbi-radio'),function(item){
+      important(item,'display','inline-flex');
+      important(item,'flex','0 0 auto');
+      important(item,'align-items','center');
+      important(item,'width','auto');
+      important(item,'margin','0');
+      important(item,'padding','2px 0');
+      important(item,'white-space','nowrap');
     });
 
     /*
-     * 关键修复：LuCI 默认 radio 列表可能 float:right，
-     * 所以只改 flex 和字段容器坐标都无法保证列表从字段列左侧开始。
-     * 直接取消列表浮动，左对齐字段列；与下面“一键预设”共用相同的
-     * CBI 网格字段起始列。CSS 同时提供无 JS 时的兜底。
+     * 用真实 radio 的屏幕坐标计算偏移，让“风扇控制方式”的第一个圆点
+     * 与“一键预设”的第一个圆点严格重合，不使用固定像素值。
      */
-    important(modeList,'float','none');
-    important(modeList,'clear','none');
-    important(modeList,'margin-left','0');
-    important(modeList,'margin-right','auto');
-    important(modeList,'text-align','left');
-    important(modeList,'justify-self','start');
+    important(modeGroup,'position','relative');
+    important(modeGroup,'left','0px');
+    var delta=presetRadio.getBoundingClientRect().left-modeRadio.getBoundingClientRect().left;
+    important(modeGroup,'left',Math.round(delta)+'px');
   }
   function scheduleFanModeLayout(){
     if(document.readyState==='loading')
