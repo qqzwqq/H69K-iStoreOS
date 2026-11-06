@@ -1706,6 +1706,39 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
 
 
 
+/* 1.6.3 修正：控制模式的底色跟随实际 radio 选项，不留在被对齐脚本移动前的外层字段上。 */
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field{
+  background:transparent!important;background-image:none!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+  padding:0!important;overflow:visible!important;
+}
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio{
+  display:inline-flex!important;align-items:center!important;
+  box-sizing:border-box!important;flex:0 0 auto!important;
+  width:auto!important;min-width:0!important;
+  margin:0!important;padding:7px 10px!important;
+  border:1px solid rgba(128,128,128,.22)!important;
+  border-radius:8px!important;
+  background:rgba(128,128,128,.075)!important;
+  color:inherit!important;white-space:nowrap!important;
+}
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio:has(input:checked){
+  background:rgba(102,120,255,.13)!important;
+  border-color:rgba(102,120,255,.48)!important;
+}
+.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio label{
+  display:inline!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;color:inherit!important;
+  white-space:nowrap!important;
+}
+html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio{
+  background:#3a4149!important;border-color:#59636e!important;color:#e1e5ea!important;
+}
+html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field>.cbi-radio:has(input:checked){
+  background:#505e6d!important;border-color:#91a6bb!important;color:#fff!important;
+}
+
 /* 控制模式布局由下方初始化脚本按实际 LuCI DOM 定位；
  * 不再保留多套互相覆盖的历史 .mode CSS 规则。
  */
