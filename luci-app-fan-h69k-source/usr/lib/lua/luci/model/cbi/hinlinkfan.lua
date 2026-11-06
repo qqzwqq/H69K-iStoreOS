@@ -1841,6 +1841,8 @@ html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-valu
 
     var modeField=modeRow.querySelector('.cbi-value-field');
     var presetField=presetRow.querySelector('.cbi-value-field');
+    var modeTitle=modeRow.querySelector('.cbi-value-title');
+    var presetTitle=presetRow.querySelector('.cbi-value-title');
     if(!modeField || !presetField) return;
 
     var modeRadio=modeField.querySelector('input[type="radio"]');
@@ -1851,6 +1853,16 @@ html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-valu
       if(el) el.style.setProperty(prop,value,'important');
     };
     var mobile=window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+
+    /*
+     * 标题左边缘与下方「一键预设」标题对齐。
+     * 只移动标题文字，不改变字段列宽，也不移动已经校准好的单选项。
+     */
+    if(modeTitle && presetTitle){
+      important(modeTitle,'position','relative');
+      important(modeTitle,'left',mobile?'0px':Math.round(presetTitle.getBoundingClientRect().left-modeTitle.getBoundingClientRect().left)+'px');
+      important(modeTitle,'text-align','left');
+    }
 
     /*
      * 当前 LuCI CBI 实际输出的是：
