@@ -652,6 +652,51 @@ html[data-darkmode="true"] .cbi-value-title,html.dark .cbi-value-title,body.dark
 html[data-darkmode="true"] .cbi-value-field input:not([type=radio]):not([type=checkbox]),html.dark .cbi-value-field input:not([type=radio]):not([type=checkbox]),body.dark .cbi-value-field input:not([type=radio]):not([type=checkbox]),html[data-darkmode="true"] .cbi-value-field select,html.dark .cbi-value-field select,body.dark .cbi-value-field select,html[data-darkmode="true"] .cbi-value-field textarea,html.dark .cbi-value-field textarea,body.dark .cbi-value-field textarea{background:#202b3b!important;color:#e5edf9!important;border-color:#405675!important}
 html[data-darkmode="true"] .cbi-value-field ul li,html.dark .cbi-value-field ul li,body.dark .cbi-value-field ul li,html[data-darkmode="true"] .cbi-value-field label:has(input[type=radio]),html.dark .cbi-value-field label:has(input[type=radio]),body.dark .cbi-value-field label:has(input[type=radio]){background:#243449!important;border-color:#405675!important;color:#dbeafe!important}
 
+
+/* 1.6.4：只修复「风扇控制方式」字段容器，不影响下方预设和曲线 */
+.cbi-section .cbi-value:has(input[name$=".mode"]),
+.cbi-section .cbi-value:has(input[name$=".mode"])::before,
+.cbi-section .cbi-value:has(input[name$=".mode"])::after {
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) {
+  border:0!important;
+  outline:0!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field,
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-description {
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  border-color:transparent!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field {
+  width:auto!important;
+  min-width:0!important;
+  flex:1 1 auto!important;
+  overflow:visible!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field > div,
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field > ul {
+  width:max-content!important;
+  max-width:100%!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  border:0!important;
+}
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-radio {
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
+
 </style>
 ]] .. (m.description or "")
 
