@@ -529,42 +529,42 @@ html[data-darkmode="true"] .cbi-value-field input:not([type=radio]):not([type=ch
 .cbi-section .cbi-value-title { text-align: center !important; }
 
 /* 控制模式专用修正：只调整这一行的选项容器，保持四项横向排列与文字位置 */
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field{
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field{
   width:100%!important;max-width:460px!important;box-sizing:border-box!important;
   margin-left:auto!important;margin-right:auto!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul{
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul{
   display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
   align-items:center!important;justify-content:flex-start!important;
   width:100%!important;max-width:100%!important;gap:6px!important;
   margin:0!important;padding:0!important;box-sizing:border-box!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li{
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li{
   display:flex!important;flex:0 0 auto!important;align-items:center!important;
   width:auto!important;max-width:100%!important;min-width:0!important;
   box-sizing:border-box!important;margin:0!important;padding:5px 9px!important;
   border:1px solid rgba(128,128,128,.24)!important;border-radius:8px!important;
   background:rgba(128,128,128,.10)!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li label{
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li label{
   display:inline-flex!important;align-items:center!important;
   width:auto!important;margin:0!important;padding:0!important;
   border:0!important;border-radius:0!important;background:transparent!important;
   white-space:nowrap!important;line-height:1.45!important;
 }
-html[data-darkmode="true"] .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li,
-html.dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li,
-body.dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li{
+html[data-darkmode="true"] .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li,
+html.dark .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li,
+body.dark .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li{
   background:#303236!important;border-color:#50545b!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li:hover{
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li:hover{
   background:rgba(102,120,255,.12)!important;border-color:rgba(102,120,255,.55)!important;
 }
 @media(max-width:767px){
-  .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul{
+  .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul{
     flex-direction:row!important;justify-content:flex-start!important;
   }
-  .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li{
+  .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li{
     width:auto!important;flex:0 0 auto!important;
   }
 }
@@ -574,58 +574,58 @@ body.dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li
  * 只作用于 mode 单选行：标题与选项共用同一条 460px 左对齐基线；
  * 清除整行/列表容器的黑底与多余灰色空白块，灰底只保留在四个选项按钮上。
  */
-.cbi-section .cbi-value:has(input[id$=".mode"]) {
+.cbi-section .cbi-value:has(input[name$=".mode"]) {
   display:flex!important;flex-direction:column!important;align-items:center!important;
   width:100%!important;min-height:0!important;padding:6px 0!important;gap:5px!important;
   background:transparent!important;border:0!important;box-shadow:none!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-title,
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field {
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-title,
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field {
   display:block!important;float:none!important;box-sizing:border-box!important;
   width:100%!important;max-width:460px!important;margin:0 auto!important;
   padding:0!important;background:transparent!important;border:0!important;
   box-shadow:none!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-title {
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-title {
   text-align:left!important;line-height:1.5!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field {
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field {
   text-align:left!important;overflow:visible!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul {
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul {
   display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
   align-items:center!important;justify-content:flex-start!important;
   width:100%!important;max-width:100%!important;min-height:0!important;
   margin:0!important;padding:0!important;list-style:none!important;
   background:transparent!important;border:0!important;box-shadow:none!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul:before,
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul:after {
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul:before,
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul:after {
   display:none!important;content:none!important;background:transparent!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li {
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li {
   display:inline-flex!important;flex:0 0 auto!important;align-items:center!important;
   width:auto!important;max-width:100%!important;min-height:0!important;
   margin:0 6px 0 0!important;padding:5px 9px!important;box-sizing:border-box!important;
   border:1px solid rgba(128,128,128,.24)!important;border-radius:8px!important;
   background:rgba(128,128,128,.10)!important;box-shadow:none!important;
 }
-.cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li label {
+.cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li label {
   display:inline-flex!important;align-items:center!important;width:auto!important;
   margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
   background:transparent!important;box-shadow:none!important;white-space:nowrap!important;
 }
-html[data-darkmode="true"] .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li,
-html.dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li,
-body.dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul li {
+html[data-darkmode="true"] .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li,
+html.dark .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li,
+body.dark .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul li {
   background:#303236!important;border-color:#50545b!important;
 }
 @media(max-width:767px) {
-  .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-title,
-  .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field {
+  .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-title,
+  .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field {
     width:100%!important;max-width:100%!important;
   }
-  .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-value-field ul {
+  .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-field ul {
     flex-direction:row!important;flex-wrap:wrap!important;
   }
 }
