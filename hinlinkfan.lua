@@ -720,6 +720,47 @@ m.description = m.description .. [[
 </div>
 ]]
 
+-- 1.6.5：只将「风扇控制方式」标题左边缘对齐到「一键预设」；
+-- 不改变单选项位置、横向排列、表单宽度或其他设置项。
+m.description = m.description .. [[
+<script>
+(function () {
+  function alignFanModeTitle() {
+    var rows = document.querySelectorAll('.cbi-value');
+    var modeRow = null, presetRow = null;
+    for (var i = 0; i < rows.length; i++) {
+      var title = rows[i].querySelector('.cbi-value-title');
+      var text = String(title && title.textContent || '');
+      if (!modeRow && text.indexOf('风扇控制方式') !== -1) modeRow = rows[i];
+      if (!presetRow && text.indexOf('一键预设') !== -1) presetRow = rows[i];
+    }
+    if (!modeRow || !presetRow) return;
+    var modeTitle = modeRow.querySelector('.cbi-value-title');
+    var presetTitle = presetRow.querySelector('.cbi-value-title');
+    if (!modeTitle || !presetTitle) return;
+    var mobile = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+    var delta = mobile ? 0 : presetTitle.getBoundingClientRect().left - modeTitle.getBoundingClientRect().left;
+    modeTitle.style.setProperty('position', 'relative', 'important');
+    modeTitle.style.setProperty('left', Math.round(delta) + 'px', 'important');
+    modeTitle.style.setProperty('text-align', 'left', 'important');
+  }
+  function scheduleAlign() {
+    if (document.readyState === 'loading')
+      document.addEventListener('DOMContentLoaded', alignFanModeTitle, { once: true });
+    else
+      alignFanModeTitle();
+  }
+  scheduleAlign();
+  window.addEventListener('load', function () {
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(alignFanModeTitle);
+    });
+  }, { once: true });
+  window.addEventListener('resize', alignFanModeTitle);
+})();
+</script>
+]]
+
 -- ---------------- 1. 控制模式 ----------------
 
 local s = m:section(TypedSection, "global", "控制模式",
