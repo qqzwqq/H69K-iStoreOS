@@ -1479,13 +1479,36 @@ html[data-darkmode="true"] .cbi-section .cbi-value-field ul li,html.dark .cbi-se
  */
 .cbi-map .cbi-section:first-of-type .cbi-value:has(.cbi-value-field input[type="radio"]) .cbi-value-field{
 	box-sizing:border-box!important;
+	display:block!important;
 	width:100%!important;
 	max-width:none!important;
+	min-width:0!important;
 	margin:0!important;
 	padding-left:0!important;
 	padding-right:0!important;
 	justify-self:stretch!important;
 	text-align:left!important;
+}
+/* LuCI 默认可能将 radio 的 ul 浮动到字段列右侧。
+ * 取消浮动并让列表从字段列左边缘开始，与下方“一键预设”对齐。
+ * 不再用 JS 测量/平移整个字段列，避免不同主题下定位失效。
+ */
+.cbi-map .cbi-section:first-of-type .cbi-value-field ul:has(input[type="radio"]){
+	float:none!important;
+	clear:none!important;
+	display:flex!important;
+	flex-direction:row!important;
+	flex-wrap:wrap!important;
+	justify-content:flex-start!important;
+	align-items:center!important;
+	width:max-content!important;
+	max-width:100%!important;
+	margin:0!important;
+	margin-left:0!important;
+	margin-right:auto!important;
+	padding:0!important;
+	text-align:left!important;
+	justify-self:start!important;
 }
 /* 已移除旧版针对 first-of-type 全部 radio 的通用覆盖。
  * 旧规则曾把控制模式强制设为纵向排列并令每项占满整行；
@@ -1789,24 +1812,17 @@ html.hinfan-theme-dark .hinfan-theme-text-tile .hinfan-tile-v.hinfan-t-bad{color
     });
 
     /*
-     * 对齐关键点：移动整个 modeField，而不是只移动内部 ul。
-     * LuCI/主题可能在 ul 外层字段容器上施加缩进、布局或裁剪规则；
-     * 只移动 ul 会受父容器限制，导致计算了偏移却看不出变化。
-     * 每次先将字段容器归零，再按两个 radio 的真实视口坐标计算偏移，
-     * 将控制模式字段列整体移动到“一键预设”第一个 radio 的起点。
+     * 关键修复：LuCI 默认 radio 列表可能 float:right，
+     * 所以只改 flex 和字段容器坐标都无法保证列表从字段列左侧开始。
+     * 直接取消列表浮动，左对齐字段列；与下面“一键预设”共用相同的
+     * CBI 网格字段起始列。CSS 同时提供无 JS 时的兜底。
      */
-    important(modeField,'position','relative');
-    important(modeField,'left','0px');
-    important(modeField,'right','auto');
-    var modeRadioNow=modeList.querySelector('input[type="radio"]');
-    var presetRadioNow=presetField.querySelector('input[type="radio"]');
-    if(modeRadioNow && presetRadioNow){
-      var modeLeft=modeRadioNow.getBoundingClientRect().left;
-      var presetLeft=presetRadioNow.getBoundingClientRect().left;
-      var offset=Math.round((presetLeft-modeLeft)*100)/100;
-      if(isFinite(offset) && Math.abs(offset)>0.5)
-        important(modeField,'left',offset+'px');
-    }
+    important(modeList,'float','none');
+    important(modeList,'clear','none');
+    important(modeList,'margin-left','0');
+    important(modeList,'margin-right','auto');
+    important(modeList,'text-align','left');
+    important(modeList,'justify-self','start');
   }
   function scheduleFanModeLayout(){
     if(document.readyState==='loading')
