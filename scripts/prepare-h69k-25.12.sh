@@ -61,6 +61,13 @@ rm -rf "$FAN_PACKAGE"
 mkdir -p "$FAN_PACKAGE"
 cp -a "$(dirname "$fan_makefile")/." "$FAN_PACKAGE/"
 
+# 控制模式背景修复：覆盖 ZIP 中对应的 LuCI 页面文件，其余功能文件保持原样
+FAN_UI_PATCH="${GITHUB_WORKSPACE}/scripts/patches/hinlinkfan.lua"
+need_file "$FAN_UI_PATCH"
+install -D -m 0644 "$FAN_UI_PATCH" \
+  "$FAN_PACKAGE/files/usr/lib/lua/luci/model/cbi/hinlinkfan.lua"
+echo "已应用调温大师控制模式背景修复。"
+
 need_file "$FAN_PACKAGE/Makefile"
 grep -qE \
   'define Package/luci-app-fan-h69k|^PKG_NAME[[:space:]]*:?=[[:space:]]*luci-app-fan-h69k' \
