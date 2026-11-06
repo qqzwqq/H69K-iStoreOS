@@ -1871,7 +1871,9 @@ body .cbi-map .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-title
      */
     if(modeTitle && presetTitle){
       important(modeTitle,'position','relative');
-      important(modeTitle,'left',mobile?'0px':Math.round(presetTitle.getBoundingClientRect().left-modeTitle.getBoundingClientRect().left)+'px');
+      important(modeTitle,'left','0px');
+      var titleDelta=mobile?0:presetTitle.getBoundingClientRect().left-modeTitle.getBoundingClientRect().left;
+      important(modeTitle,'left',Math.round(titleDelta)+'px');
       important(modeTitle,'text-align','left');
     }
 
