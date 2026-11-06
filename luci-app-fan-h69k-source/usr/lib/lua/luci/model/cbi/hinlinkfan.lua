@@ -1787,6 +1787,17 @@ html.hinfan-theme-dark .cbi-section .cbi-value:has(input[id$=".mode"]) .cbi-valu
   box-shadow:none!important;
 }
 
+
+/* 1.6.5：只将「风扇控制方式」标题左对齐到下方字段标题起点；
+ * 保留同一行的横向单选布局，不改变 radio 的已校准位置。
+ */
+body .cbi-map .cbi-section .cbi-value:has(input[name$=".mode"]) .cbi-value-title {
+  text-align:left!important;
+  margin-left:0!important;
+  margin-right:auto!important;
+  justify-self:start!important;
+  float:none!important;
+}
 </style>
 <script>
 (function(){
