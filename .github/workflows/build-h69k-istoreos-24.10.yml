@@ -2,6 +2,7 @@ name: Build H69K iStoreOS 24.10
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: write
@@ -21,6 +22,8 @@ jobs:
       # 1. 获取自定义仓库
       - name: Checkout customization repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       # 2. 清理环境并释放磁盘空间
       - name: Cleanup build environment
@@ -673,7 +676,7 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v24.10.8-h69k-${{ github.run_number }}-${{ github.run_attempt }}
+          tag_name: v24.10.8-h69k-${{ github.run_number }}-${{ github.run_id }}-${{ github.run_attempt }}
           name: H69K iStoreOS 24.10.8 定制版（构建 #${{ github.run_number }}）
           draft: false
           prerelease: false
