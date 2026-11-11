@@ -25,7 +25,7 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Compare official upstream branches
+      - name: Compare discovered and synchronized revisions
         id: compare
         shell: bash
         env:
@@ -38,25 +38,58 @@ jobs:
           mkdir -p sync
           : > "$REPORT"
 
-          CHANGES_FOUND=false
+          NEW_UPDATES=false
+          PENDING_SYNC=false
+
           {
             echo "# Official iStoreOS upstream check"
             echo
             echo "- Checked at: $(date -u '+%Y-%m-%d %H:%M UTC')"
             echo "- Upstream repository: https://github.com/istoreos/istoreos"
-            echo "- This check only records inspected upstream revisions; it never merges code into firmware branches."
+            echo "- Discovered SHA advances automatically; synchronized SHA advances only after the project code has actually been synchronized."
+            echo "- This workflow never merges upstream code or modifies firmware branches."
             echo
           } >> "$REPORT"
+
+          compare_revisions() {
+            local base_sha="$1"
+            local head_sha="$2"
+            curl -fsSL \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "https://api.github.com/repos/istoreos/istoreos/compare/$base_sha...$head_sha"
+          }
+
+          append_comparison_details() {
+            local compare_json="$1"
+            local compare_url status ahead behind
+            status="$(jq -r '.status // "unknown"' <<< "$compare_json")"
+            ahead="$(jq -r '.ahead_by // 0' <<< "$compare_json")"
+            behind="$(jq -r '.behind_by // 0' <<< "$compare_json")"
+            compare_url="$(jq -r '.html_url // empty' <<< "$compare_json")"
+
+            echo "- Comparison status: `$status` (ahead by $ahead, behind by $behind)." >> "$REPORT"
+            if [[ -n "$compare_url" ]]; then
+              echo "- Compare: $compare_url" >> "$REPORT"
+            fi
+            echo "- Commits:" >> "$REPORT"
+            jq -r '.commits[:80][]? | "- `\(.sha[0:7])` \(.commit.message | split("\n")[0])"' <<< "$compare_json" >> "$REPORT"
+            echo "- Changed paths (GitHub may limit this list):" >> "$REPORT"
+            jq -r '.files[:150][]? | "- `\(.filename)` (\(.status), +\(.additions)/-\(.deletions))"' <<< "$compare_json" >> "$REPORT"
+          }
 
           check_branch() {
             local version="$1"
             local upstream_branch="$2"
             local project_branch="$3"
-            local base_sha head_sha compare_json status ahead behind compare_url
+            local discovered_sha synced_sha head_sha update_json pending_json
+            local tmp_file
 
-            base_sha="$(jq -r --arg version "$version" '.versions[$version].sha // empty' "$TRACK_FILE")"
-            if [[ -z "$base_sha" ]]; then
-              echo "::error::Missing baseline SHA for iStoreOS $version in $TRACK_FILE"
+            discovered_sha="$(jq -r --arg version "$version" '.versions[$version].discovered_sha // .versions[$version].sha // empty' "$TRACK_FILE")"
+            synced_sha="$(jq -r --arg version "$version" '.versions[$version].synced_sha // .versions[$version].sha // empty' "$TRACK_FILE")"
+
+            if [[ -z "$discovered_sha" || -z "$synced_sha" ]]; then
+              echo "::error::Missing discovered_sha or synced_sha for iStoreOS $version in $TRACK_FILE"
               return 1
             fi
 
@@ -66,90 +99,89 @@ jobs:
               return 1
             fi
 
-            echo "Checking iStoreOS $version: $base_sha -> $head_sha"
-
             {
               echo "## iStoreOS $version"
               printf -- '- Project branch: `%s`\n' "$project_branch"
               printf -- '- Official branch: `%s`\n' "$upstream_branch"
-              printf -- '- Previously checked SHA: `%s`\n' "$base_sha"
-              printf -- '- Current upstream SHA: `%s`\n' "$head_sha"
+              printf -- '- Previously discovered SHA: `%s`\n' "$discovered_sha"
+              printf -- '- Confirmed synchronized SHA: `%s`\n' "$synced_sha"
+              printf -- '- Current official SHA: `%s`\n' "$head_sha"
             } >> "$REPORT"
 
-            if [[ "$base_sha" == "$head_sha" ]]; then
+            # First, advance the discovered revision only after the official compare API succeeds.
+            if [[ "$discovered_sha" != "$head_sha" ]]; then
+              update_json="$(compare_revisions "$discovered_sha" "$head_sha")"
               {
-                echo "- **Status: No new upstream commits.**"
                 echo
+                echo "### Newly discovered upstream commits"
+                append_comparison_details "$update_json"
               } >> "$REPORT"
-              echo "No upstream changes for $version."
-              return 0
+
+              tmp_file="$(mktemp)"
+              jq --arg version "$version" --arg sha "$head_sha" \
+                '.versions[$version].discovered_sha = $sha | del(.versions[$version].sha)' \
+                "$TRACK_FILE" > "$tmp_file"
+              mv "$tmp_file" "$TRACK_FILE"
+              discovered_sha="$head_sha"
+              NEW_UPDATES=true
+              echo "New official upstream commits discovered for $version."
+            else
+              echo "- New upstream commits since the previous check: **None**." >> "$REPORT"
             fi
 
-            # A changed head is only accepted after the official compare API responds successfully.
-            compare_json="$(curl -fsSL \
-              -H 'Accept: application/vnd.github+json' \
-              -H 'X-GitHub-Api-Version: 2022-11-28' \
-              "https://api.github.com/repos/istoreos/istoreos/compare/$base_sha...$head_sha")"
+            # Then independently compare what has been discovered with what was actually synchronized.
+            if [[ "$synced_sha" != "$discovered_sha" ]]; then
+              pending_json="$(compare_revisions "$synced_sha" "$discovered_sha")"
+              {
+                echo
+                echo "### Synchronization status"
+                echo "- **PENDING SYNC:** official commits have been discovered but are not yet marked as synchronized."
+                append_comparison_details "$pending_json"
+              } >> "$REPORT"
+              PENDING_SYNC=true
+              echo "Pending synchronization remains for $version."
+            else
+              {
+                echo
+                echo "- **Synchronization status: UP TO DATE.** The synchronized SHA matches the discovered SHA."
+              } >> "$REPORT"
+            fi
 
-            status="$(jq -r '.status // "unknown"' <<< "$compare_json")"
-            ahead="$(jq -r '.ahead_by // 0' <<< "$compare_json")"
-            behind="$(jq -r '.behind_by // 0' <<< "$compare_json")"
-            compare_url="$(jq -r '.html_url // empty' <<< "$compare_json")"
-
-            {
-              echo "- **Status: Official upstream revision changed** (`$status`; ahead by $ahead, behind by $behind)."
-              if [[ -n "$compare_url" ]]; then
-                echo "- Compare: $compare_url"
-              fi
-              echo "- Commits:"
-              jq -r '.commits[:80][]? | "- `\(.sha[0:7])` \(.commit.message | split("\n")[0])"' <<< "$compare_json"
-              echo "- Changed paths (the GitHub compare API may limit this list):"
-              jq -r '.files[:150][]? | "- `\(.filename)` (\(.status), +\(.additions)/-\(.deletions))"' <<< "$compare_json"
-              echo
-            } >> "$REPORT"
-
-            # Update the checked baseline only after the comparison succeeded.
-            local tmp_file
-            tmp_file="$(mktemp)"
-            jq --arg version "$version" --arg sha "$head_sha" \
-              '.versions[$version].sha = $sha' "$TRACK_FILE" > "$tmp_file"
-            mv "$tmp_file" "$TRACK_FILE"
-
-            CHANGES_FOUND=true
-            echo "Detected official upstream revision change for $version."
+            echo >> "$REPORT"
           }
 
           check_branch "24.10" "istoreos-24.10" "main"
           check_branch "25.12" "istoreos-25.12" "build-25.12"
 
-          # Persist the inspected SHAs before publishing the report. No Issues API is used.
+          # Persist only discovered revisions. Synchronized revisions are deliberately never advanced here.
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$TRACK_FILE"
           if ! git diff --cached --quiet; then
-            git commit -m "chore: record checked iStoreOS upstream revisions"
+            git commit -m "chore: record discovered iStoreOS upstream revisions"
             git push origin HEAD:main
           fi
 
-          if [[ "$CHANGES_FOUND" == "true" ]]; then
-            {
-              echo "## Overall result"
-              echo "**UPDATE DETECTED:** at least one official branch has a new checked revision."
+          {
+            echo "## Overall result"
+            if [[ "$NEW_UPDATES" == "true" ]]; then
+              echo "**NEW UPDATES DETECTED:** at least one official branch has advanced since the previous check."
+            else
+              echo "**NO NEW UPDATES:** neither official branch has advanced since the previous check."
+            fi
+            if [[ "$PENDING_SYNC" == "true" ]]; then
               echo
-              echo "Review the per-version comparison details below. No firmware branch was merged or modified."
+              echo "**ACTION REQUIRED: PENDING SYNC** — discovered upstream commits remain unsynchronized."
+            else
               echo
-              cat "$REPORT"
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "upstream_changed=true" >> "$GITHUB_OUTPUT"
-          else
-            {
-              echo "## Overall result"
-              echo "**UP TO DATE:** both official branches match their recorded checked revisions."
-              echo
-              cat "$REPORT"
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "upstream_changed=false" >> "$GITHUB_OUTPUT"
-          fi
+              echo "**SYNC STATUS: UP TO DATE** — both synchronized SHAs match their discovered SHAs."
+            fi
+            echo
+            cat "$REPORT"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "new_updates=$NEW_UPDATES" >> "$GITHUB_OUTPUT"
+          echo "pending_sync=$PENDING_SYNC" >> "$GITHUB_OUTPUT"
 
       - name: Publish check report
         if: always()
