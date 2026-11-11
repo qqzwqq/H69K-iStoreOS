@@ -1,18 +1,18 @@
 {
   "upstream_repository": "https://github.com/istoreos/istoreos",
-  "purpose": "discovered_sha tracks the latest official revision inspected by the checker. synced_sha tracks the latest official revision actually synchronized into the corresponding project branch. The checker updates discovered_sha only; advance synced_sha manually only after completing and verifying the code sync.",
+  "purpose": "discovered_sha tracks the latest official revision inspected by the checker. synced_sha must be set only after the corresponding upstream code has actually been synchronized into the project branch and verified. A null synced_sha means the synchronization baseline has not yet been confirmed.",
   "versions": {
     "24.10": {
       "upstream_branch": "istoreos-24.10",
       "project_branch": "main",
       "discovered_sha": "45f8da64fc38cf31096659f5e19f3e43a92cc9bd",
-      "synced_sha": "45f8da64fc38cf31096659f5e19f3e43a92cc9bd"
+      "synced_sha": null
     },
     "25.12": {
       "upstream_branch": "istoreos-25.12",
       "project_branch": "build-25.12",
       "discovered_sha": "111a9805445a88833c40d38b628fa0dfd02060c8",
-      "synced_sha": "6575c302154ca788e0983a1652a7ba5eeedcafc3"
+      "synced_sha": null
     }
   }
 }
