@@ -228,8 +228,12 @@ jobs:
           }
           install -D -m 0644 "$GITHUB_WORKSPACE/hinlinkfan.lua" "$FAN_PAGE"
           grep -q '1.4.2：重新组织信息层级' "$FAN_PAGE"
+          grep -q '1.6.5：只将「风扇控制方式」标题左对齐到下方字段标题起点' "$FAN_PAGE" || {
+            echo "::error::The reviewed H69K fan UI 1.6.5 alignment patch is missing; refusing to build an older dashboard."
+            exit 1
+          }
           grep -q 'hinfan-curve-panel' "$FAN_PAGE"
-          echo "H69K fan-control package prepared with redesigned 1.4.2 dashboard."
+          echo "H69K fan-control package prepared with the reviewed 1.6.5 dashboard source."
 
       - name: "10.1 - Add H69K SSD1306 OLED package"
         shell: bash
