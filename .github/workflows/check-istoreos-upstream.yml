@@ -92,14 +92,21 @@ jobs:
 
           append_comparison_details() {
             local compare_json="$1"
-            local compare_url status ahead behind
+            local compare_url status status_cn ahead behind
 
             status="$(jq -r '.status' <<< "$compare_json")"
+            case "$status" in
+              ahead) status_cn="官方有新增提交（领先）" ;;
+              behind) status_cn="官方分支落后" ;;
+              diverged) status_cn="双方分支存在分叉" ;;
+              identical) status_cn="双方提交一致" ;;
+              *) status_cn="未知状态（$status）" ;;
+            esac
             ahead="$(jq -r '.ahead_by' <<< "$compare_json")"
             behind="$(jq -r '.behind_by' <<< "$compare_json")"
             compare_url="$(jq -r '.html_url // empty' <<< "$compare_json")"
 
-            printf -- '- 比较结果：%s（领先 %s 个提交，落后 %s 个提交）。\n' "$status" "$ahead" "$behind" >> "$REPORT"
+            printf -- '- 比较结果：%s；领先 %s 个提交，落后 %s 个提交。\n' "$status_cn" "$ahead" "$behind" >> "$REPORT"
             if [[ -n "$compare_url" ]]; then
               printf -- '- 在线比较：%s\n' "$compare_url" >> "$REPORT"
             fi
@@ -115,7 +122,7 @@ jobs:
             if [[ "$(jq '(.files // []) | length' <<< "$compare_json")" -eq 0 ]]; then
               echo "  - 无文件变更记录。" >> "$REPORT"
             else
-              jq -r '(.files // [])[:150][] | "  - \(.filename)（\(.status // "未知")，新增 \(.additions // 0) / 删除 \(.deletions // 0)）"' <<< "$compare_json" >> "$REPORT"
+              jq -r '(.files // [])[:150][] | "  - \(.filename)（\(if .status == "added" then "新增" elif .status == "modified" then "修改" elif .status == "removed" then "删除" elif .status == "renamed" then "重命名" else (.status // "未知") end)，新增 \(.additions // 0) / 删除 \(.deletions // 0)）"' <<< "$compare_json" >> "$REPORT"
             fi
           }
 
