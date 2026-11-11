@@ -70,10 +70,10 @@ jobs:
 
             {
               echo "## iStoreOS $version"
-              echo "- Project branch: `$project_branch`"
-              echo "- Official branch: `$upstream_branch`"
-              echo "- Previously checked SHA: `$base_sha`"
-              echo "- Current upstream SHA: `$head_sha`"
+              printf -- '- Project branch: `%s`\n' "$project_branch"
+              printf -- '- Official branch: `%s`\n' "$upstream_branch"
+              printf -- '- Previously checked SHA: `%s`\n' "$base_sha"
+              printf -- '- Current upstream SHA: `%s`\n' "$head_sha"
             } >> "$REPORT"
 
             if [[ "$base_sha" == "$head_sha" ]]; then
