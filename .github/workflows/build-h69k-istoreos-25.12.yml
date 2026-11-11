@@ -2,6 +2,7 @@ name: Build H69K iStoreOS 25.12
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: write
@@ -21,6 +22,8 @@ jobs:
     steps:
       - name: "01 - Checkout customization repository"
         uses: actions/checkout@v4
+        with:
+          ref: build-25.12
 
       - name: "02 - Clean runner and check disk space"
         shell: bash
@@ -697,7 +700,7 @@ jobs:
             exit 1
           }
 
-          TAG="h69k-unified-25.12-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          TAG="h69k-unified-25.12-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           NOTES="$WORK_DIR/release-notes.md"
           cat > "$NOTES" <<EOF
           ## HINLINK OPC-H69K 双版本固件
