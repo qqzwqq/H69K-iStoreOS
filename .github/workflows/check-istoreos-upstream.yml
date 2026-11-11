@@ -281,6 +281,61 @@ jobs:
           echo "检查报告已写入 GitHub Actions 的运行摘要页面。"
           echo "如检查失败，请查看步骤日志中的中文错误提示。"
 
+  # 汇总检查及两套固件构建结果；即使构建失败也会生成中文报告。
+  build_report:
+    name: 汇总自动构建结果
+    needs: [check-upstream, build_24, build_25]
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 输出中文构建结果
+        shell: bash
+        env:
+          CHECK_RESULT: ${{ needs.check-upstream.result }}
+          WANT_24: ${{ needs.check-upstream.outputs.build_24 }}
+          WANT_25: ${{ needs.check-upstream.outputs.build_25 }}
+          BUILD_24_RESULT: ${{ needs.build_24.result }}
+          BUILD_25_RESULT: ${{ needs.build_25.result }}
+        run: |
+          {
+            echo "## 固件自动构建结果"
+            echo
+            case "$CHECK_RESULT" in
+              success) echo "- 官方更新检查：成功。" ;;
+              *) echo "- 官方更新检查：失败或未完成（$CHECK_RESULT）。本次不应视为有效检查结果。" ;;
+            esac
+
+            case "$BUILD_24_RESULT" in
+              success) echo "- iStoreOS 24.10：固件构建成功。" ;;
+              failure) echo "- iStoreOS 24.10：固件构建失败，请查看对应构建任务日志。" ;;
+              cancelled) echo "- iStoreOS 24.10：构建被取消。" ;;
+              skipped)
+                if [[ "$WANT_24" == "true" ]]; then
+                  echo "- iStoreOS 24.10：发现更新，但构建任务未执行。"
+                else
+                  echo "- iStoreOS 24.10：没有新更新，未触发构建。"
+                fi
+                ;;
+              *) echo "- iStoreOS 24.10：构建状态为 $BUILD_24_RESULT。" ;;
+            esac
+
+            case "$BUILD_25_RESULT" in
+              success) echo "- iStoreOS 25.12：固件构建成功。" ;;
+              failure) echo "- iStoreOS 25.12：固件构建失败，请查看对应构建任务日志。" ;;
+              cancelled) echo "- iStoreOS 25.12：构建被取消。" ;;
+              skipped)
+                if [[ "$WANT_25" == "true" && "$BUILD_24_RESULT" == "failure" ]]; then
+                  echo "- iStoreOS 25.12：因 24.10 构建失败，按保护规则暂不构建，避免统一发布页混入旧版 24.10 固件。"
+                elif [[ "$WANT_25" == "true" ]]; then
+                  echo "- iStoreOS 25.12：发现更新，但构建任务未执行。"
+                else
+                  echo "- iStoreOS 25.12：没有新更新，未触发构建。"
+                fi
+                ;;
+              *) echo "- iStoreOS 25.12：构建状态为 $BUILD_25_RESULT。" ;;
+            esac
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # 仅在官方 24.10 出现新提交时，调用现有 24.10 构建流程。
   build_24:
     name: 自动构建 H69K iStoreOS 24.10
