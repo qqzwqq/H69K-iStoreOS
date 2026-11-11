@@ -57,7 +57,7 @@ jobs:
           {
             echo "# iStoreOS 官方更新检查报告"
             echo
-            printf -- '- 检查时间：%s（UTC）\\n' "$(date -u '+%Y-%m-%d %H:%M')"
+            printf -- '- 检查时间：%s（UTC）\n' "$(date -u '+%Y-%m-%d %H:%M')"
             echo "- 官方仓库：https://github.com/istoreos/istoreos"
             echo "- 发现版本号：检查到官方新提交后自动更新。"
             echo "- 已同步版本号：只有项目代码实际完成同步并验证后，才允许人工更新。"
@@ -99,23 +99,23 @@ jobs:
             behind="$(jq -r '.behind_by' <<< "$compare_json")"
             compare_url="$(jq -r '.html_url // empty' <<< "$compare_json")"
 
-            printf -- '- 比较结果：%s（领先 %s 个提交，落后 %s 个提交）。\\n' "$status" "$ahead" "$behind" >> "$REPORT"
+            printf -- '- 比较结果：%s（领先 %s 个提交，落后 %s 个提交）。\n' "$status" "$ahead" "$behind" >> "$REPORT"
             if [[ -n "$compare_url" ]]; then
-              printf -- '- 在线比较：%s\\n' "$compare_url" >> "$REPORT"
+              printf -- '- 在线比较：%s\n' "$compare_url" >> "$REPORT"
             fi
 
             echo "- 官方新增提交（最多显示 80 条）：" >> "$REPORT"
             if [[ "$(jq '(.commits // []) | length' <<< "$compare_json")" -eq 0 ]]; then
               echo "  - 无新增提交。" >> "$REPORT"
             else
-              jq -r '(.commits // [])[:80][] | "  - \\(.sha[0:7]) \\(.commit.message | split("\\n")[0])"' <<< "$compare_json" >> "$REPORT"
+              jq -r '(.commits // [])[:80][] | "  - \(.sha[0:7]) \(.commit.message | split("\n")[0])"' <<< "$compare_json" >> "$REPORT"
             fi
 
             echo "- 变更文件（最多显示 150 个；GitHub 接口可能限制返回数量）：" >> "$REPORT"
             if [[ "$(jq '(.files // []) | length' <<< "$compare_json")" -eq 0 ]]; then
               echo "  - 无文件变更记录。" >> "$REPORT"
             else
-              jq -r '(.files // [])[:150][] | "  - \\(.filename)（\\(.status // "未知")，新增 \\(.additions // 0) / 删除 \\(.deletions // 0)）"' <<< "$compare_json" >> "$REPORT"
+              jq -r '(.files // [])[:150][] | "  - \(.filename)（\(.status // "未知")，新增 \(.additions // 0) / 删除 \(.deletions // 0)）"' <<< "$compare_json" >> "$REPORT"
             fi
           }
 
@@ -142,16 +142,16 @@ jobs:
             fi
 
             {
-              printf -- '## iStoreOS %s\\n' "$version"
-              printf -- '- 项目分支：%s\\n' "$project_branch"
-              printf -- '- 官方分支：%s\\n' "$upstream_branch"
-              printf -- '- 上次发现的官方提交：%s\\n' "$discovered_sha"
+              printf -- '## iStoreOS %s\n' "$version"
+              printf -- '- 项目分支：%s\n' "$project_branch"
+              printf -- '- 官方分支：%s\n' "$upstream_branch"
+              printf -- '- 上次发现的官方提交：%s\n' "$discovered_sha"
               if [[ -n "$synced_sha" ]]; then
-                printf -- '- 已确认同步的提交：%s\\n' "$synced_sha"
+                printf -- '- 已确认同步的提交：%s\n' "$synced_sha"
               else
                 echo '- 已确认同步的提交：尚未验证'
               fi
-              printf -- '- 当前官方最新提交：%s\\n' "$head_sha"
+              printf -- '- 当前官方最新提交：%s\n' "$head_sha"
             } >> "$REPORT"
 
             if [[ "$discovered_sha" != "$head_sha" ]]; then
