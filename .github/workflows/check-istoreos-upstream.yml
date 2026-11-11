@@ -40,6 +40,7 @@ jobs:
 
           NEW_UPDATES=false
           PENDING_SYNC=false
+          SYNC_REVIEW_REQUIRED=false
 
           {
             echo "# Official iStoreOS upstream check"
@@ -86,10 +87,10 @@ jobs:
             local tmp_file
 
             discovered_sha="$(jq -r --arg version "$version" '.versions[$version].discovered_sha // .versions[$version].sha // empty' "$TRACK_FILE")"
-            synced_sha="$(jq -r --arg version "$version" '.versions[$version].synced_sha // .versions[$version].sha // empty' "$TRACK_FILE")"
+            synced_sha="$(jq -r --arg version "$version" '.versions[$version].synced_sha // empty' "$TRACK_FILE")"
 
-            if [[ -z "$discovered_sha" || -z "$synced_sha" ]]; then
-              echo "::error::Missing discovered_sha or synced_sha for iStoreOS $version in $TRACK_FILE"
+            if [[ -z "$discovered_sha" ]]; then
+              echo "::error::Missing discovered_sha for iStoreOS $version in $TRACK_FILE"
               return 1
             fi
 
@@ -104,7 +105,11 @@ jobs:
               printf -- '- Project branch: `%s`\n' "$project_branch"
               printf -- '- Official branch: `%s`\n' "$upstream_branch"
               printf -- '- Previously discovered SHA: `%s`\n' "$discovered_sha"
-              printf -- '- Confirmed synchronized SHA: `%s`\n' "$synced_sha"
+              if [[ -n "$synced_sha" ]]; then
+                printf -- '- Confirmed synchronized SHA: `%s`\n' "$synced_sha"
+              else
+                echo '- Confirmed synchronized SHA: **Not verified yet**'
+              fi
               printf -- '- Current official SHA: `%s`\n' "$head_sha"
             } >> "$REPORT"
 
@@ -130,7 +135,14 @@ jobs:
             fi
 
             # Then independently compare what has been discovered with what was actually synchronized.
-            if [[ "$synced_sha" != "$discovered_sha" ]]; then
+            if [[ -z "$synced_sha" ]]; then
+              {
+                echo
+                echo "- **SYNC STATUS: UNVERIFIED.** No confirmed synchronized SHA is recorded. Verify the project branch before setting synced_sha."
+              } >> "$REPORT"
+              SYNC_REVIEW_REQUIRED=true
+              echo "Synchronization baseline needs verification for $version."
+            elif [[ "$synced_sha" != "$discovered_sha" ]]; then
               pending_json="$(compare_revisions "$synced_sha" "$discovered_sha")"
               {
                 echo
@@ -172,6 +184,9 @@ jobs:
             if [[ "$PENDING_SYNC" == "true" ]]; then
               echo
               echo "**ACTION REQUIRED: PENDING SYNC** — discovered upstream commits remain unsynchronized."
+            elif [[ "$SYNC_REVIEW_REQUIRED" == "true" ]]; then
+              echo
+              echo "**ACTION REQUIRED: VERIFY SYNC BASELINE** — at least one version has no confirmed synchronized SHA yet."
             else
               echo
               echo "**SYNC STATUS: UP TO DATE** — both synchronized SHAs match their discovered SHAs."
