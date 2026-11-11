@@ -17,6 +17,9 @@ jobs:
   check-upstream:
     name: 检查官方 24.10 与 25.12 分支
     runs-on: ubuntu-22.04
+    outputs:
+      build_24: ${{ steps.compare.outputs.build_24 }}
+      build_25: ${{ steps.compare.outputs.build_25 }}
     timeout-minutes: 15
     steps:
       - name: 检出项目 main 分支
@@ -39,6 +42,8 @@ jobs:
           : > "$REPORT"
 
           NEW_UPDATES=false
+          NEW_24=false
+          NEW_25=false
           PENDING_SYNC=false
           SYNC_REVIEW_REQUIRED=false
 
@@ -176,7 +181,12 @@ jobs:
               mv "$tmp_file" "$TRACK_FILE"
               discovered_sha="$head_sha"
               NEW_UPDATES=true
-              echo "已发现 iStoreOS $version 官方新提交。"
+              case "$version" in
+                "24.10") NEW_24=true ;;
+                "25.12") NEW_25=true ;;
+                *) echo "::error::未知版本，拒绝触发固件构建：$version"; return 1 ;;
+              esac
+              echo "已发现 iStoreOS $version 官方新提交，将触发对应版本固件构建。"
             else
               echo "- 自上次检查以来：没有发现新的官方提交。" >> "$REPORT"
             fi
@@ -235,8 +245,12 @@ jobs:
             echo "## 总体检查结果"
             if [[ "$NEW_UPDATES" == "true" ]]; then
               echo "发现官方更新：至少一个官方分支较上次检查有新提交。"
+              echo
+              echo "### 自动构建安排"
+              [[ "$NEW_24" == "true" ]] && echo "- iStoreOS 24.10：将自动触发 H69K 24.10 固件构建。"
+              [[ "$NEW_25" == "true" ]] && echo "- iStoreOS 25.12：将自动触发 H69K 25.12 固件构建。"
             else
-              echo "没有新的官方更新：两个官方分支均未较上次检查前进。"
+              echo "没有新的官方更新：两个官方分支均未较上次检查前进，本次不触发固件构建。"
             fi
 
             if [[ "$PENDING_SYNC" == "true" ]]; then
@@ -256,6 +270,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
           echo "new_updates=$NEW_UPDATES" >> "$GITHUB_OUTPUT"
+          echo "build_24=$NEW_24" >> "$GITHUB_OUTPUT"
+          echo "build_25=$NEW_25" >> "$GITHUB_OUTPUT"
           echo "pending_sync=$PENDING_SYNC" >> "$GITHUB_OUTPUT"
 
       - name: 发布中文检查结果
@@ -264,3 +280,26 @@ jobs:
         run: |
           echo "检查报告已写入 GitHub Actions 的运行摘要页面。"
           echo "如检查失败，请查看步骤日志中的中文错误提示。"
+
+  # 仅在官方 24.10 出现新提交时，调用现有 24.10 构建流程。
+  build_24:
+    name: 自动构建 H69K iStoreOS 24.10
+    needs: check-upstream
+    if: needs.check-upstream.outputs.build_24 == 'true'
+    uses: ./.github/workflows/build-h69k-istoreos-24.10.yml
+    permissions:
+      contents: write
+
+  # 25.12 的统一 Release 会收集最近一次 24.10 固件。
+  # 因此两个版本同时更新时，必须等 24.10 构建成功后再构建 25.12。
+  build_25:
+    name: 自动构建 H69K iStoreOS 25.12
+    needs: [check-upstream, build_24]
+    if: |
+      always() &&
+      needs.check-upstream.result == 'success' &&
+      needs.check-upstream.outputs.build_25 == 'true' &&
+      (needs.build_24.result == 'success' || needs.build_24.result == 'skipped')
+    uses: qqzwqq/H69K-iStoreOS/.github/workflows/build-h69k-istoreos-25.12.yml@build-25.12
+    permissions:
+      contents: write
