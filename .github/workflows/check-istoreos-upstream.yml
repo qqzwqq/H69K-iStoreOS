@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
 
 concurrency:
   group: check-istoreos-upstream
@@ -30,8 +29,6 @@ jobs:
         id: compare
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
           UPSTREAM_URL: https://github.com/istoreos/istoreos.git
         run: |
           set -Eeuo pipefail
@@ -40,6 +37,16 @@ jobs:
           REPORT="$RUNNER_TEMP/istoreos-upstream-report.md"
           mkdir -p sync
           : > "$REPORT"
+
+          CHANGES_FOUND=false
+          {
+            echo "# Official iStoreOS upstream check"
+            echo
+            echo "- Checked at: $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo "- Upstream repository: https://github.com/istoreos/istoreos"
+            echo "- This check only records inspected upstream revisions; it never merges code into firmware branches."
+            echo
+          } >> "$REPORT"
 
           check_branch() {
             local version="$1"
@@ -50,33 +57,35 @@ jobs:
             base_sha="$(jq -r --arg version "$version" '.versions[$version].sha // empty' "$TRACK_FILE")"
             if [[ -z "$base_sha" ]]; then
               echo "::error::Missing baseline SHA for iStoreOS $version in $TRACK_FILE"
-              exit 1
+              return 1
             fi
 
             head_sha="$(git ls-remote "$UPSTREAM_URL" "refs/heads/$upstream_branch" | awk 'NR==1 {print $1}')"
             if [[ -z "$head_sha" ]]; then
               echo "::error::Cannot read official upstream branch: $upstream_branch"
-              exit 1
+              return 1
             fi
 
-            echo "### iStoreOS $version"
-            echo "- Project branch: $project_branch"
-            echo "- Official branch: $upstream_branch"
-            echo "- Tracked upstream SHA: $base_sha"
-            echo "- Current upstream SHA: $head_sha"
+            echo "Checking iStoreOS $version: $base_sha -> $head_sha"
+
+            {
+              echo "## iStoreOS $version"
+              echo "- Project branch: `$project_branch`"
+              echo "- Official branch: `$upstream_branch`"
+              echo "- Previously checked SHA: `$base_sha`"
+              echo "- Current upstream SHA: `$head_sha`"
+            } >> "$REPORT"
 
             if [[ "$base_sha" == "$head_sha" ]]; then
               {
-                echo "## iStoreOS $version"
-                echo "- Project branch: $project_branch"
-                echo "- Official branch: $upstream_branch"
-                echo "- Current upstream SHA: $head_sha"
-                echo "- Status: No upstream changes."
+                echo "- **Status: No new upstream commits.**"
                 echo
               } >> "$REPORT"
-              return
+              echo "No upstream changes for $version."
+              return 0
             fi
 
+            # A changed head is only accepted after the official compare API responds successfully.
             compare_json="$(curl -fsSL \
               -H 'Accept: application/vnd.github+json' \
               -H 'X-GitHub-Api-Version: 2022-11-28' \
@@ -88,66 +97,32 @@ jobs:
             compare_url="$(jq -r '.html_url // empty' <<< "$compare_json")"
 
             {
-              echo "## iStoreOS $version"
-              echo "- Project branch: $project_branch"
-              echo "- Official branch: $upstream_branch"
-              echo "- Previously checked SHA: $base_sha"
-              echo "- Current upstream SHA: $head_sha"
-              echo "- Status: Official upstream changed ($status; ahead by $ahead, behind by $behind)."
-              echo "- Compare: $compare_url"
+              echo "- **Status: Official upstream revision changed** (`$status`; ahead by $ahead, behind by $behind)."
+              if [[ -n "$compare_url" ]]; then
+                echo "- Compare: $compare_url"
+              fi
               echo "- Commits:"
               jq -r '.commits[:80][]? | "- `\(.sha[0:7])` \(.commit.message | split("\n")[0])"' <<< "$compare_json"
-              echo "- Changed paths (GitHub compare API may limit this list):"
+              echo "- Changed paths (the GitHub compare API may limit this list):"
               jq -r '.files[:150][]? | "- `\(.filename)` (\(.status), +\(.additions)/-\(.deletions))"' <<< "$compare_json"
               echo
             } >> "$REPORT"
 
-            # Record the inspected upstream head. This does NOT merge or modify
-            # either firmware build branch; the report is preserved in a GitHub Issue.
+            # Update the checked baseline only after the comparison succeeded.
             local tmp_file
             tmp_file="$(mktemp)"
             jq --arg version "$version" --arg sha "$head_sha" \
               '.versions[$version].sha = $sha' "$TRACK_FILE" > "$tmp_file"
             mv "$tmp_file" "$TRACK_FILE"
-            echo "Detected update for $version: $base_sha -> $head_sha"
-          }
 
-          {
-            echo "# Official iStoreOS upstream check"
-            echo
-            echo "- Checked at: $(date -u '+%Y-%m-%d %H:%M UTC')"
-            echo "- Upstream repository: https://github.com/istoreos/istoreos"
-            echo
-          } >> "$REPORT"
+            CHANGES_FOUND=true
+            echo "Detected official upstream revision change for $version."
+          }
 
           check_branch "24.10" "istoreos-24.10" "main"
           check_branch "25.12" "istoreos-25.12" "build-25.12"
 
-          if [[ "$(jq -r '.versions["24.10"].sha' "$TRACK_FILE")" == "$(jq -r '.versions["24.10"].sha' < <(git show HEAD:"$TRACK_FILE"))" ]] && \
-             [[ "$(jq -r '.versions["25.12"].sha' "$TRACK_FILE")" == "$(jq -r '.versions["25.12"].sha' < <(git show HEAD:"$TRACK_FILE"))" ]]; then
-            {
-              echo "## Result"
-              echo "Both official upstream branches match the currently recorded baseline. No issue was created."
-            } >> "$GITHUB_STEP_SUMMARY"
-            cat "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          {
-            echo "## Result"
-            echo "Official upstream changes were detected. A review issue will be created; no firmware source or build branch is automatically merged."
-            echo
-            cat "$REPORT"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          DATE_TAG="$(date -u '+%Y-%m-%d')"
-          ISSUE_TITLE="官方 iStoreOS 上游更新检查（$DATE_TAG）"
-          if gh issue list --repo "$GH_REPO" --state open --search "$ISSUE_TITLE in:title" --json title --jq '.[].title' | grep -Fqx "$ISSUE_TITLE"; then
-            echo "An open issue for this check already exists; not creating a duplicate."
-          else
-            gh issue create --repo "$GH_REPO" --title "$ISSUE_TITLE" --body-file "$REPORT"
-          fi
-
+          # Persist the inspected SHAs before publishing the report. No Issues API is used.
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$TRACK_FILE"
@@ -156,7 +131,27 @@ jobs:
             git push origin HEAD:main
           fi
 
+          if [[ "$CHANGES_FOUND" == "true" ]]; then
+            {
+              echo "## Overall result"
+              echo "**UPDATE DETECTED:** at least one official branch has a new checked revision."
+              echo
+              echo "Review the per-version comparison details below. No firmware branch was merged or modified."
+              echo
+              cat "$REPORT"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "upstream_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "## Overall result"
+              echo "**UP TO DATE:** both official branches match their recorded checked revisions."
+              echo
+              cat "$REPORT"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "upstream_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish check report
         if: always()
         run: |
-          echo "Open the workflow summary above for the result."
+          echo "The official upstream check result is available in the GitHub Actions run summary."
