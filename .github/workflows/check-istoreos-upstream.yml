@@ -310,7 +310,9 @@ jobs:
               failure) echo "- iStoreOS 24.10：固件构建失败，请查看对应构建任务日志。" ;;
               cancelled) echo "- iStoreOS 24.10：构建被取消。" ;;
               skipped)
-                if [[ "$WANT_24" == "true" ]]; then
+                if [[ "$CHECK_RESULT" != "success" ]]; then
+                  echo "- iStoreOS 24.10：因官方更新检查未成功，本次未触发构建。"
+                elif [[ "$WANT_24" == "true" ]]; then
                   echo "- iStoreOS 24.10：发现更新，但构建任务未执行。"
                 else
                   echo "- iStoreOS 24.10：没有新更新，未触发构建。"
@@ -324,7 +326,9 @@ jobs:
               failure) echo "- iStoreOS 25.12：固件构建失败，请查看对应构建任务日志。" ;;
               cancelled) echo "- iStoreOS 25.12：构建被取消。" ;;
               skipped)
-                if [[ "$WANT_25" == "true" && "$BUILD_24_RESULT" == "failure" ]]; then
+                if [[ "$CHECK_RESULT" != "success" ]]; then
+                  echo "- iStoreOS 25.12：因官方更新检查未成功，本次未触发构建。"
+                elif [[ "$WANT_25" == "true" && "$BUILD_24_RESULT" == "failure" ]]; then
                   echo "- iStoreOS 25.12：因 24.10 构建失败，按保护规则暂不构建，避免统一发布页混入旧版 24.10 固件。"
                 elif [[ "$WANT_25" == "true" ]]; then
                   echo "- iStoreOS 25.12：发现更新，但构建任务未执行。"
