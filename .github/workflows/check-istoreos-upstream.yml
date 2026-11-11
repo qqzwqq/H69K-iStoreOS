@@ -1,9 +1,9 @@
-name: Check Official iStoreOS Updates
+name: 检查 iStoreOS 官方更新
 
 on:
   workflow_dispatch:
   schedule:
-    # Every Monday at 10:00 China Standard Time (02:00 UTC).
+    # 每周一北京时间 10:00（UTC 02:00）自动检查。
     - cron: "0 2 * * 1"
 
 permissions:
@@ -15,17 +15,17 @@ concurrency:
 
 jobs:
   check-upstream:
-    name: Compare official 24.10 and 25.12 branches
+    name: 检查官方 24.10 与 25.12 分支
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
-      - name: Check out project main branch
-        uses: actions/checkout@v4
+      - name: 检出项目 main 分支
+        uses: actions/checkout@v5
         with:
           ref: main
           fetch-depth: 0
 
-      - name: Compare discovered and synchronized revisions
+      - name: 比较官方版本并生成中文报告
         id: compare
         shell: bash
         env:
@@ -42,41 +42,81 @@ jobs:
           PENDING_SYNC=false
           SYNC_REVIEW_REQUIRED=false
 
+          # 中途失败时写入中文摘要，并保留失败退出码。
+          trap 'rc=$?; { echo; echo "## 检查执行失败"; echo; echo "检查流程发生错误，退出码：$rc。请查看步骤日志定位原因。"; } >> "$GITHUB_STEP_SUMMARY"; exit "$rc"' ERR
+
+          if ! command -v jq >/dev/null 2>&1; then
+            echo "::error::运行环境缺少 jq，无法读取版本记录。"
+            exit 1
+          fi
+          if ! jq -e '.versions["24.10"] and .versions["25.12"]' "$TRACK_FILE" >/dev/null; then
+            echo "::error::版本记录文件格式错误或缺少 24.10 / 25.12 配置。"
+            exit 1
+          fi
+
           {
-            echo "# Official iStoreOS upstream check"
+            echo "# iStoreOS 官方更新检查报告"
             echo
-            echo "- Checked at: $(date -u '+%Y-%m-%d %H:%M UTC')"
-            echo "- Upstream repository: https://github.com/istoreos/istoreos"
-            echo "- Discovered SHA advances automatically; synchronized SHA advances only after the project code has actually been synchronized."
-            echo "- This workflow never merges upstream code or modifies firmware branches."
+            printf -- '- 检查时间：%s（UTC）\\n' "$(date -u '+%Y-%m-%d %H:%M')"
+            echo "- 官方仓库：https://github.com/istoreos/istoreos"
+            echo "- 发现版本号：检查到官方新提交后自动更新。"
+            echo "- 已同步版本号：只有项目代码实际完成同步并验证后，才允许人工更新。"
+            echo "- 安全说明：本流程只检查、比较并生成报告，不会自动合并官方代码，也不会修改固件分支。"
             echo
           } >> "$REPORT"
 
           compare_revisions() {
             local base_sha="$1"
             local head_sha="$2"
-            curl -fsSL \
+            local result
+
+            result="$(curl --fail --silent --show-error --location \
+              --retry 3 --retry-delay 2 --retry-all-errors \
               -H 'Accept: application/vnd.github+json' \
               -H 'X-GitHub-Api-Version: 2022-11-28' \
-              "https://api.github.com/repos/istoreos/istoreos/compare/$base_sha...$head_sha"
+              "https://api.github.com/repos/istoreos/istoreos/compare/$base_sha...$head_sha")"
+
+            if ! jq -e '
+              type == "object"
+              and (.status | type == "string")
+              and (.ahead_by | type == "number")
+              and (.behind_by | type == "number")
+              and ((.commits // []) | type == "array")
+              and ((.files // []) | type == "array")
+            ' <<< "$result" >/dev/null; then
+              echo "::error::GitHub 比较接口返回的数据不完整或格式异常。"
+              return 1
+            fi
+            printf '%s' "$result"
           }
 
           append_comparison_details() {
             local compare_json="$1"
             local compare_url status ahead behind
-            status="$(jq -r '.status // "unknown"' <<< "$compare_json")"
-            ahead="$(jq -r '.ahead_by // 0' <<< "$compare_json")"
-            behind="$(jq -r '.behind_by // 0' <<< "$compare_json")"
+
+            status="$(jq -r '.status' <<< "$compare_json")"
+            ahead="$(jq -r '.ahead_by' <<< "$compare_json")"
+            behind="$(jq -r '.behind_by' <<< "$compare_json")"
             compare_url="$(jq -r '.html_url // empty' <<< "$compare_json")"
 
-            echo "- Comparison status: `$status` (ahead by $ahead, behind by $behind)." >> "$REPORT"
+            printf -- '- 比较结果：%s（领先 %s 个提交，落后 %s 个提交）。\\n' "$status" "$ahead" "$behind" >> "$REPORT"
             if [[ -n "$compare_url" ]]; then
-              echo "- Compare: $compare_url" >> "$REPORT"
+              printf -- '- 在线比较：%s\\n' "$compare_url" >> "$REPORT"
             fi
-            echo "- Commits:" >> "$REPORT"
-            jq -r '.commits[:80][]? | "- `\(.sha[0:7])` \(.commit.message | split("\n")[0])"' <<< "$compare_json" >> "$REPORT"
-            echo "- Changed paths (GitHub may limit this list):" >> "$REPORT"
-            jq -r '.files[:150][]? | "- `\(.filename)` (\(.status), +\(.additions)/-\(.deletions))"' <<< "$compare_json" >> "$REPORT"
+
+            echo "- 官方新增提交（最多显示 80 条）：" >> "$REPORT"
+            if [[ "$(jq '(.commits // []) | length' <<< "$compare_json")" -eq 0 ]]; then
+              echo "  - 无新增提交。" >> "$REPORT"
+            else
+              jq -r '(.commits // [])[:80][] | "  - \\(.sha[0:7]) \\(.commit.message | split("\\n")[0])"' <<< "$compare_json" >> "$REPORT"
+            fi
+
+            echo "- 变更文件（最多显示 150 个；GitHub 接口可能限制返回数量）：" >> "$REPORT"
+            if [[ "$(jq '(.files // []) | length' <<< "$compare_json")" -eq 0 ]]; then
+              echo "  - 无文件变更记录。" >> "$REPORT"
+            else
+              jq -r '(.files // [])[:150][] | "  - \\(.filename)（\\(.status // "未知")，新增 \\(.additions // 0) / 删除 \\(.deletions // 0)）"' <<< "$compare_json" >> "$REPORT"
+            fi
           }
 
           check_branch() {
@@ -91,35 +131,34 @@ jobs:
             review_from_sha="$(jq -r --arg version "$version" '.versions[$version].review_from_sha // empty' "$TRACK_FILE")"
 
             if [[ -z "$discovered_sha" ]]; then
-              echo "::error::Missing discovered_sha for iStoreOS $version in $TRACK_FILE"
+              echo "::error::iStoreOS $version 缺少 discovered_sha，无法安全比较。"
               return 1
             fi
 
             head_sha="$(git ls-remote "$UPSTREAM_URL" "refs/heads/$upstream_branch" | awk 'NR==1 {print $1}')"
             if [[ -z "$head_sha" ]]; then
-              echo "::error::Cannot read official upstream branch: $upstream_branch"
+              echo "::error::无法读取官方分支：$upstream_branch"
               return 1
             fi
 
             {
-              echo "## iStoreOS $version"
-              printf -- '- Project branch: `%s`\n' "$project_branch"
-              printf -- '- Official branch: `%s`\n' "$upstream_branch"
-              printf -- '- Previously discovered SHA: `%s`\n' "$discovered_sha"
+              printf -- '## iStoreOS %s\\n' "$version"
+              printf -- '- 项目分支：%s\\n' "$project_branch"
+              printf -- '- 官方分支：%s\\n' "$upstream_branch"
+              printf -- '- 上次发现的官方提交：%s\\n' "$discovered_sha"
               if [[ -n "$synced_sha" ]]; then
-                printf -- '- Confirmed synchronized SHA: `%s`\n' "$synced_sha"
+                printf -- '- 已确认同步的提交：%s\\n' "$synced_sha"
               else
-                echo '- Confirmed synchronized SHA: **Not verified yet**'
+                echo '- 已确认同步的提交：尚未验证'
               fi
-              printf -- '- Current official SHA: `%s`\n' "$head_sha"
+              printf -- '- 当前官方最新提交：%s\\n' "$head_sha"
             } >> "$REPORT"
 
-            # First, advance the discovered revision only after the official compare API succeeds.
             if [[ "$discovered_sha" != "$head_sha" ]]; then
               update_json="$(compare_revisions "$discovered_sha" "$head_sha")"
               {
                 echo
-                echo "### Newly discovered upstream commits"
+                echo "### 本次新发现的官方提交"
                 append_comparison_details "$update_json"
               } >> "$REPORT"
 
@@ -130,84 +169,91 @@ jobs:
               mv "$tmp_file" "$TRACK_FILE"
               discovered_sha="$head_sha"
               NEW_UPDATES=true
-              echo "New official upstream commits discovered for $version."
+              echo "已发现 iStoreOS $version 官方新提交。"
             else
-              echo "- New upstream commits since the previous check: **None**." >> "$REPORT"
+              echo "- 自上次检查以来：没有发现新的官方提交。" >> "$REPORT"
             fi
 
-            # Then independently compare what has been discovered with what was actually synchronized.
             if [[ -z "$synced_sha" ]]; then
               {
                 echo
-                echo "- **SYNC STATUS: UNVERIFIED.** No confirmed synchronized SHA is recorded. Verify the project branch before setting synced_sha."
+                echo "- 同步状态：尚未验证。当前没有已确认的同步提交记录，请先核对项目分支内容。"
               } >> "$REPORT"
+
               if [[ -n "$review_from_sha" && "$review_from_sha" != "$discovered_sha" ]]; then
                 pending_json="$(compare_revisions "$review_from_sha" "$discovered_sha")"
                 {
                   echo
-                  echo "### Known commits since the previous check marker (not proof of sync status)"
+                  echo "### 上次审查标记之后的已知提交（不能据此认定已经同步）"
                   append_comparison_details "$pending_json"
                 } >> "$REPORT"
               fi
+
               SYNC_REVIEW_REQUIRED=true
-              echo "Synchronization baseline needs verification for $version."
+              echo "iStoreOS $version 的同步基准尚待人工核实。"
             elif [[ "$synced_sha" != "$discovered_sha" ]]; then
               pending_json="$(compare_revisions "$synced_sha" "$discovered_sha")"
               {
                 echo
-                echo "### Synchronization status"
-                echo "- **PENDING SYNC:** official commits have been discovered but are not yet marked as synchronized."
+                echo "### 同步状态"
+                echo "- 待同步：已发现官方提交，但尚未记录为已完成同步。"
                 append_comparison_details "$pending_json"
               } >> "$REPORT"
               PENDING_SYNC=true
-              echo "Pending synchronization remains for $version."
+              echo "iStoreOS $version 存在待同步提交。"
             else
               {
                 echo
-                echo "- **Synchronization status: UP TO DATE.** The synchronized SHA matches the discovered SHA."
+                echo "- 同步状态：已同步。已确认同步提交与当前发现的官方提交一致。"
               } >> "$REPORT"
             fi
 
             echo >> "$REPORT"
           }
 
+          # 两个分支均检查成功后，才保存新发现的 SHA。
           check_branch "24.10" "istoreos-24.10" "main"
           check_branch "25.12" "istoreos-25.12" "build-25.12"
 
-          # Persist only discovered revisions. Synchronized revisions are deliberately never advanced here.
+          # 只持久化 discovered_sha；synced_sha 绝不由本流程自动推进。
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$TRACK_FILE"
           if ! git diff --cached --quiet; then
-            git commit -m "chore: record discovered iStoreOS upstream revisions"
+            git commit -m "chore: 记录已发现的 iStoreOS 官方版本"
             git push origin HEAD:main
           fi
 
           {
-            echo "## Overall result"
+            echo "## 总体检查结果"
             if [[ "$NEW_UPDATES" == "true" ]]; then
-              echo "**NEW UPDATES DETECTED:** at least one official branch has advanced since the previous check."
+              echo "发现官方更新：至少一个官方分支较上次检查有新提交。"
             else
-              echo "**NO NEW UPDATES:** neither official branch has advanced since the previous check."
+              echo "没有新的官方更新：两个官方分支均未较上次检查前进。"
             fi
+
             if [[ "$PENDING_SYNC" == "true" ]]; then
               echo
-              echo "**ACTION REQUIRED: PENDING SYNC** — discovered upstream commits remain unsynchronized."
+              echo "需要处理：存在待同步提交。请核对对应项目分支，并在完成验证后更新同步记录。"
             elif [[ "$SYNC_REVIEW_REQUIRED" == "true" ]]; then
               echo
-              echo "**ACTION REQUIRED: VERIFY SYNC BASELINE** — at least one version has no confirmed synchronized SHA yet."
+              echo "需要处理：同步基准待核实。至少一个版本尚无已确认的同步 SHA。"
             else
               echo
-              echo "**SYNC STATUS: UP TO DATE** — both synchronized SHAs match their discovered SHAs."
+              echo "同步状态：两个版本均已确认同步。"
             fi
+
             echo
+            echo "---"
             cat "$REPORT"
           } >> "$GITHUB_STEP_SUMMARY"
 
           echo "new_updates=$NEW_UPDATES" >> "$GITHUB_OUTPUT"
           echo "pending_sync=$PENDING_SYNC" >> "$GITHUB_OUTPUT"
 
-      - name: Publish check report
+      - name: 发布中文检查结果
         if: always()
+        shell: bash
         run: |
-          echo "The official upstream check result is available in the GitHub Actions run summary."
+          echo "检查报告已写入 GitHub Actions 的运行摘要页面。"
+          echo "如检查失败，请查看步骤日志中的中文错误提示。"
