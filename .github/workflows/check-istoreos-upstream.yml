@@ -83,11 +83,12 @@ jobs:
             local version="$1"
             local upstream_branch="$2"
             local project_branch="$3"
-            local discovered_sha synced_sha head_sha update_json pending_json
+            local discovered_sha synced_sha review_from_sha head_sha update_json pending_json
             local tmp_file
 
             discovered_sha="$(jq -r --arg version "$version" '.versions[$version].discovered_sha // .versions[$version].sha // empty' "$TRACK_FILE")"
             synced_sha="$(jq -r --arg version "$version" '.versions[$version].synced_sha // empty' "$TRACK_FILE")"
+            review_from_sha="$(jq -r --arg version "$version" '.versions[$version].review_from_sha // empty' "$TRACK_FILE")"
 
             if [[ -z "$discovered_sha" ]]; then
               echo "::error::Missing discovered_sha for iStoreOS $version in $TRACK_FILE"
@@ -140,6 +141,14 @@ jobs:
                 echo
                 echo "- **SYNC STATUS: UNVERIFIED.** No confirmed synchronized SHA is recorded. Verify the project branch before setting synced_sha."
               } >> "$REPORT"
+              if [[ -n "$review_from_sha" && "$review_from_sha" != "$discovered_sha" ]]; then
+                pending_json="$(compare_revisions "$review_from_sha" "$discovered_sha")"
+                {
+                  echo
+                  echo "### Known commits since the previous check marker (not proof of sync status)"
+                  append_comparison_details "$pending_json"
+                } >> "$REPORT"
+              fi
               SYNC_REVIEW_REQUIRED=true
               echo "Synchronization baseline needs verification for $version."
             elif [[ "$synced_sha" != "$discovered_sha" ]]; then
